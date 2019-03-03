@@ -52,7 +52,6 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
     	SemanticsCommand currentStatement = rsm.getCurrentNode().getStatement();
     	
     	loadInitialStates();
-    	ProgramState testState = initialStates.get(10);
     	
     	// INIT MAIN STATE SPACE
         
@@ -70,7 +69,7 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
         	try {
     			mainStateSpace = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates).generateAndCheck(formula, proofStructure);
     		} catch (StateSpaceGenerationAbortedException e) {
-    			// TODO Auto-generated catch block
+
     			e.printStackTrace();
     		}
         }
@@ -78,7 +77,7 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
 
 	@Override
 	public StateSpace getStateSpace() {
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 
@@ -90,13 +89,12 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
 
 	@Override
 	public void logSummary() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public boolean isVerificationPhase() {
-		// TODO Auto-generated method stub
+
 		return false;
 	}
     
@@ -105,7 +103,7 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
         List<HeapConfiguration> inputs = getPhase(InputTransformer.class).getInputs();
         initialStates = new ArrayList<>(inputs.size());
         for(HeapConfiguration hc : inputs) {
-            initialStates.add(scene().createProgramState(hc));
+        	initialStates.add(scene().createProgramState(hc));
         }
     }
 

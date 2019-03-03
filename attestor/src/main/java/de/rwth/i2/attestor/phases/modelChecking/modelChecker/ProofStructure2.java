@@ -17,7 +17,6 @@ import de.rwth.i2.attestor.generated.node.AReleaseLtlform;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
-import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerator;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.list.array.TIntArrayList;
@@ -30,16 +29,19 @@ public class ProofStructure2 {
 	
 	private static final Logger logger = LogManager.getLogger("proofStructure.java");
 
+	/**
+	 * State space instance not needed for on-the-fly model checking.
+	 */
 	private StateSpace stateSpace;
-	TIntObjectMap<Set<Assertion2>> stateIdToAssertions;
-	HashMap<Assertion2, HashSet<Assertion2>> edges;
+	private TIntObjectMap<Set<Assertion2>> stateIdToAssertions;
+	private HashMap<Assertion2, HashSet<Assertion2>> edges;
 	
-	LinkedList<Assertion2> queue = new LinkedList<>();
-	Assertion2 currentParentAssertion;
+	private LinkedList<Assertion2> queue = new LinkedList<>();
+	private Assertion2 currentParentAssertion = null;
 	
-	boolean buildFullStructure = false;
-	boolean successful = true;
-	Assertion2 originOfFailure = null;    
+	private boolean buildFullStructure = false;
+	private boolean successful = true;
+	private Assertion2 originOfFailure = null;    
 
 	public ProofStructure2(StateSpace stateSpace) {
 		this.stateSpace = stateSpace;
@@ -53,54 +55,24 @@ public class ProofStructure2 {
 		this.edges = new LinkedHashMap<>();
 	}
 	
-	// check formula for program state; if only next formulae are left, return next formulae
-	// if an empty list is returned: this branch is done.
-	public HashMap<Assertion2, LinkedList<Node>> check(ProgramState state, LinkedList<Node> formulae, Assertion2 parentAssertion) {
-		
-		// queue to hold assertions that will be generated while model checking the current state
-		LinkedList<Assertion2> assertionQueue = new LinkedList<>();
-		
-		// set of sets of next formulae to be checked for successor states, mapped to parent assertion
-		HashMap<Assertion2, LinkedList<Node>> nextFormulae = new HashMap<>();
-		
-		// Create assertion from program state and formulae to be checked
-		Assertion2 assertion = new Assertion2(state, parentAssertion);
-		for (Node formula : formulae) {
-			assertion.addFormula(formula);
-		}
-		
-		// Check if we have already seen an equal assertion before
-        Assertion2 presentAssertion = getPresentAssertion(assertion);
-        boolean assertionPresent = (presentAssertion != null);
-        if (assertionPresent) assertion = presentAssertion;
+	public ProgramState getNextStateToCheck() {
+		Assertion2 nextAssertion = queue.peekFirst();
+		return nextAssertion != null ? nextAssertion.getProgramState() : null;
+	}
+	
+	public ProgramState getLastCheckedState() {
 
-        addEdge(parentAssertion, assertion);
-
-		// add assertion to map 
-		addAssertion(assertion);
-        
-        // Process the assertion further only in case it is not one, that was already processed.                       
-        if (!assertionPresent) {
-        	assertionQueue.add(assertion);
-        } 
-        // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
-        else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
-            this.successful = false;                                    
-            setOriginOfFailure(assertion);
-
-            // abort proof structure generation, as we already know that it is not successful!
-            if (!buildFullStructure) {
-            	
-            	System.err.println("unsuccessful");
-            	return null;                                                      
-            }
-        } 		
-
-		while (!assertionQueue.isEmpty()) {
-			Assertion2 currentAssertion = assertionQueue.poll();
-            System.err.println(currentAssertion.getProgramState().getStateSpaceId());
+		return currentParentAssertion.getProgramState();
+	}
+	
+	public LinkedList<Node> build() {
+		
+		// start model checking until we meet X-formula
+        while (!queue.isEmpty()) {
+			Assertion2 currentAssertion = queue.poll();
+            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
 			
-			// tableau step for formulae without X operator: the program state stays the same
+			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
 				Node currentFormula = currentAssertion.getFirstFormula();
 				LinkedList<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
@@ -108,36 +80,30 @@ public class ProofStructure2 {
 					for (Assertion2 successorAssertion : successorAssertions) {						
 						addEdge(currentAssertion, successorAssertion);
 						addAssertion(successorAssertion);
-						assertionQueue.add(successorAssertion);
+						queue.add(successorAssertion);
 					}
 				}
 			} 
-			
-			// tableau step for formulae with X operator (no more other formulae left to check)
+			// tableau step for formulae with X operator
 			else if (!currentAssertion.getNextFormulae().isEmpty()) {
-
-				nextFormulae.put(currentAssertion, currentAssertion.getNextFormulae());
+				// set current parent and return X-Formula
+				currentParentAssertion = currentAssertion;
+				return currentAssertion.getNextFormulae();
 			} 
-			
 			// assertion does not contain any formulae to check (unsuccessful)
 			else {
 				this.successful = false;				
 				setOriginOfFailure(currentAssertion);
 				
                 // abort proof structure generation, as we already know that it is not successful!
-                if (!buildFullStructure) {
-                	System.err.println("unsuccessful");
-                	return nextFormulae;                
-                }
+                if (!buildFullStructure) return null;                
 			}
 		}
-		
-		return nextFormulae;  
+        
+		return null;		
 	}
 	
-	public void build(LinkedList<ProgramState> initialStates, LTLFormula formula) {
-
-//		LinkedList<Assertion2> queue = new LinkedList<>();
+	public void build(List<ProgramState> initialStates, LTLFormula formula) {
 		
 		for (ProgramState state : initialStates) {
 			Assertion2 assertion = new Assertion2(state, null, formula);
@@ -148,7 +114,6 @@ public class ProofStructure2 {
 		while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
             System.out.println(currentAssertion.getProgramState().getStateSpaceId());
-
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
@@ -200,58 +165,9 @@ public class ProofStructure2 {
                 if (!buildFullStructure) return;                
 			}
 		}
-	}
-	
-	public LinkedList<Node> continueTableau() {
-
-		while (!queue.isEmpty()) {
-			Assertion2 currentAssertion = queue.poll();
-            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
-			
-			// tableau step for formulae without X operator
-			if (!currentAssertion.getFormulae().isEmpty()) {
-				Node currentFormula = currentAssertion.getFirstFormula();
-				LinkedList<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
-				if (successorAssertions != null) {
-					for (Assertion2 successorAssertion : successorAssertions) {						
-						addEdge(currentAssertion, successorAssertion);
-						addAssertion(successorAssertion);
-						queue.add(successorAssertion);
-					}
-				}
-			} 
-			// tableau step for formulae with X operator
-			else if (!currentAssertion.getNextFormulae().isEmpty()) {
-				currentParentAssertion = currentAssertion;
-				return currentAssertion.getNextFormulae();
-				
-			} 
-			// assertion does not contain any formulae to check (unsuccessful)
-			else {
-				this.successful = false;				
-				setOriginOfFailure(currentAssertion);
-				
-                // abort proof structure generation, as we already know that it is not successful!
-                if (!buildFullStructure) return null;                
-			}
-		}
-		
-		return null;
-	}
+	}	
 	
 	private Assertion2 getPresentAssertion(Assertion2 assertion) {
-
-		Set<Assertion2> presentAssertions = getAssertionsForState(assertion.getProgramState().getStateSpaceId());
-        if (!presentAssertions.isEmpty()) {
-            for (Assertion2 presentAssertion : presentAssertions) {            	
-                if (assertion.equals(presentAssertion)) return presentAssertion;
-            }
-        }
-        
-        return null;
-	}
-	
-	private Assertion2 getPresentAssertionTEST(Assertion2 assertion) {
 
 		Set<Assertion2> presentAssertions = getAssertionsForState(assertion.getProgramState().getStateSpaceId());
         if (!presentAssertions.isEmpty()) {
@@ -281,17 +197,17 @@ public class ProofStructure2 {
 		
 		System.err.println("cycle check");
         
-        LinkedList<Assertion2> queue = new LinkedList<>();
-        queue.add(assertion);        
+        LinkedList<Assertion2> cycleQueue = new LinkedList<>();
+        cycleQueue.add(assertion);        
 
         HashSet<Assertion2> seen = new LinkedHashSet<>();
         seen.add(assertion);        
         
-        while (!queue.isEmpty()) {
-            Assertion2 currentAssertion = queue.pop();
+        while (!cycleQueue.isEmpty()) {
+            Assertion2 currentAssertion = cycleQueue.pop();
             for (Assertion2 successorAssertion : this.getSuccessorAssertions(currentAssertion)) {            	
                 if (successorAssertion.equals(assertion)) return true;   
-                if (!seen.contains(successorAssertion)) queue.add(successorAssertion);
+                if (!seen.contains(successorAssertion)) cycleQueue.add(successorAssertion);
                 seen.add(successorAssertion);
             }
         }
@@ -351,21 +267,6 @@ public class ProofStructure2 {
 		LinkedList<Assertion2> successorAssertions = new LinkedList<>();
 
 		for (ProgramState successorProgramState : this.getSuccessorProgramStates(assertion.getProgramState())) {
-			// successor nodes of the current node have to satisfy the Next formulae of the current node
-			Assertion2 successorAssertion = new Assertion2(successorProgramState, assertion, true);
-			successorAssertion.addFormulae(assertion.getNextFormulae());
-			successorAssertions.add(successorAssertion);
-		}
-
-		return successorAssertions;
-	}
-	
-	private LinkedList<Assertion2> expandNextAssertionStateSpaceGenerator(StateSpaceGenerator stateSpaceGenerator, Assertion2 assertion) {
-
-		// list that holds successor nodes for the current node
-		LinkedList<Assertion2> successorAssertions = new LinkedList<>();
-
-		for (ProgramState successorProgramState : stateSpaceGenerator.computeSuccessorStates(assertion.getProgramState())) {
 			// successor nodes of the current node have to satisfy the Next formulae of the current node
 			Assertion2 successorAssertion = new Assertion2(successorProgramState, assertion, true);
 			successorAssertion.addFormulae(assertion.getNextFormulae());
@@ -446,6 +347,14 @@ public class ProofStructure2 {
         return getVertices().size();
     }
     
+    public FailureTrace getFailureTrace(StateSpace stateSpace) {
+
+    	// proof was successful, no counterexample exists
+        if (isSuccessful()) return null;
+        
+        return new FailureTrace(this.originOfFailure, stateSpace);
+    }
+    
     public FailureTrace getFailureTrace() {
 
     	// proof was successful, no counterexample exists
@@ -454,7 +363,7 @@ public class ProofStructure2 {
         return new FailureTrace(this.originOfFailure, stateSpace);
     }
     
-    public HashSet<Assertion2> getSuccessorAssertions(Assertion2 assertion) {
+    private HashSet<Assertion2> getSuccessorAssertions(Assertion2 assertion) {
 
         HashSet<Assertion2> successorAssertions = new LinkedHashSet<>();
         if (this.edges.get(assertion) != null) {
@@ -466,7 +375,12 @@ public class ProofStructure2 {
         return successorAssertions;
     }
 
-	// TODO get rid of statespace: insert computation of next states here (triggered by model checking Next formulae)
+    /**
+     * (not needed for on-the-fly model checking)
+     * 
+     * @param programState
+     * @return
+     */
 	private LinkedList<ProgramState> getSuccessorProgramStates(ProgramState programState) {		
 		
 		int stateID = programState.getStateSpaceId();
@@ -494,60 +408,45 @@ public class ProofStructure2 {
 		while (successorsIterator.hasNext()) {
 			successorStates.add(this.stateSpace.getState(successorsIterator.next()));
 		}
-
+		
 		return successorStates;
 	}
 	
 	/**
-	 * Add new assertion to proof structure. 
-	 * Before adding assertion to queue, check if it has been seen before.
-	 * @param assertion
+	 * Add an assertion to the proof structure.
+	 * 
+	 * @param state
+	 * @param formulae
+	 * @return true if the assertion has successfully been added to the proof structure, false otherwise
 	 */
-	public void addNewNextAssertions(ProgramState currentState, Set<Node> currentFormulae, List<ProgramState> successorProgramStates, List<Node> nextFormulae) {
-		
-		// get current assertion
-		Assertion2 currentAssertion = new Assertion2(currentState, null);
-		for (Node formula : currentFormulae) {
-			// TODO decide for datastructure: sets or lists (probably sets)
-			currentAssertion.addFormula(formula);
-		}
-		Assertion2 presentCurrentAssertion = getPresentAssertion(currentAssertion);
-        if (presentCurrentAssertion != null) currentAssertion = presentCurrentAssertion;
-		
-        // create new successor assertions
-		LinkedList<Assertion2> successorAssertions = new LinkedList<>();
-		for (ProgramState successorProgramState : successorProgramStates) {
-			Assertion2 successorAssertion = new Assertion2(successorProgramState, currentAssertion, true);
-			successorAssertion.addFormulae(nextFormulae);
-			successorAssertions.add(successorAssertion);
-		}
-		
-		// check whether new assertions have been seen before, if not, add to queue
-		if (successorAssertions != null) {
-			for (Assertion2 assertion : successorAssertions) {	
+	public boolean addAssertion(ProgramState state, List<Node> formulae) {
 				
-				// Check if we have already seen an equal assertion before
-                Assertion2 presentAssertion = getPresentAssertion(assertion);
-                boolean assertionPresent = (presentAssertion != null);
-                if (assertionPresent) assertion = presentAssertion;
+		// create assertion from state and formulae
+		Assertion2 assertion = new Assertion2(state, currentParentAssertion, true);
+		assertion.addFormulae(formulae);
+		
+		// check if assertion already exists
+        Assertion2 presentAssertion = getPresentAssertion(assertion);
+        boolean assertionPresent = (presentAssertion != null);
+        if (assertionPresent) assertion = presentAssertion;
 
-                addEdge(currentAssertion, assertion);
-                addAssertion(assertion);
-                
-                // Process the assertion further only in case it is not one, that was already processed.                       
-                if (!assertionPresent) {
-                    queue.add(assertion);
-                } 
-                // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
-                else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
-                    this.successful = false;                                    
-                    System.out.println("abort");
-                    setOriginOfFailure(assertion);
+        if (currentParentAssertion != null) addEdge(currentParentAssertion, assertion);
+        addAssertion(assertion);
+        
+        // Process the assertion further only in case it is not one, that was already processed.                       
+        if (!assertionPresent) {
+            queue.add(assertion);
+        } // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
+        else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
+            this.successful = false;                                    
+            setOriginOfFailure(assertion);
 
-                    // abort proof structure generation, as we already know that it is not successful!
-                    if (!buildFullStructure) return;                                                      
-                } 
-			}
-		}
+            // abort proof structure generation, as we already know that it is not successful!
+            // if (!buildFullStructure) return false;   
+            return false;
+        } 
+		
+        // TODO check this return statement
+        return true;
 	}
 }
