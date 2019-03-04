@@ -36,8 +36,8 @@ public class ProofStructure2 {
 	private TIntObjectMap<Set<Assertion2>> stateIdToAssertions;
 	private HashMap<Assertion2, HashSet<Assertion2>> edges;
 	
-	private LinkedList<Assertion2> queue = new LinkedList<>();
-	private Assertion2 currentParentAssertion = null;
+	private LinkedList<Assertion2> queue;
+	private Assertion2 currentParent;
 	
 	private boolean buildFullStructure = false;
 	private boolean successful = true;
@@ -47,12 +47,16 @@ public class ProofStructure2 {
 		this.stateSpace = stateSpace;
 		this.stateIdToAssertions = new TIntObjectHashMap<>();
 		this.edges = new LinkedHashMap<>();
+		this.queue = new LinkedList<>();
+		this.currentParent = null;
 	}
 	
 	public ProofStructure2() {
 		this.stateSpace = null;
 		this.stateIdToAssertions = new TIntObjectHashMap<>();
 		this.edges = new LinkedHashMap<>();
+		this.queue = new LinkedList<>();
+		this.currentParent = null;
 	}
 	
 	public ProgramState getNextStateToCheck() {
@@ -62,7 +66,7 @@ public class ProofStructure2 {
 	
 	public ProgramState getLastCheckedState() {
 
-		return currentParentAssertion.getProgramState();
+		return currentParent.getProgramState();
 	}
 	
 	public LinkedList<Node> build() {
@@ -70,7 +74,7 @@ public class ProofStructure2 {
 		// start model checking until we meet X-formula
         while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
-            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
+//            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
@@ -84,10 +88,10 @@ public class ProofStructure2 {
 					}
 				}
 			} 
-			// tableau step for formulae with X operator
+			// return formulae with X operator
 			else if (!currentAssertion.getNextFormulae().isEmpty()) {
-				// set current parent and return X-Formula
-				currentParentAssertion = currentAssertion;
+				// set current parent 
+				currentParent = currentAssertion;
 				return currentAssertion.getNextFormulae();
 			} 
 			// assertion does not contain any formulae to check (unsuccessful)
@@ -113,7 +117,7 @@ public class ProofStructure2 {
 
 		while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
-            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
+//            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
@@ -195,7 +199,7 @@ public class ProofStructure2 {
 
 	private boolean isRealCycle(Assertion2 assertion) {
 		
-		System.err.println("cycle check");
+//		System.err.println("cycle check");
         
         LinkedList<Assertion2> cycleQueue = new LinkedList<>();
         cycleQueue.add(assertion);        
@@ -266,7 +270,7 @@ public class ProofStructure2 {
 		// list that holds successor nodes for the current node
 		LinkedList<Assertion2> successorAssertions = new LinkedList<>();
 
-		for (ProgramState successorProgramState : this.getSuccessorProgramStates(assertion.getProgramState())) {
+		for (ProgramState successorProgramState : this.getSuccessorStates(assertion.getProgramState())) {
 			// successor nodes of the current node have to satisfy the Next formulae of the current node
 			Assertion2 successorAssertion = new Assertion2(successorProgramState, assertion, true);
 			successorAssertion.addFormulae(assertion.getNextFormulae());
@@ -347,6 +351,11 @@ public class ProofStructure2 {
         return getVertices().size();
     }
     
+    /**
+     * For on-the-fly model checking.
+     * @param stateSpace
+     * @return
+     */
     public FailureTrace getFailureTrace(StateSpace stateSpace) {
 
     	// proof was successful, no counterexample exists
@@ -381,7 +390,7 @@ public class ProofStructure2 {
      * @param programState
      * @return
      */
-	private LinkedList<ProgramState> getSuccessorProgramStates(ProgramState programState) {		
+	private LinkedList<ProgramState> getSuccessorStates(ProgramState programState) {		
 		
 		int stateID = programState.getStateSpaceId();
 		LinkedList<ProgramState> successorStates = new LinkedList<>();
@@ -422,7 +431,7 @@ public class ProofStructure2 {
 	public boolean addAssertion(ProgramState state, List<Node> formulae) {
 				
 		// create assertion from state and formulae
-		Assertion2 assertion = new Assertion2(state, currentParentAssertion, true);
+		Assertion2 assertion = new Assertion2(state, currentParent, true);
 		assertion.addFormulae(formulae);
 		
 		// check if assertion already exists
@@ -430,7 +439,7 @@ public class ProofStructure2 {
         boolean assertionPresent = (presentAssertion != null);
         if (assertionPresent) assertion = presentAssertion;
 
-        if (currentParentAssertion != null) addEdge(currentParentAssertion, assertion);
+        if (currentParent != null) addEdge(currentParent, assertion);
         addAssertion(assertion);
         
         // Process the assertion further only in case it is not one, that was already processed.                       

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
-import de.rwth.i2.attestor.recursiveStateMachine.RecursiveStateMachine;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.
@@ -56,8 +55,8 @@ public class StateSpaceGeneratorBuilder {
             throw new IllegalStateException("StateSpaceGenerator: No initial states.");
         }
 
-        if (generator.program == null && generator.rsm == null) {
-            throw new IllegalStateException("StateSpaceGenerator: No program or RSM.");
+        if (generator.program == null) {
+            throw new IllegalStateException("StateSpaceGenerator: No program.");
         }
 
         if (generator.materializationStrategy == null) {
@@ -275,11 +274,4 @@ public class StateSpaceGeneratorBuilder {
         generator.alwaysCanonicalize = alwaysCanonicalize;
         return this;
     }
-    
-    public StateSpaceGeneratorBuilder setRecursiveStateMachine(RecursiveStateMachine rsm) {
-    	
-    	generator.rsm = rsm;
-    	return this;
-    }
-
 }
