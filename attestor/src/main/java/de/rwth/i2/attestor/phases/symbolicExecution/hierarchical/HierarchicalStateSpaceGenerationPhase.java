@@ -2,6 +2,7 @@ package de.rwth.i2.attestor.phases.symbolicExecution.hierarchical;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.Set;
 import org.apache.logging.log4j.Level;
 
 import de.rwth.i2.attestor.LTLFormula;
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.Scene;
@@ -18,12 +20,24 @@ import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.preprocessing.RSMGenerationPhase;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContractCollection;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.scopes.DefaultScopeExtractor;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureCall;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureRegistry;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.NonRecursiveMethodExecutor;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.RecursiveMethodExecutor;
 import de.rwth.i2.attestor.phases.transformers.InputTransformer;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
 import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
+import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
+import de.rwth.i2.attestor.procedures.MethodExecutor;
+import de.rwth.i2.attestor.procedures.PreconditionMatchingStrategy;
 import de.rwth.i2.attestor.recursiveStateMachine.ComponentStateMachine;
 import de.rwth.i2.attestor.recursiveStateMachine.RecursiveStateMachine;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -37,6 +51,7 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
 	Method mainMethod;
 	private List<ProgramState> initialStates; // states before any statement has been executed (independent from code)
 	private StateSpace mainStateSpace;
+	private InterproceduralAnalysis interproceduralAnalysis;
 	
 	private RecursiveStateMachine rsm;
 	
@@ -54,41 +69,37 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
 	
 	@Override
     public void executePhase() {
-		
-		System.out.println("Hierarchical State Space Generation Phase");
     	
     	// RSM
     	this.rsm = getPhase(RSMGenerationPhase.class).getRSM(); 
     	ComponentStateMachine mainCSM = rsm.getMainComponent();
     	mainMethod = mainCSM.getMethod();
-    	
+    	interproceduralAnalysis = new InterproceduralAnalysis();
     	loadInitialStates();
     	
-    	// INIT MAIN STATE SPACE
-        
-    	
-    	// EXECUTE STATEMENT
-    	
+    	initializeMethodExecutors();
     	
     	// MODEL CHECKING
     	ModelCheckingSettings mcSettings = getPhase(MCSettingsTransformer.class).getMcSettings();
-        Set<LTLFormula> formulae = mcSettings.getFormulae();
-        if (formulae.isEmpty()) {
+        Set<LTLFormula> mcFormulae = mcSettings.getFormulae();
+        if (mcFormulae.isEmpty()) {
             logger.debug("No LTL formulae have been provided.");
             return;
         }
 
         // TODO do not generate state space again for each formula
-        for (LTLFormula formula : formulae) {
+        for (LTLFormula formula : mcFormulae) {
 
         	String formulaString = formula.getFormulaString();
             logger.info("Checking formula: " + formulaString + "...");
             
+            LinkedList<Node> formulae = new LinkedList<>();
+            formulae.add(formula.getASTRoot().getPLtlform());
         	ProofStructure2 proofStructure = new ProofStructure2();
         	
         	try {
         		// model check formula while generating state space on the fly
-    			mainStateSpace = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates).generateAndCheck(formula, proofStructure);
+    			mainStateSpace = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates).generateAndCheck(formulae, proofStructure);
     		} catch (StateSpaceGenerationAbortedException e) {
 
     			e.printStackTrace();
@@ -114,9 +125,17 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
                     logger.warn("Counterexample generation for indexed grammars is not supported yet.");
                 } else {
                     FailureTrace failureTrace = proofStructure.getFailureTrace(mainStateSpace);
+                    System.out.println(failureTrace.toString());
                     traces.put(formula, failureTrace);
                 }
             }
+        }
+        
+        registerMainProcedureCalls();
+        interproceduralAnalysis.run();
+
+        if(mainStateSpace.getFinalStateIds().isEmpty()) {
+            logger.error("Computed state space contains no final states.");
         }
     }
 
@@ -129,21 +148,25 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
 	@Override
 	public String getName() {
 		
-		return "Hierarchical State Space Generation";
+		return "Hierarchical Model Checking";
 	}
 
 	@Override
 	public void logSummary() {
 		
 		logSum("+-------------------------+------------------+");
+		logSum("+---- Hierarchical Model Checking Results ---+");
+		logSum("+-------------------------+------------------+");
         logHighlight("| Generated states        | Number of states |");
         logSum("+-------------------------+------------------+");
         logSum(String.format("| w/ procedure calls      | %16d |",
                 scene().getNumberOfGeneratedStates()));
-        logSum(String.format("| w/o procedure calls     | %16d |",
-                mainStateSpace.getStates().size()));
-        logSum(String.format("| final states            | %16d |",
-                mainStateSpace.getFinalStateIds().size()));
+        if (mainStateSpace != null) {
+		    logSum(String.format("| w/o procedure calls     | %16d |",
+		            mainStateSpace.getStates().size()));
+		    logSum(String.format("| final states            | %16d |",
+		            mainStateSpace.getFinalStateIds().size()));
+        }
         logSum("+-------------------------+------------------+");
 		
 		if (formulaResults.isEmpty()) {
@@ -204,4 +227,43 @@ public class HierarchicalStateSpaceGenerationPhase extends AbstractPhase impleme
         }
     }
 
+    private void initializeMethodExecutors() {
+
+        InternalProcedureRegistry procedureRegistry = new InternalProcedureRegistry(
+                interproceduralAnalysis,
+                stateSpaceGeneratorFactory
+        );
+
+        PreconditionMatchingStrategy preconditionMatchingStrategy = new InternalPreconditionMatchingStrategy();
+
+        for(Method method : scene ().getRegisteredMethods()) {
+            MethodExecutor executor;
+            ContractCollection contractCollection = new InternalContractCollection(preconditionMatchingStrategy);
+            if(method.isRecursive()) {
+                executor = new RecursiveMethodExecutor(
+                        method,
+                        new DefaultScopeExtractor(this, method.getName()),
+                        contractCollection,
+                        procedureRegistry
+                );
+            } else {
+                executor = new NonRecursiveMethodExecutor(
+                		method,
+                        new DefaultScopeExtractor(this, method.getName()),
+                        contractCollection,
+                        procedureRegistry 
+                );
+            }
+            method.setMethodExecution(executor);
+        }
+    }
+    
+    private void registerMainProcedureCalls() {
+
+        for(ProgramState iState : initialStates) {
+            StateSpace mainStateSpace = iState.getContainingStateSpace();
+            ProcedureCall mainCall = new InternalProcedureCall(mainMethod, iState.getHeap(), stateSpaceGeneratorFactory, null);
+            interproceduralAnalysis.registerStateSpace(mainCall, mainStateSpace);
+        }
+    }
 }
