@@ -1,10 +1,17 @@
 package de.rwth.i2.attestor.phases.preprocessing;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.ElementNotPresentException;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.InputSettings;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
+import de.rwth.i2.attestor.phases.transformers.InputTransformer;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.recursiveStateMachine.ComponentStateMachine;
 import de.rwth.i2.attestor.recursiveStateMachine.RSMBox;
@@ -14,15 +21,22 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.InvokeStm
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.ReturnValueStmt;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.ReturnVoidStmt;
 import de.rwth.i2.attestor.stateSpaceGeneration.Program;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 
 public class RSMGenerationPhase extends AbstractPhase {
 	
 	private RecursiveStateMachine rsm;
     private Method mainMethod;
+    private LinkedList<Method> translatedMethods;
+    private StateSpaceGeneratorFactory stateSpaceGeneratorFactory;
+    private List<ProgramState> initialStates;
 
 	public RSMGenerationPhase(Scene scene) {
 		super(scene);
+		translatedMethods = new LinkedList<>();
+		
+		stateSpaceGeneratorFactory = new StateSpaceGeneratorFactory(scene);
 	}
 	
 	@Override
@@ -38,10 +52,22 @@ public class RSMGenerationPhase extends AbstractPhase {
     
     	rsm = new RecursiveStateMachine(mainMethod);
     	
+    	translateMethod(mainMethod);
+    	System.out.println(rsm.toString());
     	// translate each method to a component state machine
-    	for (Method method : scene().getRegisteredMethods()) {
-    		translateMethod(method);   		
-    	}	
+//    	for (Method method : scene().getRegisteredMethods()) {
+//    		translateMethod(method);   		
+//    	}	
+    	
+    	loadInitialStates();
+    	
+    	// State space generation (separate into other phase later)
+//    	try {
+//			StateSpace mainStateSpace = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates).generate();
+//		} catch (StateSpaceGenerationAbortedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
     }
     
     /**
@@ -51,16 +77,20 @@ public class RSMGenerationPhase extends AbstractPhase {
      */
     private void translateMethod(Method method) {
     	
-    	System.out.println("Translating method " + method.getName());
-    	
-    	// get or create CSM to method
-		ComponentStateMachine csm = rsm.getOrCreateComponentStateMachine(method);
-		
-		// translate method statements to nodes and boxes
-		Program methodBody = method.getBody();		
-		for (int i = 0; i < methodBody.getSize(); i++) {		
-			translateStatement(csm, methodBody.getStatement(i), i);		
-		}
+    	if (!translatedMethods.contains(method)) {
+	    	System.out.println("Translating method " + method.getName());
+	    	
+	    	// get or create CSM to method
+			ComponentStateMachine csm = rsm.getOrCreateComponentStateMachine(method);
+			
+			translatedMethods.add(method);
+			
+			// translate method statements to nodes and boxes
+			Program methodBody = method.getBody();		
+			for (int i = 0; i < methodBody.getSize(); i++) {		
+				translateStatement(csm, methodBody.getStatement(i), i);		
+			}
+    	}		
     }
     
     /**
@@ -137,6 +167,9 @@ public class RSMGenerationPhase extends AbstractPhase {
     	} 
     	
     	csm.getOrCreateNode(programCounter, statement, box, isEntryNode, isExitNode);
+    	
+    	// translate called method
+    	translateMethod(calledMethod);
     }
     
     /**
@@ -177,6 +210,15 @@ public class RSMGenerationPhase extends AbstractPhase {
         }
 
         throw new IllegalArgumentException("Could not find top-level method '" + methodName + "'.");
+    }
+    
+    private void loadInitialStates() {
+
+        List<HeapConfiguration> inputs = getPhase(InputTransformer.class).getInputs();
+        initialStates = new ArrayList<>(inputs.size());
+        for(HeapConfiguration hc : inputs) {
+        	initialStates.add(scene().createProgramState(hc));
+        }
     }
 
 	@Override
