@@ -74,7 +74,8 @@ public class ProofStructure2 {
 		// start model checking until we meet X-formula
         while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
-//            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
+            System.out.println(currentAssertion.getProgramState().getStateSpaceId() + " (PC: " +
+            		currentAssertion.getProgramState().getProgramCounter() + ") (State space: " + currentAssertion.getProgramState().getContainingStateSpace() + ")");
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
@@ -117,7 +118,6 @@ public class ProofStructure2 {
 
 		while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
-//            System.out.println(currentAssertion.getProgramState().getStateSpaceId());
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
@@ -198,8 +198,6 @@ public class ProofStructure2 {
 	}
 
 	private boolean isRealCycle(Assertion2 assertion) {
-		
-//		System.err.println("cycle check");
         
         LinkedList<Assertion2> cycleQueue = new LinkedList<>();
         cycleQueue.add(assertion);        
@@ -428,7 +426,7 @@ public class ProofStructure2 {
 	 * @param formulae
 	 * @return true if the assertion has successfully been added to the proof structure, false otherwise
 	 */
-	public boolean addAssertion(ProgramState state, List<Node> formulae) {
+	public void addAssertion(ProgramState state, List<Node> formulae) {
 				
 		// create assertion from state and formulae
 		Assertion2 assertion = new Assertion2(state, currentParent, true);
@@ -449,13 +447,6 @@ public class ProofStructure2 {
         else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
             this.successful = false;                                    
             setOriginOfFailure(assertion);
-
-            // abort proof structure generation, as we already know that it is not successful!
-            // if (!buildFullStructure) return false;   
-            return false;
         } 
-		
-        // TODO check this return statement
-        return true;
 	}
 }
