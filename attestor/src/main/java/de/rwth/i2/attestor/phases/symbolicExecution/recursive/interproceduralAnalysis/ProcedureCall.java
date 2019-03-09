@@ -1,5 +1,9 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
+import java.util.LinkedList;
+
+import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
@@ -25,4 +29,5 @@ public interface ProcedureCall {
     StateSpace execute();
     Method getMethod();
     ProgramState getInput();
+	StateSpace execute(LinkedList<Node> formulae, ProofStructure2 proofStructure);
 }

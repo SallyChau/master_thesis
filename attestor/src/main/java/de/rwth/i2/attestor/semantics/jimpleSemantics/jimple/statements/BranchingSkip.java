@@ -1,11 +1,15 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Set;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.util.SingleElementUtil;
-
-import java.util.Set;
 
 /**
  * Branching Skip has no effect on the heap and two successors. It models
@@ -32,7 +36,8 @@ public class BranchingSkip extends Statement {
     }
 
 
-    public String toString() {
+    @Override
+	public String toString() {
 
         return "Skip;";
     }
@@ -52,6 +57,11 @@ public class BranchingSkip extends Statement {
         Set<ProgramState> res = SingleElementUtil.createSet(leftResult);
         res.add(rightResult);
         return res;
+    }
+    
+    @Override
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+    	return computeSuccessors(programState);
     }
 
     @Override

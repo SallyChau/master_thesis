@@ -2,8 +2,11 @@ package de.rwth.i2.attestor.procedures;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public abstract class AbstractMethodExecutor implements MethodExecutor {
@@ -33,6 +36,14 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
         Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap);
         return createResultStates(input, postconditions);
     }
+    
+    public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+
+        HeapConfiguration inputHeap = input.getHeap();
+        ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
+        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap, formulae, proofStructure);
+        return createResultStates(input, postconditions);
+    }
 
     protected Collection<ProgramState> createResultStates(ProgramState input,
                                                         Collection<HeapConfiguration> postconditions) {
@@ -59,5 +70,8 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     public Collection<Contract> getContractsForExport() {
     	return contractCollection.getContractsForExport();
     }
+
+	protected abstract Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap,
+			LinkedList<Node> formulae, ProofStructure2 proofStructure);
 
 }

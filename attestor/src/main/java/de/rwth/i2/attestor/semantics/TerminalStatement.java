@@ -1,12 +1,15 @@
 package de.rwth.i2.attestor.semantics;
 
-import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
-import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
-import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
-
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Set;
+
+import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
+import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 
 /**
  * Terminal Statements are used to model the exit point of a method. They return
@@ -22,6 +25,13 @@ public class TerminalStatement implements SemanticsCommand {
 
         return new LinkedHashSet<>();
     }
+    
+    @Override
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae,
+			ProofStructure2 proofStructure) {
+
+		return computeSuccessors(programState);
+	}
 
     @Override
     public ViolationPoints getPotentialViolationPoints() {
@@ -45,5 +55,7 @@ public class TerminalStatement implements SemanticsCommand {
 
         return "program terminated";
     }
+
+	
 
 }

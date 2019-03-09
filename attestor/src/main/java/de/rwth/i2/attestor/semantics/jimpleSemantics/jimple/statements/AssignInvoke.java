@@ -1,8 +1,18 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -11,12 +21,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.NullPointerDe
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.util.SingleElementUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * AssignInvoke models statements of the form x = foo(); or x = bar(3, name);
@@ -78,6 +82,19 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
                 .getResultStates(programState, preparedState);
         return getCleanedResultStates(methodResult);
     }
+    
+    @Override
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+
+        // programState is callingState, prepared state is new input
+        ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+
+        Collection<ProgramState> methodResult = method
+                .getMethodExecutor()
+                .getResultStates(programState, preparedState, formulae, proofStructure);
+        return getCleanedResultStates(methodResult);
+    }
 
     protected Collection<ProgramState> getCleanedResultStates(Collection<ProgramState> resultStates) {
 
@@ -92,7 +109,8 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         return assignResult;
     }
 
-    public ProgramState getCleanedResultState(ProgramState state) {
+    @Override
+	public ProgramState getCleanedResultState(ProgramState state) {
 
         ConcreteValue concreteRHS = state.removeIntermediate("@return");
         invokePrepare.cleanHeap(state);
@@ -112,7 +130,8 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         return invokePrepare.needsMaterialization(programState);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
 
         String res = lhs.toString() + " = ";
         res += invokePrepare.baseValueString() + method.toString() + "(";

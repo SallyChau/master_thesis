@@ -1,11 +1,14 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -45,6 +48,27 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
 
         try {
             StateSpace stateSpace = factory.create( method.getBody(), initialState ).generate();
+
+            List<HeapConfiguration> finalHeaps = new ArrayList<>();
+            stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
+            Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
+            method.addContract(contract);
+            
+            registry.registerStateSpace( this, stateSpace );
+            
+            return stateSpace;
+        } catch (StateSpaceGenerationAbortedException e) {
+            throw new IllegalStateException("Procedure call execution failed.");
+        }
+    }
+    
+    @Override
+	public StateSpace execute(LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+    	
+    	ProgramState initialState = preconditionState.clone();
+
+        try {
+            StateSpace stateSpace = factory.create( method.getBody(), initialState ).generateAndCheck(formulae, proofStructure);
 
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
