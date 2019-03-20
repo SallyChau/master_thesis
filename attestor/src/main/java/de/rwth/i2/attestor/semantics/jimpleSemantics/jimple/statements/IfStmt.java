@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.ConcreteValue;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.NullPointerDereferenceException;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
@@ -108,8 +107,14 @@ public class IfStmt extends Statement {
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
     	return computeSuccessors(programState);
+    }
+    
+    @Override
+	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+
+    	return null;
     }
 
     @Override

@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -83,8 +82,11 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         return getCleanedResultStates(methodResult);
     }
     
+    /**
+     * On the fly model checking
+     */
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
 
         // programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
@@ -92,8 +94,17 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState, formulae, proofStructure);
+                .getResultStates(programState, preparedState, formulae);
         return getCleanedResultStates(methodResult);
+    }
+    
+    @Override
+	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+    	// programState is callingState, prepared state is new input
+        ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+
+        return method.getMethodExecutor().getResultFormulae(programState, preparedState, formulae);
     }
 
     protected Collection<ProgramState> getCleanedResultStates(Collection<ProgramState> resultStates) {

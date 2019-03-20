@@ -2,11 +2,10 @@ package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAn
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
@@ -37,10 +36,15 @@ public class RecursiveMethodExecutor extends AbstractInterproceduralMethodExecut
 	}
 
 	@Override
-	protected void generateAndAddContract(ProcedureCall call, LinkedList<Node> formulae,
-			ProofStructure2 proofStructure) {
-		// TODO Auto-generated method stub
+	protected void generateAndAddContract(ProcedureCall call, List<Node> formulae) {
 		
+		Collection<HeapConfiguration> postconditions = new LinkedHashSet<>();
+		getContractCollection().addContract(new InternalContract(call.getInput().getHeap(), postconditions));
+		
+		procedureRegistry.registerProcedure( call );		
+		procedureRegistry.registerFormulae( call, formulae );
+		
+		System.out.println("Registered procedure call to method " + call.getMethod().getName());
 	}
 
 }

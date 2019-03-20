@@ -1,12 +1,11 @@
 package de.rwth.i2.attestor.stateSpaceGeneration;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 
 /**
  * An abstraction of abstract program semantics that is executed on objects of type {@link ProgramState}.
@@ -32,7 +31,9 @@ public interface SemanticsCommand {
      * @param proofStructure
      * @return
      */
-    Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure);
+    Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae);
+    
+    List<Node> getResultFormulae(ProgramState programState, List<Node> formulae);
 
     /**
      * @return All potential violation points that may prevent execution of this statement.

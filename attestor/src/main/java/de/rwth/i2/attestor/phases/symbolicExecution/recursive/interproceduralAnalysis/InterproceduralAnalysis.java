@@ -1,9 +1,18 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
 
-import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import java.util.*;
+import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 /**
  * This class is responsible of computing the fixpoint of the interprocedural analysis
@@ -23,9 +32,15 @@ public class InterproceduralAnalysis {
 
 	Map<ProcedureCall, Set<PartialStateSpace>> callingDependencies = new LinkedHashMap<>();
 	Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = new LinkedHashMap<>();
+	
+	Map<ProcedureCall, ProofStructure2> callToProofStructure = new LinkedHashMap<>();
+	Map<ProcedureCall, List<Node>> callToFormulae = new LinkedHashMap<>();
+	Map<ProcedureCall, List<Node>> callToReturnFormulae = new LinkedHashMap<>();
+	
+	Map<PartialStateSpace, List<Node>> partialStateSpaceToReturnFormulae = new LinkedHashMap<>();
 
 
-	public void registerStateSpace( ProcedureCall call, StateSpace stateSpace) {
+	public void registerStateSpace(ProcedureCall call, StateSpace stateSpace) {
 
 		stateSpaceToAnalyzedCall.put(stateSpace, call);
 	}
@@ -49,6 +64,62 @@ public class InterproceduralAnalysis {
 		}
 	}
 
+	public void registerProofStructure(ProcedureCall procedureCall, ProofStructure2 proofStructure) {
+		callToProofStructure.put(procedureCall, proofStructure);
+	}
+	
+	public void registerFormulae(ProcedureCall procedureCall, List<Node> formulae) {
+		if(!callToFormulae.containsKey(procedureCall)) {
+			callToFormulae.put(procedureCall, formulae);
+		} else {
+			callToFormulae.get(procedureCall).addAll(formulae);
+		}
+	}
+	
+	public void registerReturnFormulae(ProcedureCall procedureCall, List<Node> returnFormulae) {
+		if(!callToReturnFormulae.containsKey(procedureCall)) {
+			callToReturnFormulae.put(procedureCall, returnFormulae);
+		} else {
+			callToReturnFormulae.get(procedureCall).addAll(returnFormulae);
+		}
+	}
+	
+	public void run2() {
+
+		while(!remainingProcedureCalls.isEmpty() || !remainingPartialStateSpaces.isEmpty()) {
+			
+			System.out.println("Interprocedural Analysis started");
+			
+			ProcedureCall call;
+			List<Node> formulae;
+			boolean contractChanged;
+			if(!remainingProcedureCalls.isEmpty()) {
+				// creates new state space for recursive methods
+				call = remainingProcedureCalls.pop();
+				formulae = callToFormulae.get(call);
+				StateSpace stateSpace = call.execute(formulae);
+				contractChanged = stateSpace.getFinalStateIds().size() > 0;
+			} else {
+				// continue partial state space 
+				PartialStateSpace partialStateSpace = remainingPartialStateSpaces.pop();
+				
+				int currentNumberOfFinalStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
+				call = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
+				ProofStructure2 proofStructure = callToProofStructure.get(call);
+				List<Node> returnFormulae = partialStateSpaceToReturnFormulae.get(partialStateSpace);
+				
+				System.out.println("Continuing state space for " + call.getMethod().getName() + " with formulae " + returnFormulae.toString());
+				
+				partialStateSpace.continueExecution(call, returnFormulae, proofStructure);
+				int newNumberOfFinalsStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
+				contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
+			}
+			if( contractChanged ) {
+				notifyDependenciesMC(call);
+			}
+		}
+	}
+	
 	/**
 	 * the fixpoint iteration
 	 * (note that this routine may need to be stopped if it is not able to find
@@ -60,11 +131,14 @@ public class InterproceduralAnalysis {
 			ProcedureCall call;
 			boolean contractChanged;
 			if(!remainingProcedureCalls.isEmpty()) {
+				// creates new state space for recursive methods
 				call = remainingProcedureCalls.pop();
-				StateSpace stateSpace = call.execute();
+				StateSpace stateSpace = call.execute(); 
 				contractChanged = stateSpace.getFinalStateIds().size() > 0;
 			} else {
+				// continue partial state space 
 				PartialStateSpace partialStateSpace = remainingPartialStateSpaces.pop();
+				
 				int currentNumberOfFinalStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
 				call = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
 				partialStateSpace.continueExecution(call);
@@ -87,6 +161,20 @@ public class InterproceduralAnalysis {
 		Set<PartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);
 	}
+	
+	void notifyDependenciesMC(ProcedureCall call) {
 
+		Set<PartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
+		remainingPartialStateSpaces.addAll(dependencies);
+		
+		// map return formulae and partial state spaces
+		for (PartialStateSpace dependency : dependencies) {
+			if (!partialStateSpaceToReturnFormulae.containsKey(dependency)) {
+				partialStateSpaceToReturnFormulae.put(dependency, callToReturnFormulae.get(call));
+			} else {
+				partialStateSpaceToReturnFormulae.get(dependency).addAll(callToReturnFormulae.get(call));
+			}
+		}
+	}
 
 }

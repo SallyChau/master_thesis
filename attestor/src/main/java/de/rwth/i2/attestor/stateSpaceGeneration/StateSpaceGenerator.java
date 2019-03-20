@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
@@ -40,7 +40,12 @@ public class StateSpaceGenerator {
      * The control flow of the program together with the
      * abstract semantics of each statement
      */
-    Program program;
+    Program program; 
+    
+    ProofStructure2 proofStructure;
+    
+    List<Node> returnFormulae;
+    
     /**
      * Strategy guiding the materialization of states.
      * This strategy is invoked whenever an abstract transfer
@@ -202,6 +207,17 @@ public class StateSpaceGenerator {
     public FinalStateStrategy getFinalStateStrategy() {
         return finalStateStrategy;
     }
+    
+    public ProofStructure2 getProofStructure() {
+
+        return proofStructure;
+    }
+    
+    public List<Node> getReturnFormulae() {
+
+        return returnFormulae;
+    }
+
 
     /**
      * Attempts to generate a StateSpace according to the
@@ -210,12 +226,13 @@ public class StateSpaceGenerator {
      * @return The generated StateSpace.
      */
     public StateSpace generate() throws StateSpaceGenerationAbortedException {
+    	
+    	System.out.println("State space " + stateSpace.toString());
 
         while (stateExplorationStrategy.hasUnexploredStates()) {
 
             ProgramState state = stateExplorationStrategy.getNextUnexploredState();
-            
-			
+       
             state.setContainingStateSpace( this.stateSpace );
 
             if(!checkAbortCriteria(state)) {
@@ -244,27 +261,60 @@ public class StateSpaceGenerator {
         return stateSpace;
     }
     
-    // TODO register proof structure in outer instance similar to registry
-    public StateSpace generateAndCheck(LinkedList<Node> formulae, ProofStructure2 proofStructure) throws StateSpaceGenerationAbortedException {
+    public StateSpace generateAndCheck(ProgramState initialState, List<Node> formulae) throws StateSpaceGenerationAbortedException {
     	
-    	// Add assertions for initial states to proof structure
-    	Set<ProgramState> initialStates = stateSpace.getInitialStates();
-    	for (ProgramState initialState : initialStates) {
-            generateState(initialState, formulae, proofStructure);
-            proofStructure.addAssertion(initialState, formulae);
-    	}    	       	
+    	List<ProgramState> initialStates = new LinkedList<ProgramState>();
+    	initialStates.add(initialState);
+    	return generateAndCheck(initialStates, formulae);
+    }
+    
+    public StateSpace generateAndCheck(List<ProgramState> initialStates, List<Node> formulae) throws StateSpaceGenerationAbortedException {
+    	    	
+    	System.out.println("Model Checking State space " + stateSpace.toString());
+    	System.out.println("for formulae " + formulae.toString());
     	
+    	// Generate initial states
+    	for (ProgramState state : initialStates) {
+            generateState(state, formulae);
+            
+            if (state.isContinueState()) {
+            	List<ProgramState> successors = computeModelCheckingSuccessorStates(state, formulae);
+            	for (ProgramState successorState : successors) {    	    		
+    	    		proofStructure.addAssertion(successorState, formulae);
+    			}	
+            } else {
+                proofStructure.addAssertion(state, formulae);
+            }
+    	}    	   
+
     	// build proof structure while generating state space on-the-fly
     	while (proofStructure.getNextStateToCheck() != null && proofStructure.isSuccessful()) {
     		
     		// start model checking and get next formulae to check
-    		LinkedList<Node> nextFormulae = proofStructure.build();
+    		List<Node> nextFormulae = proofStructure.build();
     		
     		// get successor states of last checked program state in the proof structure
     		if (nextFormulae != null) {
     			ProgramState lastCheckedState = proofStructure.getLastCheckedState();
     			
-    			LinkedList<ProgramState> successors = computeModelCheckingSuccessorStates(lastCheckedState, nextFormulae, proofStructure);
+    			// if next formulae result from a final state, next formulae need to be passed to above proof structure
+    			// take latest next Formulae seen before returning to above proof structure
+    			if (stateSpace.getFinalStates().contains(lastCheckedState)) {
+    				returnFormulae = nextFormulae;
+    			}
+    			
+    			// compute next states for model checking
+    			List<ProgramState> successors = computeModelCheckingSuccessorStates(lastCheckedState, nextFormulae);
+    			
+    			// get resulting LTL formulae from state space generation of procedure call (used nextFormulae to check procedure call)
+    			// null if command was not a procedure call
+    			List<Node> outputFormulae = semanticsOf(lastCheckedState).getResultFormulae(lastCheckedState, nextFormulae);
+    			if (outputFormulae != null) {
+    				System.out.println("Next Formulae: " + nextFormulae.toString());
+    				System.out.println("Output Formulae: " + outputFormulae.toString());
+    				System.out.println("Continue check of state space " + stateSpace.toString() + " with output formulae.");
+    				nextFormulae = outputFormulae;
+    			}
     			
     			// add next assertions to proof structure
     			for (ProgramState successorState : successors) {    	    		
@@ -276,14 +326,25 @@ public class StateSpaceGenerator {
     		}
 		}  	
     	
+    	if (!proofStructure.isSuccessful()) {
+            
+            System.err.println("PROOF STRUCTURE NOT SUCCESSFUL FOR STATE SPACE " + stateSpace.toString());
+            System.out.println(proofStructure.getFailureTrace(stateSpace).toString());
+    	}
+    	
+    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertionsOnTheFly() + " assertions.");
+    	
+    	// TODO find better position for this part ...
     	postProcessingStrategy.process(stateSpace);
         totalStatesCounter.addStates(stateSpace.size());
     	return stateSpace;
     }
     
-    public void generateState(ProgramState state, LinkedList<Node> formulae, ProofStructure2 proofStructure) throws StateSpaceGenerationAbortedException {
+    public void generateState(ProgramState state, List<Node> formulae) throws StateSpaceGenerationAbortedException {
     	
-    	if (state.getContainingStateSpace() == null) {
+    	if (stateExplorationStrategy.containsState(state)) {
+    		
+    		stateExplorationStrategy.removeUnexploredState(state);
 	    	state.setContainingStateSpace(this.stateSpace);
 			
 			if(!checkAbortCriteria(state)) {
@@ -294,7 +355,7 @@ public class StateSpaceGenerator {
 	    	SemanticsCommand stateSemanticsCommand = semanticsOf(state);
 	        boolean isMaterialized = materializationPhase(stateSemanticsCommand, state) ;
 	        if(isMaterialized) {
-	            Collection<ProgramState> successorStates = stateSemanticsCommand.computeSuccessors(state, formulae, proofStructure);
+	            Collection<ProgramState> successorStates = stateSemanticsCommand.computeSuccessors(state, formulae);	            
 	            if(finalStateStrategy.isFinalState(state, successorStates, stateSemanticsCommand)) {
 	                stateSpace.setFinal(state);
 	                stateSpace.addArtificialInfPathsTransition(state); // Add self-loop to each final state
@@ -304,9 +365,6 @@ public class StateSpaceGenerator {
 	                }
 	            }
 	        }
-	        
-		    postProcessingStrategy.process(stateSpace);
-		    totalStatesCounter.addStates(stateSpace.size()); 
     	}
     }
     
@@ -316,7 +374,7 @@ public class StateSpaceGenerator {
      * @return
      * @throws StateSpaceGenerationAbortedException
      */
-    public LinkedList<ProgramState> computeModelCheckingSuccessorStates(ProgramState state, LinkedList<Node> formulae, ProofStructure2 proofStructure) throws StateSpaceGenerationAbortedException {      	
+    public List<ProgramState> computeModelCheckingSuccessorStates(ProgramState state, List<Node> formulae) throws StateSpaceGenerationAbortedException {      	
 	   
     	StateSpace containingStateSpace = state.getContainingStateSpace();
 		int stateId = state.getStateSpaceId();
@@ -332,7 +390,7 @@ public class StateSpaceGenerator {
 				// Every materialization state is followed by a control flow state
 				int materializationState = materializationStateIterator.next();
 				// generate materialization state in order to get control flow successors
-				generateState(containingStateSpace.getState(materializationState), formulae, proofStructure);
+				generateState(containingStateSpace.getState(materializationState), formulae);
 				TIntArrayList controlFlowSuccessorIds = containingStateSpace.getControlFlowSuccessorsIdsOf(materializationState);
 				assert (!controlFlowSuccessorIds.isEmpty());
 				successors.addAll(controlFlowSuccessorIds);
@@ -349,7 +407,7 @@ public class StateSpaceGenerator {
 
 		// generate successor states in state space (if they have not been added to state space yet)
 		for (ProgramState successorState : result) {			
-			generateState(successorState, formulae, proofStructure);
+			generateState(successorState, formulae);
 		}
 		
 		return result;

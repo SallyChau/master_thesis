@@ -1,9 +1,9 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies;
 
+import java.util.LinkedList;
+
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateExplorationStrategy;
-
-import java.util.LinkedList;
 
 public class DepthFirstStateExplorationStrategy implements StateExplorationStrategy {
 
@@ -26,4 +26,18 @@ public class DepthFirstStateExplorationStrategy implements StateExplorationStrat
 
         unexploredStates.addLast(state);
     }
+    
+	@Override
+	public void removeUnexploredState(ProgramState state) {
+
+		if (unexploredStates.contains(state)) {
+			unexploredStates.remove(state);
+		}		
+	}
+
+	@Override
+	public boolean containsState(ProgramState state) {
+
+		return unexploredStates.contains(state);
+	}
 }

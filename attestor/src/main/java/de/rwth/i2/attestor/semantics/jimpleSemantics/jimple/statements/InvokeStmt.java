@@ -1,13 +1,12 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
@@ -68,20 +67,29 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
 
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState, formulae, proofStructure);
+                .getResultStates(programState, preparedState, formulae);
 
         methodResult.forEach(invokePrepare::cleanHeap);
         methodResult.forEach(ProgramState::clone);
         methodResult.forEach(x -> x.setProgramCounter(nextPC));
 
         return methodResult;
+    }
+    
+    @Override
+	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+    	// programState is callingState, prepared state is new input
+        ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+
+        return method.getMethodExecutor().getResultFormulae(programState, preparedState, formulae);
     }
 
     @Override

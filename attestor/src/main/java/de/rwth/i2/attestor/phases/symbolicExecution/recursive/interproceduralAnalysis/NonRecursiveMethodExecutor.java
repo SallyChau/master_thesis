@@ -1,9 +1,8 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
-import java.util.LinkedList;
+import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.procedures.ScopeExtractor;
@@ -29,9 +28,7 @@ public class NonRecursiveMethodExecutor extends AbstractInterproceduralMethodExe
 	}
 	
 	@Override
-	protected void generateAndAddContract(ProcedureCall call, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
-		call.execute(formulae, proofStructure);
-	}
-
-  
+	protected void generateAndAddContract(ProcedureCall call, List<Node> formulae) {
+		call.execute(formulae);
+	}  
 }

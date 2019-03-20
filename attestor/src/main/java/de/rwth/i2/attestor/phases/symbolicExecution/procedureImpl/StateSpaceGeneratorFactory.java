@@ -6,13 +6,13 @@ import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.main.scene.Strategies;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.AggressivePostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.FinalStateSubsumptionPostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoPostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.TerminalStatementFinalStateStrategy;
-import de.rwth.i2.attestor.recursiveStateMachine.RecursiveStateMachine;
 import de.rwth.i2.attestor.stateSpaceGeneration.PostProcessingStrategy;
 import de.rwth.i2.attestor.stateSpaceGeneration.Program;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -114,23 +114,7 @@ public class StateSpaceGeneratorFactory extends SceneObject{
                 .build();
     }
     
-    public StateSpaceGenerator create(RecursiveStateMachine rsm, ProgramState initialState) {
-    	
-        return createBuilder()
-                .addInitialState(initialState)
-                .setRecursiveStateMachine(rsm)
-                .build();
-    }
-    
-    public StateSpaceGenerator create(RecursiveStateMachine rsm, List<ProgramState> initialStates) {
-    	
-        return createBuilder()
-                .addInitialStates(initialStates)
-                .setRecursiveStateMachine(rsm)
-                .build();
-    }
-    
-    public StateSpaceGenerator create(RecursiveStateMachine rsm, ProgramState initialState, StateSpace stateSpace) {
+    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, ProofStructure2 proofStructure) {
 
         if(stateSpace == null) {
             throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
@@ -138,8 +122,9 @@ public class StateSpaceGeneratorFactory extends SceneObject{
 
         return createBuilder()
                 .addInitialState(initialState)
-                .setRecursiveStateMachine(rsm)
+                .setProgram(program)
                 .setInitialStateSpace(stateSpace)
+                .setProofStructure(proofStructure)
                 .build();
     }
 }

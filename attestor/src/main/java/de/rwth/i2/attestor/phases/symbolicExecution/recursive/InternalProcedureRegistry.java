@@ -1,6 +1,10 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
+import java.util.List;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -44,8 +48,22 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
 
 	@Override
 	public void registerStateSpace(ProcedureCall call, StateSpace generatedStateSpace) {
-		analysis.registerStateSpace(call, generatedStateSpace);
-		
+		analysis.registerStateSpace(call, generatedStateSpace);		
+	}
+
+	@Override
+	public void registerProofStructure(ProcedureCall call, ProofStructure2 proofStructure) {
+		analysis.registerProofStructure(call, proofStructure);		
+	}
+	
+	@Override
+	public void registerFormulae(ProcedureCall call, List<Node> formulae) {
+		analysis.registerFormulae(call, formulae);		
+	}
+	
+	@Override
+	public void registerReturnFormulae(ProcedureCall call, List<Node> returnFormulae) {
+		analysis.registerReturnFormulae(call, returnFormulae);		
 	}
 
 }

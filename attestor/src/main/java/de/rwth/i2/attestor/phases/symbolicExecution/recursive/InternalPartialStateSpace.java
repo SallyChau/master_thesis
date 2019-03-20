@@ -1,6 +1,11 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -10,9 +15,7 @@ import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
-
-import java.util.ArrayList;
-import java.util.List;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerator;
 
 public class InternalPartialStateSpace implements PartialStateSpace {
 
@@ -34,6 +37,8 @@ public class InternalPartialStateSpace implements PartialStateSpace {
         try {
 
             Method method = call.getMethod();
+            
+            System.out.println("Continuing state space for method " + method.getName());
             ProgramState preconditionState = call.getInput();
 
             if(partialStateSpace.containsAbortedStates()) {
@@ -54,6 +59,47 @@ public class InternalPartialStateSpace implements PartialStateSpace {
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
             Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
             method.addContract(contract);
+        } catch (StateSpaceGenerationAbortedException e) {
+            throw new IllegalStateException("Failed to continue state space execution.");
+        }
+    }
+    
+    @Override
+    public void continueExecution(ProcedureCall call, List<Node> formulae, ProofStructure2 proofStructure) {
+
+        try {
+
+            Method method = call.getMethod();
+            ProgramState preconditionState = call.getInput();
+
+            if(partialStateSpace.containsAbortedStates()) {
+                return;
+            }
+            
+            stateToContinue.flagAsContinueState();
+            
+            StateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(
+                    call.getMethod().getBody(),
+                    stateToContinue,
+                    partialStateSpace,
+                    proofStructure
+            );
+
+            System.out.println("InternalPartialStateSpace: Continuing execution: for method " + method.getName());
+            StateSpace stateSpace = stateSpaceGenerator.generateAndCheck(stateToContinue, formulae);
+            
+            stateToContinue.unflagContinueState();
+
+            List<HeapConfiguration> finalHeaps = new ArrayList<>();
+            stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
+            List<Node> outputFormulae = stateSpaceGenerator.getReturnFormulae();
+            Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
+            contract.addFormulaPair(formulae, outputFormulae);
+            method.addContract(contract);
+            
+            if (finalHeaps.isEmpty()) {
+            	System.err.println("Internal Partial State Space: Final heap is empty ");
+            }
 
         } catch (StateSpaceGenerationAbortedException e) {
             throw new IllegalStateException("Failed to continue state space execution.");
@@ -97,7 +143,4 @@ public class InternalPartialStateSpace implements PartialStateSpace {
 	public StateSpace unfinishedStateSpace() {
 		return this.partialStateSpace;
 	}
-
-    
-
 }

@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
@@ -12,7 +12,6 @@ import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.markingGeneration.Markings;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import gnu.trove.iterator.TIntIterator;
@@ -46,8 +45,14 @@ public class ReturnVoidStmt extends Statement {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, LinkedList<Node> formulae, ProofStructure2 proofStructure) {
+	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
     	return computeSuccessors(programState);
+    }
+    
+    @Override
+	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+
+    	return null;
     }
 
     @Override

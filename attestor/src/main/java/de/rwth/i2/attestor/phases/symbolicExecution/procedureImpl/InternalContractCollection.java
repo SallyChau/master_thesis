@@ -1,10 +1,16 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.procedures.*;
+import de.rwth.i2.attestor.procedures.Contract;
+import de.rwth.i2.attestor.procedures.ContractCollection;
+import de.rwth.i2.attestor.procedures.ContractMatch;
+import de.rwth.i2.attestor.procedures.PreconditionMatchingStrategy;
 
 public class InternalContractCollection implements ContractCollection {
 
