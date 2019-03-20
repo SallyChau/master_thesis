@@ -11,6 +11,10 @@
 \usepackage{xcolor}
 \usepackage[shortlabels]{enumitem}
 \usepackage{hyperref}
+\usepackage{pifont}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{graphicx}
 
 \setlength\parindent{0pt}
 
@@ -92,6 +96,14 @@ frametitleaboveskip=\dimexpr-\ht\strutbox\relax
 \label{#2}}{\end{mdframed}}
 %%
 
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$}
+
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+\hspace{-2.5pt}}
+\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
 
 
 \title{Master Thesis}
@@ -1310,6 +1322,9 @@ guarantee or verify certain properties in pograms that use recursion.
 				\item get semantics of program state
 				\item materialize if necessary (partially concretize an abstract heap configuration such that one step of the concrete semantics can be executed); materialized states are immediately added to the state space as successors of the given state
 				\item compute successor states of program state by executing a single step of the abstract program semantics on the given program state
+				\item \textbf{Special treatment for AssignInvoke and Invoke Statements}: differentiate between recursive and non-recursive method calls: 
+				\item \underline{non-recursive}: generate new state space for method (similar to main state space)
+				\item \underline{recursive}: register procedure calls in procedure registry to be treated separately in InterproceduralAnalysis.run (only recursive procedure calls are processed here); procedure is \textbf{not} executed here yet
 				\item mark final states as final
 				\item handle successor states: add or merge states to state space (states might already exist if they are a continue state of a previously started state space)
 			\end{itemize}
@@ -1323,7 +1338,7 @@ guarantee or verify certain properties in pograms that use recursion.
 	\end{itemize}
 	\item \textbf{interproceduralAnalysis.run}
 	\begin{itemize}
-		\item handle remaining procedure calls and generate \textbf{new} state spaces/ contracts; registry registers new state space in interprocedural analysis
+		\item handle remaining \textit{recursive} procedure calls and generate \textbf{new} state spaces/ contracts; registry registers new state space in interprocedural analysis
 		\item if all procedure calls are handled, handle partial state spaces that have not been finished yet
 		\item get unfinished state space and continue execution
 		\item if contracts have changed, notify according procedure call in order to continue its state space generation 
@@ -1496,11 +1511,11 @@ In order to avoid multiple computation of the same model checking results for th
 \end{itemize}
 If all above qeustions can be answered with 'yes', a table look up can check for the model checking results that must have been previously computed. Thus, the model checking process does not need to be repeated for the procedure and the set of assertions.\\
 
-\textbf{To-Do} 
-\begin{itemize}
+\paragraph{To-Do} 
+\begin{todolist}
 	\item How can we structure the table such that a look up is as fast as possible?
 	\item Is there a way to reuse or imply model checking results from set of assertions that do not coincide with the current set of assertions by 100\%? e.g. expansion rules 
-\end{itemize}
+\end{todolist}
 
 \subsection{Analyse counterexample for spuriosity}
 
@@ -1550,6 +1565,90 @@ Want to do model checking on on-the-fly generated state space. Thus, state space
 		\item Also need to keep track of parent assertions
 	\end{itemize}
 \end{enumerate}
+
+\subsubsection{Current solution}
+StateSpaceGenerator does not implement an own queue anymore, but asks proof structure for current state that needs to be generated and whose successors need to be computed.\\
+
+On-the-fly model checking can be extended for non-recursive method calls by:
+
+\begin{itemize}
+	\item Pass formulae set to new state space generator
+	\item Generate new proof structure for method call \ref{fig:mc} 
+	\begin{itemize}
+		\item \underline{One state space for each method call vs. one big proof structure}: 
+		\item Procedures that have been seen before might not be model checked again: following states might be ignored
+		\item Big cycles crossing several state spaces can be reduced to cycles only within one state space since one state cannot repeat itself in another state space
+		\item need to map proof structure/ formulae to method calls for recursive methods (in interprocedural analysis)
+	\end{itemize}
+\end{itemize}
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{mc.png}
+	\caption{Model Checking Procedure.}
+	\label{fig:mc}
+\end{figure}
+
+Can also be adjusted for \textbf{recursive} method calls:
+
+\begin{itemize}
+	\item Need to register "partial" proof structures in registry/ interprocedural analysis in order to map proof structures to method calls	
+	\item Model checking happens offline, not on-the-fly since state spaces could not be reused for recomputation
+\end{itemize}
+
+On-the-fly model checking is basically based on the new method generateAndCheck() in StateSpaceGenerator class. Methods that use generate():
+
+\begin{todolist}
+	\item CounterExampleGenerator
+	\item InterproceduralAnalysis.run()
+	\item InternalPartialStateSpace.continueExecution()
+	\item[\done] InternalProcedureCall.execute()
+	\item InternalContractGenerator
+	\item AbstractMarkingGenerator
+\end{todolist}
+
+\subsubsection{To-Do}
+\begin{todolist}
+	% \item[\done] for ticked boxes \item[\wontfix] for crossed boxes
+	
+	\item[\done] Set abort criteria	
+	\item[\done] Example: refSll should visit \textbf{all} states
+	\item[\done] Example: MC\_completeness\_reverseWithInitialList has no final states: \textit{Model checking terminates before reaching final states, thus they do not need to be generated}
+	\item Generate more examples for testing procedure model checking 
+	\item[\done] Generate recursive example
+	\item Debug hierarchical model checking for recursive methods
+	\item[\done] Send back formulae resulting from model checking to upper state spaces 
+	\item Reuse partial graphs for model checking (generate new states if needed) - map proof structure to the same (continuing) state space
+	\item Contract generation
+	\begin{itemize}
+		\item when are contracts used? 
+		\item failed Model Checking: abort, no contracts necessary
+		\item successful Model Checking: complete state space needed, but maybe not generated if declared successful early (e.g. for Xf)
+		\item \textbf{ Generate complete state space if model checking was successful} and not complete state space generated yet: 
+		\begin{itemize}
+			\item mark states as explored in stateSpaceGenerator 
+			\item continue generation with unexplored states --> generate() 
+			\item generate post and preconditions
+		\end{itemize} 
+	\end{itemize}
+	\item totalStatesCounter is at wrong position in generateAndCheck() method.. should only be called once for each state space
+	\item Implement recursive model checking in offline manner, but with hierarchical use of results: generate RSM out of procedure state spaces
+	\item Store model checking results to avoid multiple checks of the same state space/ method $\rightarrow$ store results
+	\item Adjust contract matching method to consider different input formulae for model checking
+	\item Abort model checking as soon as a failure is found in a procedure state space (use boolean variable buildFullStructure to also allow for full model checking)
+	\item Generate output report (diagram)
+	\item Add stats to model checking summary
+	\item Process return of procedure model checking
+	\item Clean up code
+	\item Debug time issue of hierarchical model checking
+	\item Write down implication relations for LTL formula (use for model checking contracts)
+	\item Compare offline and on-the-fly model checking
+\end{todolist}
+
+\subsubsection{Notes}
+
+\begin{itemize}
+	\item Procedure call examples: G \{L(SLL)\} fails if method with list object is called by another method, e.g. main because the main state space is not a list
+\end{itemize}
 
 \subsection{Hierarchical State Space Generation}
 (2 weeks)\\
