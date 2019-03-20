@@ -9,14 +9,15 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 /**
  * Represents node in tableau graph
+ * 
  * @author chau 
  *
  */
 public class Assertion2 {
 
 	private ProgramState programState;
-	private LinkedList<Node> formulae = new LinkedList<>();
-	private LinkedList<Node> nextFormulae = new LinkedList<>(); 
+	private List<Node> formulae = new LinkedList<>();
+	private List<Node> nextFormulae = new LinkedList<>(); 
 	private Assertion2 parent;
 	private boolean isTrue;
 	private boolean isContainedInTrace;
@@ -35,7 +36,7 @@ public class Assertion2 {
 	public Assertion2(ProgramState programState, Assertion2 parent, boolean isContainedInTrace) {
 
         this(programState, parent);
-        this.isContainedInTrace = true;
+        this.isContainedInTrace = isContainedInTrace;
     }
 	
 	public void addNextFormula(Node formula) {
@@ -66,20 +67,20 @@ public class Assertion2 {
 		}
 	}
 	
-	public LinkedList<Node> getFormulae() {
+	public List<Node> getFormulae() {
 		return this.formulae;
 	}
 	
 	public Node getFirstFormula() {
-        return this.formulae.getFirst();
+        return this.formulae.get(0);
     }
 	
-	public LinkedList<Node> getNextFormulae() {
+	public List<Node> getNextFormulae() {
 		return this.nextFormulae;
 	}
 	
-	public void removeFormula(Node formula) {
-		this.formulae.removeFirst();
+	public void removeFirstFormula() {
+		this.formulae.remove(0);
 	}
 	
 	public ProgramState getProgramState() {
@@ -94,6 +95,18 @@ public class Assertion2 {
 		this.isTrue = true;
 	}
 	
+	public boolean isTrue() {
+		return this.isTrue;
+	}
+	
+	public void setContainedInTrace(boolean isContainedInTrace) {
+		this.isContainedInTrace = isContainedInTrace;
+	}
+	
+	public boolean isContainedInTrace() {
+		return this.isContainedInTrace;
+	}
+	
 	public boolean containsFormula(Node formula) {
 		return this.formulae.contains(formula);
 	}
@@ -102,7 +115,7 @@ public class Assertion2 {
 		return this.nextFormulae.contains(formula);
 	}
 	
-	public boolean containsAllFormulae(LinkedList<Node> formulae) {
+	public boolean containsAllFormulae(List<Node> formulae) {
 		
 		if (formulae.size() == this.formulae.size()) {
 			for (Node formula : formulae) {
@@ -115,7 +128,7 @@ public class Assertion2 {
 		return false;
 	}
 	
-	public boolean containsAllNextFormulae(LinkedList<Node> formulae) {
+	public boolean containsAllNextFormulae(List<Node> formulae) {
 
 		if (formulae.size() == this.nextFormulae.size()) {
 			for (Node formula : formulae) {

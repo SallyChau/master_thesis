@@ -1,10 +1,10 @@
 package de.rwth.i2.attestor.phases.modelChecking.modelChecker;
 
+import java.util.LinkedList;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.ANextLtlform;
 import de.rwth.i2.attestor.generated.node.Node;
-
-import java.util.LinkedList;
 
 /**
  * This class implements the states of the tableau method proof structure. Each state consists
@@ -70,7 +70,7 @@ public class Assertion {
     public Assertion(int progState, Assertion parent, boolean isContainedInTrace) {
 
         this(progState, parent);
-        this.isContainedInTrace = true;
+        this.isContainedInTrace = isContainedInTrace;
     }
 
     LinkedList<Node> getFormulae() {

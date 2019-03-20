@@ -274,7 +274,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
 
         Assertion2 resultNode = new Assertion2(currentState, currentNode.getParent());
     	resultNode.addFormulae(currentNode.getFormulae());
-    	resultNode.removeFormula(node);
+    	resultNode.removeFirstFormula();
     	resultNode.addNextFormulae(currentNode.getNextFormulae());
 
         return resultNode;

@@ -66,9 +66,10 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             String formulaString = formula.getFormulaString();
             logger.info("Checking formula: " + formulaString + "...");
             
-            ProofStructure2 proofStructure = new ProofStructure2(stateSpace); // TODO change to RSM?
+            ProofStructure2 proofStructure = new ProofStructure2(stateSpace);
             proofStructure.build(initialProgramStates, formula);
             
+            System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
             if (proofStructure.isSuccessful()) {
 
                 if(stateSpace.containsAbortedStates()) {
