@@ -1,19 +1,33 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.ElementNotPresentException;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.InputSettings;
-import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.*;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContractCollection;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.scopes.DefaultScopeExtractor;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.*;
-import de.rwth.i2.attestor.phases.transformers.*;
-import de.rwth.i2.attestor.procedures.*;
-import de.rwth.i2.attestor.stateSpaceGeneration.*;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.NonRecursiveMethodExecutor;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.RecursiveMethodExecutor;
+import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
+import de.rwth.i2.attestor.phases.transformers.InputTransformer;
+import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
+import de.rwth.i2.attestor.procedures.ContractCollection;
+import de.rwth.i2.attestor.procedures.Method;
+import de.rwth.i2.attestor.procedures.MethodExecutor;
+import de.rwth.i2.attestor.procedures.PreconditionMatchingStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
 
 
 public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements StateSpaceTransformer {
@@ -24,11 +38,14 @@ public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements
     private List<ProgramState> initialStates;
     private Method mainMethod;
     private StateSpace mainStateSpace = null;
+    
+    private List<ProcedureCall> mainProcedureCalls;
 
     public RecursiveStateSpaceGenerationPhase(Scene scene) {
 
         super(scene);
         stateSpaceGeneratorFactory = new StateSpaceGeneratorFactory(scene);
+        mainProcedureCalls = new LinkedList<>();
     }
 
     @Override
@@ -122,6 +139,7 @@ public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements
     private void startPartialStateSpaceGeneration() {
 
         try {
+        	System.out.println("Generate state space for method " + mainMethod.getName());
             mainStateSpace = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates).generate();
         } catch (StateSpaceGenerationAbortedException e) {
             e.printStackTrace();
@@ -133,8 +151,14 @@ public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements
         for(ProgramState iState : initialStates) {
             StateSpace mainStateSpace = iState.getContainingStateSpace();
             ProcedureCall mainCall = new InternalProcedureCall(mainMethod, iState.getHeap(), stateSpaceGeneratorFactory, null);
+            mainProcedureCalls.add(mainCall);
             interproceduralAnalysis.registerStateSpace(mainCall, mainStateSpace);
         }
+    }
+    
+    @Override
+    public List<ProcedureCall> getMainProcedureCalls() {
+    	return mainProcedureCalls;
     }
 
     @Override
@@ -163,4 +187,10 @@ public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements
 
         return mainStateSpace;
     }
+
+	@Override
+	public Map<StateSpace, ProcedureCall> getProcedureStateSpaces() {
+
+		return interproceduralAnalysis.getStateSpaceToCallMap();
+	}
 }

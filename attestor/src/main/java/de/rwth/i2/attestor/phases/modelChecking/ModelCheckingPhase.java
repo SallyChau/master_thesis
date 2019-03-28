@@ -14,7 +14,7 @@ import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.SimpleProofStructure;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
 import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
@@ -66,7 +66,7 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             String formulaString = formula.getFormulaString();
             logger.info("Checking formula: " + formulaString + "...");
             
-            ProofStructure2 proofStructure = new ProofStructure2(stateSpace);
+            SimpleProofStructure proofStructure = new SimpleProofStructure(stateSpace);
             proofStructure.build(initialProgramStates, formula);
             
             System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");

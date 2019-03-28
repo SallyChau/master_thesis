@@ -1,13 +1,15 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -48,6 +50,8 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
 
         try {
         	System.out.println("Generate state space for method " + method.getName());
+        	System.out.println("initial state " + initialState);
+        	System.out.println("precodure initial heap " + getInput());
             StateSpace stateSpace = factory.create( method.getBody(), initialState ).generate();
 
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
@@ -77,14 +81,20 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
         	
         	System.out.println("InternalProcedureCall: Generate state space for method " + method.getName() + " and formulae " + formulae);
             StateSpace stateSpace = stateSpaceGenerator.generateAndCheck(initialState, formulae);
-            ProofStructure2 proofStructure = stateSpaceGenerator.getProofStructure();
-            
-            
+            OnTheFlyProofStructure proofStructure = stateSpaceGenerator.getProofStructure();    
             List<Node> outputFormulae = stateSpaceGenerator.getReturnFormulae();
             
             if (proofStructure.isSuccessful() && outputFormulae == null) {
 
                 System.out.println("Proofstructure for method: " + method.getName() + " was successful");
+                LTLFormula ltlFormula = new LTLFormula("true");
+                ltlFormula.toPNF();
+                outputFormulae = new LinkedList<>();
+                outputFormulae.add(ltlFormula.getASTRoot().getPLtlform());
+            } else if (!proofStructure.isSuccessful()) {
+            	
+            	System.out.println("Proofstructure for method: " + method.getName() + " was unsuccessful");
+                // TODO abort model checking here
             }
 
             if (stateSpaceGenerator.getStateExplorationStrategy().hasUnexploredStates()) {
@@ -106,9 +116,9 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
             System.out.println("Method " + method.getName() + " generated output formulae " + outputFormulae + "\n");
             
             return stateSpace;
-        } catch (StateSpaceGenerationAbortedException e) {
+        } catch (Exception e) {
             throw new IllegalStateException("Procedure call execution failed.");
-        }
+        } 
     }
 
     @Override

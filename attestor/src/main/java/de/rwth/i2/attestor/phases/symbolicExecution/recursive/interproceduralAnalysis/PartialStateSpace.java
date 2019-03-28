@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAn
 import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 /**
@@ -38,5 +38,5 @@ public interface PartialStateSpace {
     StateSpace unfinishedStateSpace();
     
     
-    void continueExecution(ProcedureCall call, List<Node> formulae, ProofStructure2 proofStructure);
+    void continueExecution(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure);
 }

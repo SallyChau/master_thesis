@@ -6,7 +6,7 @@ import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.main.scene.Strategies;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.AggressivePostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
@@ -114,7 +114,7 @@ public class StateSpaceGeneratorFactory extends SceneObject{
                 .build();
     }
     
-    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, ProofStructure2 proofStructure) {
+    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, OnTheFlyProofStructure proofStructure) {
 
         if(stateSpace == null) {
             throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");

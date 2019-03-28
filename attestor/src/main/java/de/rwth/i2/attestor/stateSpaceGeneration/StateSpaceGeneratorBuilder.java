@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.
@@ -32,7 +32,7 @@ public class StateSpaceGeneratorBuilder {
     private StateSpace initialStateSpace = null;
     
     
-    private ProofStructure2 proofStructure = null;
+    private OnTheFlyProofStructure proofStructure = null;
 
     /**
      * Creates a new builder representing an everywhere
@@ -114,7 +114,7 @@ public class StateSpaceGeneratorBuilder {
         }
         
         if(proofStructure == null) {
-            generator.proofStructure = new ProofStructure2(); // TODO improve
+            generator.proofStructure = new OnTheFlyProofStructure(); // TODO improve
         } else {
             generator.proofStructure = proofStructure;
         }
@@ -286,7 +286,7 @@ public class StateSpaceGeneratorBuilder {
         return this;
     }
     
-    public StateSpaceGeneratorBuilder setProofStructure(ProofStructure2 proofStructure) {
+    public StateSpaceGeneratorBuilder setProofStructure(OnTheFlyProofStructure proofStructure) {
     	
     	this.proofStructure = proofStructure;
     	return this;

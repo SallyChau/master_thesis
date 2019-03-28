@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 /**
@@ -33,7 +33,7 @@ public class InterproceduralAnalysis {
 	Map<ProcedureCall, Set<PartialStateSpace>> callingDependencies = new LinkedHashMap<>();
 	Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = new LinkedHashMap<>();
 	
-	Map<ProcedureCall, ProofStructure2> callToProofStructure = new LinkedHashMap<>();
+	Map<ProcedureCall, OnTheFlyProofStructure> callToProofStructure = new LinkedHashMap<>();
 	Map<ProcedureCall, List<Node>> callToFormulae = new LinkedHashMap<>();
 	Map<ProcedureCall, List<Node>> callToReturnFormulae = new LinkedHashMap<>();
 	
@@ -44,7 +44,6 @@ public class InterproceduralAnalysis {
 
 		stateSpaceToAnalyzedCall.put(stateSpace, call);
 	}
-
 
 	public void registerDependency(ProcedureCall procedureCall, PartialStateSpace dependentPartialStateSpace) {
 
@@ -64,7 +63,7 @@ public class InterproceduralAnalysis {
 		}
 	}
 
-	public void registerProofStructure(ProcedureCall procedureCall, ProofStructure2 proofStructure) {
+	public void registerProofStructure(ProcedureCall procedureCall, OnTheFlyProofStructure proofStructure) {
 		callToProofStructure.put(procedureCall, proofStructure);
 	}
 	
@@ -82,6 +81,10 @@ public class InterproceduralAnalysis {
 		} else {
 			callToReturnFormulae.get(procedureCall).addAll(returnFormulae);
 		}
+	}
+	
+	public Map<StateSpace, ProcedureCall> getStateSpaceToCallMap() {
+		return stateSpaceToAnalyzedCall;
 	}
 	
 	public void run2() {
@@ -105,14 +108,22 @@ public class InterproceduralAnalysis {
 				
 				int currentNumberOfFinalStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
 				call = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
-				ProofStructure2 proofStructure = callToProofStructure.get(call);
+				OnTheFlyProofStructure proofStructure = callToProofStructure.get(call);
 				List<Node> returnFormulae = partialStateSpaceToReturnFormulae.get(partialStateSpace);
 				
 				System.out.println("Continuing state space for " + call.getMethod().getName() + " with formulae " + returnFormulae.toString());
 				
-				partialStateSpace.continueExecution(call, returnFormulae, proofStructure);
-				int newNumberOfFinalsStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
-				contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
+				// TODO
+//				if (proofStructure.isSuccessful() && returnFormulae == null) {
+//	                // do not continue execution: tell state space that one path is done but others can be continued
+//					// return "true" as next formulae
+//					LTLFormula formula;
+//					PTerm term = new ATrueTerm();
+//	            } else {				
+					partialStateSpace.continueExecution(call, returnFormulae, proofStructure);
+					int newNumberOfFinalsStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
+					contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
+//	            }
 			}
 			if( contractChanged ) {
 				notifyDependenciesMC(call);
@@ -149,6 +160,8 @@ public class InterproceduralAnalysis {
 				notifyDependencies(call);
 			}
 		}
+		
+		System.out.println("end of analysis");
 	}
 
 	/**

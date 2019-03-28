@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
@@ -55,7 +55,7 @@ public interface ProcedureRegistry {
 	
 	
 	
-	void registerProofStructure(ProcedureCall call, ProofStructure2 proofStructure);
+	void registerProofStructure(ProcedureCall call, OnTheFlyProofStructure proofStructure);
 	
 	void registerFormulae(ProcedureCall call, List<Node> formulae);
 

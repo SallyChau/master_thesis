@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
@@ -42,7 +42,7 @@ public class StateSpaceGenerator {
      */
     Program program; 
     
-    ProofStructure2 proofStructure;
+    OnTheFlyProofStructure proofStructure;
     
     List<Node> returnFormulae;
     
@@ -208,7 +208,7 @@ public class StateSpaceGenerator {
         return finalStateStrategy;
     }
     
-    public ProofStructure2 getProofStructure() {
+    public OnTheFlyProofStructure getProofStructure() {
 
         return proofStructure;
     }
@@ -270,10 +270,9 @@ public class StateSpaceGenerator {
     
     public StateSpace generateAndCheck(List<ProgramState> initialStates, List<Node> formulae) throws StateSpaceGenerationAbortedException {
     	    	
-    	System.out.println("Model Checking State space " + stateSpace.toString());
-    	System.out.println("for formulae " + formulae.toString());
-    	
-    	// Generate initial states
+//    	System.out.println("Model Checking State space " + stateSpace.toString());
+////    	System.out.println("for formulae " + formulae.toString());
+
     	for (ProgramState state : initialStates) {
             generateState(state, formulae);
             
@@ -326,13 +325,14 @@ public class StateSpaceGenerator {
     		}
 		}  	
     	
+    	// TODO remove
     	if (!proofStructure.isSuccessful()) {
             
             System.err.println("PROOF STRUCTURE NOT SUCCESSFUL FOR STATE SPACE " + stateSpace.toString());
             System.out.println(proofStructure.getFailureTrace(stateSpace).toString());
     	}
     	
-    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertionsOnTheFly() + " assertions.");
+    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
     	
     	// TODO find better position for this part ...
     	postProcessingStrategy.process(stateSpace);

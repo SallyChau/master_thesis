@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -37,8 +37,6 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
         analysis.registerProcedureCall(call);
     }
 
-
-
     @Override
     public void registerDependency(ProgramState callingState, ProcedureCall call) {
 
@@ -52,7 +50,7 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
 	}
 
 	@Override
-	public void registerProofStructure(ProcedureCall call, ProofStructure2 proofStructure) {
+	public void registerProofStructure(ProcedureCall call, OnTheFlyProofStructure proofStructure) {
 		analysis.registerProofStructure(call, proofStructure);		
 	}
 	
@@ -65,5 +63,4 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
 	public void registerReturnFormulae(ProcedureCall call, List<Node> returnFormulae) {
 		analysis.registerReturnFormulae(call, returnFormulae);		
 	}
-
 }

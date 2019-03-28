@@ -1,11 +1,13 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
+import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ProofStructure2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -65,7 +67,7 @@ public class InternalPartialStateSpace implements PartialStateSpace {
     }
     
     @Override
-    public void continueExecution(ProcedureCall call, List<Node> formulae, ProofStructure2 proofStructure) {
+    public void continueExecution(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure) {
 
         try {
 
@@ -93,6 +95,20 @@ public class InternalPartialStateSpace implements PartialStateSpace {
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
             List<Node> outputFormulae = stateSpaceGenerator.getReturnFormulae();
+            
+            if (proofStructure.isSuccessful() && outputFormulae == null) {
+
+                System.out.println("Proofstructure for method: " + method.getName() + " was successful");
+                LTLFormula ltlFormula = new LTLFormula("true");
+                ltlFormula.toPNF();
+                outputFormulae = new LinkedList<>();
+                outputFormulae.add(ltlFormula.getASTRoot().getPLtlform());
+            } else if (!proofStructure.isSuccessful()) {
+            	
+            	System.out.println("Proofstructure for method: " + method.getName() + " was unsuccessful");
+                // TODO abort model checking here
+            }
+            
             Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
             contract.addFormulaPair(formulae, outputFormulae);
             method.addContract(contract);
@@ -101,7 +117,7 @@ public class InternalPartialStateSpace implements PartialStateSpace {
             	System.err.println("Internal Partial State Space: Final heap is empty ");
             }
 
-        } catch (StateSpaceGenerationAbortedException e) {
+        } catch (Exception e) {
             throw new IllegalStateException("Failed to continue state space execution.");
         }
     }
