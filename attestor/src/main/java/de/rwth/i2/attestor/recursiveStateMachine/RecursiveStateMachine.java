@@ -1,191 +1,96 @@
 package de.rwth.i2.attestor.recursiveStateMachine;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
+import java.util.Objects;
 
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
-import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
-
+// TODO maybe do some generator stuff pattern thingy
 public class RecursiveStateMachine {
 
-	private final Map<String, ComponentStateMachine> components = new HashMap<>();
-	RSMNode currentNode;
-	private final Method mainMethod;
+	private Map<Method, ComponentStateMachine> components;
+	private Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall;
 	
-	public RecursiveStateMachine(Method mainMethod) {
-		this.mainMethod = mainMethod;
+	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall) {
+		
+		this.stateSpaceToAnalyzedCall = stateSpaceToAnalyzedCall;	
+		this.components = new LinkedHashMap<>();
+		build();
 	}
 	
+	private void build() {
+		
+		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
+		for (ProcedureCall call : procedureCalls) {
+			
+			Method method = call.getMethod();
+			StateSpace stateSpace = getStateSpace(call);
+			ProgramState callingState = call.getInput();
+			
+			ComponentStateMachine csm = getOrCreateComponentStateMachine(method);
+			csm.addStateSpace(callingState, stateSpace); 
+			
+			components.put(method, csm);			
+		}
+	}
+	
+	public ComponentStateMachine getComponentStateMachine(String signature) {
+		
+		for (ComponentStateMachine csm : components.values()) {
+			if (csm.getMethod().getSignature().equals(signature)) {
+				return csm;
+			}
+		}
+		
+		return null;
+	}
+	
+	public ComponentStateMachine getComponentStateMachine(StateSpace stateSpace) {
+		
+		for (ComponentStateMachine csm : components.values()) {
+			if (csm.getStateSpaces().contains(stateSpace)) {
+				return csm;
+			}
+		}
+		
+		return null;
+	}
+
 	public ComponentStateMachine getOrCreateComponentStateMachine(Method method) {
 		
-		if(components.containsKey(method.getSignature())) {
-            return components.get(method.getSignature());
+		if(components.containsKey(method)) {
+            return components.get(method);
         } else {
             ComponentStateMachine result = new ComponentStateMachine(method);
-            components.put(method.getSignature(), result);
+            components.put(method, result);
             return result;
         }
 	}	
-	
-	public RSMNode getCurrentNode() {
-		return currentNode;
-	}
-	
-	public void setCurrentNode(RSMNode node) {
-		this.currentNode = node;
-	}
-	
-	public LinkedList<RSMNode> getNextNodes() {
-		return getSuccessorNodes(currentNode);
-	}
 	
 	public Collection<ComponentStateMachine> getComponentStateMachines() {
 		
 		return components.values();
 	}
 	
-	public ComponentStateMachine getMainComponent() {
-		
-		return components.get(this.mainMethod.getSignature());
-	}
-	
-	/**
-	 * Returns number of CSM of RSM
-	 * @return
-	 */
-	public int getSize() {
-		return components.size();
-	}	
-	
-	public LinkedList<RSMNode> getSuccessorNodes(RSMNode node) {
-		
-		LinkedList<RSMNode> successors = new LinkedList<>();
-		ComponentStateMachine component = node.getComponent();
-		
-		// get statement
-		SemanticsCommand currentStatement = node.getStatement();
-		
-		// handle call nodes
-		RSMBox calledBox = node.getCallingBox();
-		if (calledBox != null) {
-			System.out.println("Calling " + calledBox.toString());			
-			
-			// enter called box
-			// need to know which entry node is used (might be single entry due to construction)
-			for (RSMNode entryNode : calledBox.getCalledComponent().getEntryNodes()) {
-				if (entryNode != null && !entryNode.visited) { 
-					// TODO might rerun if model checking requires it
-					successors.add(entryNode);
-				} else if (entryNode != null && entryNode.visited) {
-					// only for completeness
-					System.err.println(calledBox.toString() + " has been visited before!!");
-				}
-			}
-			
-		} else if (node.isExitNode()) {
-			// TODO Handle return nodes
-			System.out.println("Return");
-			node.visited = true;
-		} else {				
-			// handle internal nodes: get next PCs
-			// TODO change to computeSuccessors (successor state spaces) for model checking
-			Set<Integer> successorPCs = currentStatement.getSuccessorPCs();
-			
-	        node.visited = true;
-			for (int i : successorPCs) {
-				RSMNode n = component.getNode(i);
-				if(n != null) {
-					successors.add(n);
-				}
-			}
-		}
-		
-		return successors;
-	}
-	
-	// for testing: get transition relation of RSM
-	public void run() {
-		System.out.println("DFS Traversing RSM ...");
-	
-		ComponentStateMachine mainComponent = getMainComponent();
-		Set<RSMNode> entryNodes = mainComponent.getEntryNodes();
-		
-		for (RSMNode entryNode : entryNodes) {
-			if(entryNode != null && !entryNode.visited) {
-				dfs(entryNode, mainComponent);
-			}
-		}		
-	}
-	
-	//TODO kinda works for static case without state space generation, 
-	// need to adjust when state space is generated
-	public void dfs(RSMNode node, ComponentStateMachine component) {
-		System.out.print("Component " + component.getSignature() + " at PC " + node.getProgramCounter() + "\n");
-		
-		// get statement
-		SemanticsCommand currentStatement = node.getStatement();
-		
-		// handle call nodes
-		RSMBox calledBox = node.getCallingBox();
-		if (calledBox != null) {
-			System.out.println("Calling " + calledBox.toString());			
-			
-			// enter called box
-			// need to know which entry node is used (might be single entry due to construction)
-			for (RSMNode entryNode : calledBox.getCalledComponent().getEntryNodes()) {
-				if (entryNode != null && !entryNode.visited) { 
-					// TODO might rerun if model checking requires it
-					dfs(entryNode, calledBox.getCalledComponent());
-				} else if (entryNode != null && entryNode.visited) {
-					// only for completeness
-					System.err.println(calledBox.toString() + " has been visited before!!");
-				}
-			}
-			
-			// continue at successor statement after return from box
-			Set<Integer> successors = currentStatement.getSuccessorPCs();
-			
-	        node.visited = true;
-			for (int i : successors) {
-				RSMNode n = component.getNode(i);
-				if(n != null && !n.visited) {
-					dfs(n, component);
-				}
-			}
-		} else if (node.isExitNode()) {
-			// Handle return nodes
-			System.out.println("Return");
-			node.visited = true;
-		} else {				
-			// handle internal nodes: get next PCs
-			// TODO change to computeSuccessors (successor state spaces) for model checking
-			Set<Integer> successors = currentStatement.getSuccessorPCs();
-			
-	        node.visited = true;
-			for (int i : successors) {
-				RSMNode n = component.getNode(i);
-				if(n != null && !n.visited) {
-					dfs(n, component);
-				}
-			}
-		}
-	}
+	private StateSpace getStateSpace(ProcedureCall call) {
+        for (Entry<StateSpace, ProcedureCall> entry : stateSpaceToAnalyzedCall.entrySet()) {
+            if (Objects.equals(call, entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        
+        return null;
+    }
 	
 	@Override
 	public String toString() {
 		
-		String result = "Recursive State Machine \n";
-		result += "# Components: " + components.size() + ", with \n";
-		
-		for (ComponentStateMachine csm : components.values()) {
-			result += csm.toString();
-			result += "\n";
-		}
-		
-		return result;
+		return "RSM  with " + components.size();
 	}
 }

@@ -1,93 +1,82 @@
 package de.rwth.i2.attestor.recursiveStateMachine;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.HierarchicalProofStructure;
+import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.Method;
+import de.rwth.i2.attestor.procedures.ScopeExtractor;
+import de.rwth.i2.attestor.procedures.ScopedHeap;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 public class ComponentStateMachine {
 	
-	// program states, maps program locations of component to nodes of statement
-	private final Map<Integer, RSMNode> nodes = new HashMap<>();
-	
-	// one box for each procedure call, maps box with signature of called method
-	private final Map<String, RSMBox> boxes = new HashMap<>();
-	
 	private Method method;
 	private String signature;
+	
+	private Map<ProgramState, StateSpace> inputStateToStateSpace;
+	
+	private Map<StateSpace, Set<HierarchicalProofStructure>> stateSpaceToProofStructures;
 	
 	public ComponentStateMachine(Method method) {
 
 		this.method = method;
 		this.signature = method.getSignature();
-	}
-	
-	public RSMNode getOrCreateNode(int programCounter, SemanticsCommand statement, RSMBox callingBox, boolean isEntryNode, boolean isExitNode) {
-
-		if (nodes.containsKey(programCounter)) {
-            return nodes.get(programCounter);
-        } else {
-            RSMNode result = new RSMNode(this, programCounter, statement, callingBox, isEntryNode, isExitNode);
-            nodes.put(programCounter, result);            
-            return result;
-        }		
-	}
-	
-	public RSMNode getNode(int programCounter) {
-		if (nodes.containsKey(programCounter)) {
-            return nodes.get(programCounter);
-        } else {
-        	return null;
-        }
-	}
-	
-	public RSMBox getOrCreateBox(ComponentStateMachine calledComponent, int pc, Set<Integer> successorPCs) {
 		
-		if (boxes.containsKey(calledComponent.signature)) {
-            return boxes.get(calledComponent.signature);
-        } else {
-            RSMBox result = new RSMBox(this, calledComponent, pc, successorPCs);
-            boxes.put(calledComponent.signature, result);
-            return result;
-        }
+		this.inputStateToStateSpace = new LinkedHashMap<>();
+		this.stateSpaceToProofStructures = new LinkedHashMap<>();
 	}
 	
-	public Collection<RSMNode> getNodes() {
-		return nodes.values();
-	}
-	
-	public Collection<RSMBox> getBoxes() {
-		return boxes.values();
-	}
-	
-	public Set<RSMNode> getEntryNodes() {
+	/**
+	 * Get state space of CSM whose input heap matches the calling state.
+	 * @param callingState
+	 * @param statement
+	 * @return the state space
+	 */
+	public final StateSpace getCalledStateSpace(ProgramState callingState, SemanticsCommand statement) {
 
-		Set<RSMNode> entryNodes = new HashSet<>();
+		StateSpace result = null;
 		
-		for (RSMNode node : nodes.values()) {
-			if (node.isEntryNode()) {
-				entryNodes.add(node);
+		AbstractMethodExecutor executor = (AbstractMethodExecutor) method.getMethodExecutor();
+		ScopeExtractor scopeExtractor = executor.getScopeExtractor();
+		
+        HeapConfiguration inputHeap = statement.prepareHeap(callingState).getHeap();
+        ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
+	    HeapConfiguration heapInScope = scopedHeap.getHeapInScope();
+	    
+	    for (ProgramState inputState : inputStateToStateSpace.keySet()) {
+			if (inputState.getHeap().equals(heapInScope)) {
+				result = inputStateToStateSpace.get(inputState);
 			}
 		}
-		
-		return entryNodes;
+	    
+	    return result;
 	}
 	
-	public Set<RSMNode> getExitNodes() {
-
-		Set<RSMNode> exitNodes = new HashSet<>();
+	public void addStateSpace(ProgramState inputState, StateSpace stateSpace) {
 		
-		for (RSMNode node : nodes.values()) {
-			if (node.isExitNode()) {
-				exitNodes.add(node);
-			}
-		}
+		inputStateToStateSpace.put(inputState, stateSpace);
+	}
+	
+	public StateSpace getStateSpace(ProgramState inputState) {		
 		
-		return exitNodes;
+		return inputStateToStateSpace.get(inputState);
+	}
+	
+	public Collection<StateSpace> getStateSpaces() {
+		
+		return inputStateToStateSpace.values();
+	}
+	
+	public SemanticsCommand getSemanticsCommand(ProgramState programState) {
+		
+		return method.getBody().getStatement(programState.getProgramCounter());
 	}
 	
 	public String getSignature() {
@@ -101,13 +90,6 @@ public class ComponentStateMachine {
 	@Override
 	public String toString() {
 		
-		String result = "CSM for method " + signature + "\n";
-		result += "==============================================================================\n";
-		result += "Boxes to components: \n";
-		for (RSMBox box : boxes.values()) {
-			result += box.getCalledComponent().getSignature() + "\n";
-		}
-		
-		return result;
+		return getSignature();
 	}
 }

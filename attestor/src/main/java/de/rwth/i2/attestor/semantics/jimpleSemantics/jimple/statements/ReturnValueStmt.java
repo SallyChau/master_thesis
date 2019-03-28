@@ -140,4 +140,10 @@ public class ReturnValueStmt extends Statement {
         builder.build();
     }
 
+	@Override
+	public ProgramState prepareHeap(ProgramState programState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

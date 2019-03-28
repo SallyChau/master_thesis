@@ -75,6 +75,9 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         // programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
+        
+        System.out.println("Calling state: " + programState.getHeap());
+        System.out.println("Called method " + method.getSignature());
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
@@ -139,6 +142,14 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
     public boolean needsMaterialization(ProgramState programState) {
 
         return invokePrepare.needsMaterialization(programState);
+    }
+    
+    @Override
+    public ProgramState prepareHeap(ProgramState programState) {
+    	ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+        
+        return preparedState;
     }
 
     @Override

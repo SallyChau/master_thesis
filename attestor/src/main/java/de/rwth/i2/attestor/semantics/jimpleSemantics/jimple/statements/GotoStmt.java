@@ -70,4 +70,11 @@ public class GotoStmt extends Statement {
         return false;
     }
 
+
+	@Override
+	public ProgramState prepareHeap(ProgramState programState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -141,4 +141,10 @@ public class IfStmt extends Statement {
     public boolean needsCanonicalization() {
         return false;
     }
+
+	@Override
+	public ProgramState prepareHeap(ProgramState programState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

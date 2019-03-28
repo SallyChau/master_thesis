@@ -60,6 +60,12 @@ public class TerminalStatement implements SemanticsCommand {
         return "program terminated";
     }
 
+	@Override
+	public ProgramState prepareHeap(ProgramState programState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	
 
 }

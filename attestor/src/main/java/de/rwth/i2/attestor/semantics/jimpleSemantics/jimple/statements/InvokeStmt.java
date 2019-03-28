@@ -54,6 +54,10 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
 
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
+        
+        System.out.println("Calling state: " + programState);
+        System.out.println("Prepared state: " + preparedState.getHeap());
+        System.out.println("Called method " + method.getSignature());
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
@@ -104,6 +108,13 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
         return invokePrepare.needsMaterialization(programState);
     }
 
+    @Override
+	public ProgramState prepareHeap(ProgramState programState) {
+    	ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+        
+        return preparedState;
+    }
 
     @Override
 	public String toString() {
