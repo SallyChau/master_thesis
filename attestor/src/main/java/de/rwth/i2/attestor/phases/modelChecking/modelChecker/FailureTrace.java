@@ -14,7 +14,7 @@ public class FailureTrace implements ModelCheckingTrace {
     private final LinkedList<ProgramState> stateTrace = new LinkedList<>();
     private Iterator<ProgramState> iterator;
 
-    FailureTrace(Assertion failureAssertion, StateSpace stateSpace) {
+    public FailureTrace(Assertion failureAssertion, StateSpace stateSpace) {
 
         Assertion current = failureAssertion;
 
@@ -29,7 +29,7 @@ public class FailureTrace implements ModelCheckingTrace {
         iterator = stateTrace.iterator();
     }
     
-    FailureTrace(Assertion2 failureAssertion, StateSpace stateSpace) {
+    public FailureTrace(Assertion2 failureAssertion, StateSpace stateSpace) {
 
         Assertion2 current = failureAssertion;
 

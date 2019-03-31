@@ -1,4 +1,4 @@
-package de.rwth.i2.attestor.phases.modelChecking.modelChecker;
+package de.rwth.i2.attestor.phases.modelChecking.onthefly;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.AbstractProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.Assertion2;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 import gnu.trove.iterator.TIntObjectIterator;
@@ -63,26 +66,56 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 		return null;		
 	}
 	
-	public ProgramState getNextStateToCheck() {
-		Assertion2 nextAssertion = queue.peekFirst();
-		return nextAssertion != null ? nextAssertion.getProgramState() : null;
-	}
-	
-	public ProgramState getLastCheckedState() {
-
-		return currentParent.getProgramState();
-	}
-	
-	public Assertion2 getCurrentParent() {
-
-		return currentParent;
+	/**
+	 * Links assertions to according state.
+	 * @param assertion to be added to the map between assertions and a state
+	 */
+	private void addAssertion(Assertion2 assertion) {
+			
+		int stateId = assertion.getProgramState().getStateSpaceId();
+        Set<Assertion2> assertionsOfId = stateIdToAssertions.get(stateId);
+        if (assertionsOfId == null) {
+            assertionsOfId = new LinkedHashSet<>();
+            assertionsOfId.add(assertion);
+            stateIdToAssertions.put(stateId, assertionsOfId);
+        } else {
+            assertionsOfId.add(assertion);
+        }
 	}
 	
 	/**
-	 * Add an assertion to the proof structure.
+     * This method collects all vertices, whose program state component is equal to
+     * the input program state.
+     *
+     * @param programState, the state that the vertices are checked for
+     * @return a set containing all assertions with program state component 'state',
+     * if none exist an empty set is returned.
+     */
+    private Set<Assertion2> getAssertionsForState(int stateId) {
+
+        Set<Assertion2> result = stateIdToAssertions.get(stateId);  // need to store complete state object      
+        if (result == null) return Collections.emptySet();
+        
+        return result;
+    }
+    
+    private Assertion2 getPresentAssertion(Assertion2 assertion) {
+
+		Set<Assertion2> presentAssertions = getAssertionsForState(assertion.getProgramState().getStateSpaceId());
+        if (!presentAssertions.isEmpty()) {
+            for (Assertion2 presentAssertion : presentAssertions) {            	
+                if (assertion.equals(presentAssertion)) return presentAssertion;
+            }
+        }
+        
+        return null;
+	}
+	
+	/**
+	 * Adds an assertion to the queue of the proof structure if it does not exist yet.
 	 * 
-	 * @param state
-	 * @param formulae
+	 * @param state to be checked
+	 * @param formulae to be checked
 	 * @return true if the assertion has successfully been added to the proof structure, false otherwise
 	 */
 	public void addAssertion(ProgramState state, List<Node> formulae) {
@@ -108,41 +141,37 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
             setOriginOfFailure(assertion);
         } 
 	}
-	
+    
 	/**
-	 * 
-	 * @param assertion
+	 * Gets the state of the next assertion in the model checking queue.
+	 * @return the state of the next assertion in the model checking queue
 	 */
-	protected void addAssertion(Assertion2 assertion) {
-			
-		int stateId = assertion.getProgramState().getStateSpaceId();
-        Set<Assertion2> assertionsOfId = stateIdToAssertions.get(stateId);
-        if (assertionsOfId == null) {
-            assertionsOfId = new LinkedHashSet<>();
-            assertionsOfId.add(assertion);
-            stateIdToAssertions.put(stateId, assertionsOfId);
-        } else {
-            assertionsOfId.add(assertion);
-        }
+    public ProgramState getNextStateToCheck() {
+    	
+		Assertion2 nextAssertion = queue.peekFirst();
+		return nextAssertion != null ? nextAssertion.getProgramState() : null;
+	}
+	
+    /**
+     * Gets the state of the last checked assertion in the model checking queue.
+     * @return state of the last checked assertion in the model checking queue
+     */
+	public ProgramState getLastCheckedState() {
+
+		return currentParent.getProgramState();
 	}
 	
 	/**
-     * This method collects all vertices, whose program state component is equal to
-     * the input program state.
-     *
-     * @param programState, the state that the vertices are checked for
-     * @return a set containing all assertions with program state component 'state',
-     * if none exist an empty set is returned.
-     */
-    private Set<Assertion2> getAssertionsForState(int programStateID) {
+	 * Gets the last checked assertion with X-formulae which is also the current parent for new assertions.
+	 * @return last checked assertion with X-formulae which is also the current parent for new assertions
+	 */
+	public Assertion2 getCurrentParent() {
 
-        Set<Assertion2> result = stateIdToAssertions.get(programStateID);  // need to store complete state object      
-        if (result == null) return Collections.emptySet();
-        
-        return result;
-    }
+		return currentParent;
+	}
     
-    public Set<Assertion2> getLeaves() {
+    @Override
+	public Set<Assertion2> getLeaves() {
 
         HashSet<Assertion2> leaves = new LinkedHashSet<>();
 
@@ -157,23 +186,13 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
         return leaves;
     }
 
+    @Override
     public Integer size() {
 
         return getVertices().size();
     }
-    
-    protected Assertion2 getPresentAssertion(Assertion2 assertion) {
 
-		Set<Assertion2> presentAssertions = getAssertionsForState(assertion.getProgramState().getStateSpaceId());
-        if (!presentAssertions.isEmpty()) {
-            for (Assertion2 presentAssertion : presentAssertions) {            	
-                if (assertion.equals(presentAssertion)) return presentAssertion;
-            }
-        }
-        
-        return null;
-	}
-
+    @Override
     public Set<Assertion2> getVertices() {
 
         HashSet<Assertion2> vertices = new LinkedHashSet<>();
@@ -205,5 +224,4 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

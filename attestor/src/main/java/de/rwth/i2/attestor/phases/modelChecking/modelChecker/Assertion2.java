@@ -10,7 +10,7 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 /**
  * Represents node in tableau graph
  * 
- * @author chau 
+ * @author sally 
  *
  */
 public class Assertion2 {

@@ -92,10 +92,6 @@ public abstract class AbstractProofStructure {
 		return (LinkedList<Assertion2>) rulesSwitch.getOut(formula);
 	}
 
-	
-	
-	
-    
     protected void addEdge(Assertion2 assertion, Assertion2 successorAssertion) {
 
         if (!edges.containsKey(assertion)) {
@@ -116,14 +112,16 @@ public abstract class AbstractProofStructure {
 
         return this.successful;
     }
-
     
-
-    
-
     public int getNumberOfCheckedAssertions() {
 		return checkedAssertions;
 	}
     
-    public abstract FailureTrace getFailureTrace ();
+    public abstract Set<Assertion2> getLeaves();
+
+    public abstract Integer size();
+
+    public abstract Set<Assertion2> getVertices();
+    
+    public abstract FailureTrace getFailureTrace();
 }

@@ -29,16 +29,17 @@ public class SimpleProofStructure extends AbstractProofStructure {
 	private StateSpace stateSpace;	
 	protected TIntObjectMap<Set<Assertion2>> stateIdToAssertions;
 
-	public SimpleProofStructure(StateSpace stateSpace) {
+	public SimpleProofStructure() {
 		
 		super();
 		this.stateIdToAssertions = new TIntObjectHashMap<>();
-		this.stateSpace = stateSpace;
 	}	
 	
-	public void build(List<ProgramState> initialStates, LTLFormula formula) {
+	public void build(StateSpace stateSpace, LTLFormula formula) {		
+
+		this.stateSpace = stateSpace;
 		
-		for (ProgramState state : initialStates) {
+		for (ProgramState state : this.stateSpace.getInitialStates()) {
 			Assertion2 assertion = new Assertion2(state, null, formula);
 			addAssertion(assertion);
 			queue.add(assertion);
@@ -125,10 +126,10 @@ public class SimpleProofStructure extends AbstractProofStructure {
 	}
 	
 	/**
-	 * 
-	 * @param assertion
+	 * Links assertions to according state.
+	 * @param assertion to be added to the map between assertions and a state
 	 */
-	protected void addAssertion(Assertion2 assertion) {
+	private void addAssertion(Assertion2 assertion) {
 			
 		int stateId = assertion.getProgramState().getStateSpaceId();
         Set<Assertion2> assertionsOfId = stateIdToAssertions.get(stateId);
@@ -157,27 +158,7 @@ public class SimpleProofStructure extends AbstractProofStructure {
         return result;
     }
     
-    public Set<Assertion2> getLeaves() {
-
-        HashSet<Assertion2> leaves = new LinkedHashSet<>();
-
-        TIntObjectIterator<Set<Assertion2>> iter = stateIdToAssertions.iterator();
-        while (iter.hasNext()) {
-            iter.advance();
-            for (Assertion2 assertion : iter.value()) {
-                if (!edges.containsKey(assertion)) leaves.add(assertion);
-            }
-        }
-        
-        return leaves;
-    }
-
-    public Integer size() {
-
-        return getVertices().size();
-    }
-    
-    protected Assertion2 getPresentAssertion(Assertion2 assertion) {
+    private Assertion2 getPresentAssertion(Assertion2 assertion) {
 
 		Set<Assertion2> presentAssertions = getAssertionsForState(assertion.getProgramState().getStateSpaceId());
         if (!presentAssertions.isEmpty()) {
@@ -189,33 +170,11 @@ public class SimpleProofStructure extends AbstractProofStructure {
         return null;
 	}
 
-    public Set<Assertion2> getVertices() {
-
-        HashSet<Assertion2> vertices = new LinkedHashSet<>();
-
-        TIntObjectIterator<Set<Assertion2>> iter = stateIdToAssertions.iterator();
-        while (iter.hasNext()) {
-            iter.advance();
-            vertices.addAll(iter.value());
-        }
-        
-        return vertices;
-    }
-    
-    @Override
-    public FailureTrace getFailureTrace() {
-
-    	// proof was successful, no counterexample exists
-        if (isSuccessful()) return null;
-        
-        return new FailureTrace(this.originOfFailure, stateSpace);
-    }
-
     /**
-     * 
-     * @param programState
-     * @return
-     */
+	 * Gets successor states from state space.
+	 * @param state
+	 * @return a list of successor states of the current state
+	 */
 	private List<ProgramState> getSuccessorStates(ProgramState programState) {		
 		
 		int stateID = programState.getStateSpaceId();
@@ -245,5 +204,50 @@ public class SimpleProofStructure extends AbstractProofStructure {
 		}
 		
 		return successorStates;
-	}	
+	}
+	
+	@Override
+	public Set<Assertion2> getLeaves() {
+
+        HashSet<Assertion2> leaves = new LinkedHashSet<>();
+
+        TIntObjectIterator<Set<Assertion2>> iter = stateIdToAssertions.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            for (Assertion2 assertion : iter.value()) {
+                if (!edges.containsKey(assertion)) leaves.add(assertion);
+            }
+        }
+        
+        return leaves;
+    }
+
+	@Override
+    public Integer size() {
+
+        return getVertices().size();
+    }
+	
+	@Override
+	public Set<Assertion2> getVertices() {
+
+        HashSet<Assertion2> vertices = new LinkedHashSet<>();
+
+        TIntObjectIterator<Set<Assertion2>> iter = stateIdToAssertions.iterator();
+        while (iter.hasNext()) {
+            iter.advance();
+            vertices.addAll(iter.value());
+        }
+        
+        return vertices;
+    }
+    
+    @Override
+    public FailureTrace getFailureTrace() {
+
+    	// proof was successful, no counterexample exists
+        if (isSuccessful()) return null;
+        
+        return new FailureTrace(this.originOfFailure, stateSpace);
+    }
 }
