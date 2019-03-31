@@ -7,7 +7,7 @@ import java.util.List;
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;

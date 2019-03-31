@@ -4,7 +4,7 @@ import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;

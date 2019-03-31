@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;

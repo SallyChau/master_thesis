@@ -193,4 +193,10 @@ public class RecursiveStateSpaceGenerationPhase extends AbstractPhase implements
 
 		return interproceduralAnalysis.getStateSpaceToCallMap();
 	}
+	
+	@Override
+	public Map<ProgramState, ProcedureCall> getCallingStatesToCall() {
+
+		return interproceduralAnalysis.getCallingStateToCall();
+	}
 }

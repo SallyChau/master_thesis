@@ -3,7 +3,7 @@ package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAn
 import java.util.List;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 /**

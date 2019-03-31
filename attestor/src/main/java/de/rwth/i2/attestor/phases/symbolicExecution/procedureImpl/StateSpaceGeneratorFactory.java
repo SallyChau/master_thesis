@@ -6,7 +6,7 @@ import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.main.scene.Strategies;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.AggressivePostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;

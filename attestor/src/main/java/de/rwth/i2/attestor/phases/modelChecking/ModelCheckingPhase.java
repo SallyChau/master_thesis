@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.phases.modelChecking;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,9 +17,7 @@ import de.rwth.i2.attestor.phases.modelChecking.modelChecker.SimpleProofStructur
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
 import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
-import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
-import gnu.trove.iterator.TIntIterator;
 
 public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingResultsTransformer {
 
@@ -51,14 +48,7 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             return;
         }
 
-        StateSpace stateSpace = getPhase(StateSpaceTransformer.class).getStateSpace();        
-        
-        // get list of initial program states
-        LinkedList<ProgramState> initialProgramStates = new LinkedList<>();
-        TIntIterator initialStatesIterator = stateSpace.getInitialStateIds().iterator();
-        while (initialStatesIterator.hasNext()) {
-        	initialProgramStates.add(stateSpace.getState(initialStatesIterator.next()));
-        } 
+        StateSpace stateSpace = getPhase(StateSpaceTransformer.class).getStateSpace();  
         
         // build proof structure for each formula
         for (LTLFormula formula : formulae) {
@@ -66,10 +56,9 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             String formulaString = formula.getFormulaString();
             logger.info("Checking formula: " + formulaString + "...");
             
-            SimpleProofStructure proofStructure = new SimpleProofStructure(stateSpace);
-            proofStructure.build(initialProgramStates, formula);
+            SimpleProofStructure proofStructure = new SimpleProofStructure();
+            proofStructure.build(stateSpace, formula);
             
-            System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
             if (proofStructure.isSuccessful()) {
 
                 if(stateSpace.containsAbortedStates()) {

@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 /**
@@ -32,6 +33,8 @@ public class InterproceduralAnalysis {
 
 	Map<ProcedureCall, Set<PartialStateSpace>> callingDependencies = new LinkedHashMap<>();
 	Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = new LinkedHashMap<>();
+	
+	Map<ProgramState, ProcedureCall> callingStateToCall = new LinkedHashMap<>();
 	
 	Map<ProcedureCall, OnTheFlyProofStructure> callToProofStructure = new LinkedHashMap<>();
 	Map<ProcedureCall, List<Node>> callToFormulae = new LinkedHashMap<>();
@@ -54,6 +57,10 @@ public class InterproceduralAnalysis {
 		} else {
 			callingDependencies.get(procedureCall).add(dependentPartialStateSpace);
 		}
+	}
+	
+	public void registerCallingStates(ProgramState callingState, ProcedureCall call) {
+		callingStateToCall.put(callingState, call);
 	}
 
 	public void registerProcedureCall(ProcedureCall procedureCall) {
@@ -85,6 +92,10 @@ public class InterproceduralAnalysis {
 	
 	public Map<StateSpace, ProcedureCall> getStateSpaceToCallMap() {
 		return stateSpaceToAnalyzedCall;
+	}
+	
+	public Map<ProgramState, ProcedureCall> getCallingStateToCall() {
+		return callingStateToCall;
 	}
 	
 	public void run2() {

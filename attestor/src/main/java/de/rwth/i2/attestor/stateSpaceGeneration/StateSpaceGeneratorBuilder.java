@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.

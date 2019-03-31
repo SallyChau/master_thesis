@@ -32,6 +32,7 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
+        System.out.println("Scoped heap " + scopedHeap.getHeapInScope());
         Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap);
         return createResultStates(input, postconditions);
     }
