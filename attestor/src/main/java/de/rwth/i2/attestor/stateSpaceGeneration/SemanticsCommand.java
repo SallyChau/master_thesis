@@ -50,5 +50,8 @@ public interface SemanticsCommand {
      * @return true, if the statement always requires canonicalization
      */
     boolean needsCanonicalization();
+    
+    // TODO refactor
+    ProgramState prepareHeap(ProgramState programState);
 
 }

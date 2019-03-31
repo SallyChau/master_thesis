@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
@@ -16,16 +17,19 @@ public class RecursiveStateMachine {
 
 	private Map<Method, ComponentStateMachine> components;
 	private Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall;
+	private Map<ProgramState, ProcedureCall> callingStatesToCall;
 	
-	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall) {
+	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
 		
 		this.stateSpaceToAnalyzedCall = stateSpaceToAnalyzedCall;	
+		this.callingStatesToCall = callingStatesToCall;
 		this.components = new LinkedHashMap<>();
 		build();
 	}
 	
 	private void build() {
 		
+		// create Component State Machines
 		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
 		for (ProcedureCall call : procedureCalls) {
 			
@@ -38,6 +42,15 @@ public class RecursiveStateMachine {
 			
 			components.put(method, csm);			
 		}
+		
+		// translate procedure calls to CSM boxes
+		Set<ProgramState> callingStates = callingStatesToCall.keySet();
+		for (ProgramState state : callingStates) {
+			StateSpace stateSpace = state.getContainingStateSpace();
+			ComponentStateMachine caller = getComponentStateMachine(stateSpace);
+			ComponentStateMachine callee = getOrCreateComponentStateMachine(callingStatesToCall.get(state).getMethod());
+			caller.addCalledCSM(state, callee);
+		}		
 	}
 	
 	public ComponentStateMachine getComponentStateMachine(String signature) {
