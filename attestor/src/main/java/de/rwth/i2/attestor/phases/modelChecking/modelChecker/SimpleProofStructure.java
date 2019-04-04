@@ -52,7 +52,7 @@ public class SimpleProofStructure extends AbstractProofStructure {
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
 				Node currentFormula = currentAssertion.getFirstFormula();
-				List<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
+				HashSet<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
 				if (successorAssertions != null) {
 					for (Assertion2 successorAssertion : successorAssertions) {						
 						addEdge(currentAssertion, successorAssertion);
@@ -207,7 +207,7 @@ public class SimpleProofStructure extends AbstractProofStructure {
 	}
 	
 	@Override
-	public Set<Assertion2> getLeaves() {
+	public HashSet<Assertion2> getLeaves() {
 
         HashSet<Assertion2> leaves = new LinkedHashSet<>();
 

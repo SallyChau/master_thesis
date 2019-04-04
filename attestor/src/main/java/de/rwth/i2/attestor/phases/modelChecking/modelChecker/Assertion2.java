@@ -16,8 +16,8 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 public class Assertion2 {
 
 	private ProgramState programState;
-	private List<Node> formulae = new LinkedList<>();
-	private List<Node> nextFormulae = new LinkedList<>(); 
+	private LinkedList<Node> formulae = new LinkedList<>();
+	private LinkedList<Node> nextFormulae = new LinkedList<>(); 
 	private Assertion2 parent;
 	private boolean isTrue;
 	private boolean isContainedInTrace;
@@ -39,10 +39,26 @@ public class Assertion2 {
         this.isContainedInTrace = isContainedInTrace;
     }
 	
+	/**
+     * This constructor returns a new assertion as a copy of the provided one.
+     * Note that the new assertion receives a shallow copy of the formulae list.
+     *
+     * @param assertion, the assertion to be copied
+     */
+	public Assertion2(Assertion2 assertion) {
+		
+		this.programState = assertion.getProgramState();
+        this.formulae = new LinkedList<>(assertion.getFormulae());
+        this.nextFormulae = new LinkedList<>(assertion.getNextFormulae());
+        this.isTrue = assertion.isTrue();
+        this.isContainedInTrace = assertion.isContainedInTrace;
+        this.parent = assertion.parent;		
+	}
+	
 	public void addNextFormula(Node formula) {
 
 		if (!this.nextFormulae.contains(formula)) {
-			this.nextFormulae.add(formula);
+			this.nextFormulae.addFirst(formula);
 		}
 	}
 	
@@ -56,7 +72,7 @@ public class Assertion2 {
 	public void addFormula(Node formula) {
 		
 		if (!this.formulae.contains(formula)) {
-			this.formulae.add(formula);
+			this.formulae.addFirst(formula);
 		}
 	}
 	
@@ -67,20 +83,20 @@ public class Assertion2 {
 		}
 	}
 	
-	public List<Node> getFormulae() {
+	public LinkedList<Node> getFormulae() {
 		return this.formulae;
 	}
 	
 	public Node getFirstFormula() {
-        return this.formulae.get(0);
+        return this.formulae.getFirst();
     }
 	
-	public List<Node> getNextFormulae() {
+	public LinkedList<Node> getNextFormulae() {
 		return this.nextFormulae;
 	}
 	
 	public void removeFirstFormula() {
-		this.formulae.remove(0);
+		this.formulae.removeFirst();
 	}
 	
 	public ProgramState getProgramState() {

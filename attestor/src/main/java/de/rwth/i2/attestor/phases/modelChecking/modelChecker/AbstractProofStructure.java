@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.AReleaseLtlform;
@@ -73,7 +72,7 @@ public abstract class AbstractProofStructure {
     }
     
 	/**
-	 * Do one step in the tableau according to the tableau rules.
+	 * Do one step in the tableau according to tableau rules.
 	 * 
 	 * @param node
 	 * 		assertion which holds the program state and the formula to be checked
@@ -83,13 +82,13 @@ public abstract class AbstractProofStructure {
 	 * 		list of successor nodes, possibly empty (successful path)
 	 */
 	@SuppressWarnings("unchecked")
-	protected List<Assertion2> expand(Assertion2 node, Node formula) {
+	protected HashSet<Assertion2> expand(Assertion2 node, Node formula) {
 
 		TableauRulesSwitch2 rulesSwitch = new TableauRulesSwitch2(node.getProgramState());
 		rulesSwitch.setIn(formula, node);
 		formula.apply(rulesSwitch);
 		
-		return (LinkedList<Assertion2>) rulesSwitch.getOut(formula);
+		return (LinkedHashSet<Assertion2>) rulesSwitch.getOut(formula);
 	}
 
     protected void addEdge(Assertion2 assertion, Assertion2 successorAssertion) {

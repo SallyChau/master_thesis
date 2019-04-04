@@ -1,6 +1,7 @@
 package de.rwth.i2.attestor.phases.modelChecking.modelChecker;
 
-import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import de.rwth.i2.attestor.generated.analysis.AnalysisAdapter;
 import de.rwth.i2.attestor.generated.node.AAndStateform;
@@ -176,7 +177,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
     	Assertion2 successorNode2 = removeFormula(node);
     	successorNode2.addFormula(node.getRightform()); 
     	
-        LinkedList<Assertion2> successors = new LinkedList<>();
+        HashSet<Assertion2> successors = new LinkedHashSet<>();
         successors.add(successorNode1);
         successors.add(successorNode2);
         this.setOut(node, successors);
@@ -193,7 +194,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
 		successor.addFormula(node.getLeftform());
 		successor.addFormula(node.getRightform());
 
-        LinkedList<Assertion2> successors = new LinkedList<>();
+		HashSet<Assertion2> successors = new LinkedHashSet<>();
         successors.add(successor);
         this.setOut(node, successors);
     }
@@ -213,7 +214,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
     	successorNode2.addFormula(node.getRightform()); 
     	successorNode2.addNextFormula(node);
     	
-		LinkedList<Assertion2> successors = new LinkedList<>();
+    	HashSet<Assertion2> successors = new LinkedHashSet<>();
 	    successors.add(successorNode1);
 	    successors.add(successorNode2);
 	    this.setOut(node, successors);
@@ -233,7 +234,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
     	successorNode2.addFormula(node.getLeftform()); 
     	successorNode2.addNextFormula(node);
     	
-    	LinkedList<Assertion2> successors = new LinkedList<>();
+    	HashSet<Assertion2> successors = new LinkedHashSet<>();
 	    successors.add(successorNode1);
 	    successors.add(successorNode2);
 	    this.setOut(node, successors);
@@ -248,9 +249,9 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
     public void caseANextLtlform(ANextLtlform node) {
 
 		Assertion2 successorNode = removeFormula(node);
-		successorNode.addNextFormula(node);
+		successorNode.addNextFormula(node.getLtlform());
 		
-		LinkedList<Assertion2> successors = new LinkedList<>();
+		HashSet<Assertion2> successors = new LinkedHashSet<>();
 	    successors.add(successorNode);
         this.setOut(node, successors);
     }    
@@ -268,16 +269,13 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
      * 		a node with the set of formulae of the current node without the passed formula
      */
 	private Assertion2 removeFormula(Node node) {
+		
+		Assertion2 current = (Assertion2) this.getIn(node);
 
-		Assertion2 currentNode = (Assertion2) this.getIn(node);
-		ProgramState currentState = currentNode.getProgramState();
+        Assertion2 currentCopy = new Assertion2(current);
+        currentCopy.removeFirstFormula();
 
-        Assertion2 resultNode = new Assertion2(currentState, currentNode.getParent());
-    	resultNode.addFormulae(currentNode.getFormulae());
-    	resultNode.removeFirstFormula();
-    	resultNode.addNextFormulae(currentNode.getNextFormulae());
-
-        return resultNode;
+        return currentCopy;
 	}
     
     /**
@@ -290,7 +288,7 @@ public class TableauRulesSwitch2 extends AnalysisAdapter {
     	
     	Assertion2 resultNode = removeFormula(node);
 
-        LinkedList<Assertion2> successors = new LinkedList<>();
+        HashSet<Assertion2> successors = new LinkedHashSet<>();
         successors.add(resultNode);
         this.setOut(node, successors);
 	}

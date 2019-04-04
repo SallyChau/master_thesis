@@ -2,39 +2,53 @@ package de.rwth.i2.attestor.recursiveStateMachine;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import de.rwth.i2.attestor.LTLFormula;
+import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
+import de.rwth.i2.attestor.phases.modelChecking.hierarchical.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
-// TODO maybe do some generator stuff pattern thingy
 public class RecursiveStateMachine {
 
-	private Map<Method, ComponentStateMachine> components;
-	private Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall;
-	private Map<ProgramState, ProcedureCall> callingStatesToCall;
+	private Map<Method, ComponentStateMachine> components;	
+	private Map<ProcedureCall, List<ModelCheckingContract>> modelCheckingResults;
 	
 	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
-		
-		this.stateSpaceToAnalyzedCall = stateSpaceToAnalyzedCall;	
-		this.callingStatesToCall = callingStatesToCall;
+
 		this.components = new LinkedHashMap<>();
-		build();
+		this.modelCheckingResults = new LinkedHashMap<>();
+		build(stateSpaceToAnalyzedCall, callingStatesToCall);
 	}
 	
-	private void build() {
+	/**
+	 * Builds a Recursive State Machine based on the given dependencies between state spaces, procedure calls, and calling states.
+	 * @param stateSpaceToAnalyzedCall
+	 * @param callingStatesToCall
+	 */
+	private void build(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
 		
 		// create Component State Machines
 		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
 		for (ProcedureCall call : procedureCalls) {
 			
 			Method method = call.getMethod();
-			StateSpace stateSpace = getStateSpace(call);
+			StateSpace stateSpace = null;
+			for (Entry<StateSpace, ProcedureCall> entry : stateSpaceToAnalyzedCall.entrySet()) {
+	            if (Objects.equals(call, entry.getValue())) {
+	                stateSpace = entry.getKey();
+	            }
+	        }
+	        
 			ProgramState callingState = call.getInput();
 			
 			ComponentStateMachine csm = getOrCreateComponentStateMachine(method);
@@ -49,22 +63,11 @@ public class RecursiveStateMachine {
 			StateSpace stateSpace = state.getContainingStateSpace();
 			ComponentStateMachine caller = getComponentStateMachine(stateSpace);
 			ComponentStateMachine callee = getOrCreateComponentStateMachine(callingStatesToCall.get(state).getMethod());
-			caller.addCalledCSM(state, callee);
+			if (caller != null) caller.addBox(state, callee);
 		}		
 	}
 	
-	public ComponentStateMachine getComponentStateMachine(String signature) {
-		
-		for (ComponentStateMachine csm : components.values()) {
-			if (csm.getMethod().getSignature().equals(signature)) {
-				return csm;
-			}
-		}
-		
-		return null;
-	}
-	
-	public ComponentStateMachine getComponentStateMachine(StateSpace stateSpace) {
+	private ComponentStateMachine getComponentStateMachine(StateSpace stateSpace) {
 		
 		for (ComponentStateMachine csm : components.values()) {
 			if (csm.getStateSpaces().contains(stateSpace)) {
@@ -91,19 +94,66 @@ public class RecursiveStateMachine {
 		return components.values();
 	}
 	
-	private StateSpace getStateSpace(ProcedureCall call) {
-        for (Entry<StateSpace, ProcedureCall> entry : stateSpaceToAnalyzedCall.entrySet()) {
-            if (Objects.equals(call, entry.getValue())) {
-                return entry.getKey();
-            }
-        }
+	/**
+	 * Model checks the underlying state spaces of the procedure call for the given formula using the tableau method.
+	 * @param call
+	 * @param formula
+	 * @return true if the proof structure is successful, false otherwise
+	 */
+	public boolean check(ProcedureCall call, LTLFormula formula) {
         
-        return null;
-    }
+        ComponentStateMachine csm = getOrCreateComponentStateMachine(call.getMethod());
+		
+		csm.check(call, formula);
+		
+		ModelCheckingContract contract = csm.getModelCheckingContract(call, formula);		
+		addModelCheckingContract(call, contract);
+		
+		return contract.modelCheckingSuccessful();
+	}
+	
+	public boolean modelCheckingSuccessful(ProcedureCall call, LTLFormula formula) {
+		
+		ModelCheckingContract contract = getModelCheckingContract(call, formula);
+		return (contract != null) ? contract.modelCheckingSuccessful() : null;
+	}
+	
+	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProcedureCall call, LTLFormula formula) {
+		
+		ModelCheckingContract contract = getModelCheckingContract(call, formula);
+		return (contract != null) ? contract.getHierarchicalFailureTrace() : null;
+	}
+	
+	private void addModelCheckingContract(ProcedureCall call, ModelCheckingContract contract) {
+		
+		List<ModelCheckingContract> contracts = modelCheckingResults.get(call);
+		
+		if (contracts == null) {
+			contracts = new LinkedList<>();
+			contracts.add(contract);
+			modelCheckingResults.put(call, contracts);
+        } else {
+        	contracts.add(contract);
+        }
+	}
+	
+	private ModelCheckingContract getModelCheckingContract(ProcedureCall call, LTLFormula formula) {
+		
+		List<ModelCheckingContract> contracts =  modelCheckingResults.get(call);
+		List<Node> formulae = new LinkedList<>();
+		formulae.add(formula.getASTRoot().getPLtlform());
+		
+		for (ModelCheckingContract contract : contracts) {
+			
+			if (contract.getInputFormulae().equals(formulae)) return contract;
+		}
+		
+		return null;
+	}
 	
 	@Override
 	public String toString() {
 		
-		return "RSM  with " + components.size();
+		return "RSM  with " + components.size() + " components";
 	}
 }

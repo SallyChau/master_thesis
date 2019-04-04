@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.phases.modelChecking.hierarchical;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,7 +10,6 @@ import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -25,10 +23,11 @@ import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 public class HierarchicalModelCheckingPhase extends AbstractPhase implements ModelCheckingResultsTransformer {	
 	
 	private final Map<LTLFormula, ModelCheckingResult> formulaResults = new LinkedHashMap<>();
-    private final Map<LTLFormula, ModelCheckingTrace> traces = new LinkedHashMap<>();
+    private final Map<LTLFormula, HierarchicalFailureTrace> traces = new LinkedHashMap<>();
     private boolean allSatisfied = true;
-
     private int numberSatFormulae = 0;
+
+    RecursiveStateMachine rsm;
 	
 	public HierarchicalModelCheckingPhase(Scene scene) {
 		
@@ -37,14 +36,6 @@ public class HierarchicalModelCheckingPhase extends AbstractPhase implements Mod
 	
 	@Override
     public void executePhase() {
-
-		// get state spaces and calling dependencies
-		Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = getPhase(StateSpaceTransformer.class).getProcedureStateSpaces();
-		Map<ProgramState, ProcedureCall> callingStatesToCall = getPhase(StateSpaceTransformer.class).getCallingStatesToCall();
-		List<ProcedureCall> mainProcedureCalls = getPhase(StateSpaceTransformer.class).getMainProcedureCalls();
-        
-        // build Recursive State Machine from procedure state spaces
-        RecursiveStateMachine rsm = new RecursiveStateMachine(stateSpaceToAnalyzedCall, callingStatesToCall);
 		
 		// get model checking settings
 		ModelCheckingSettings mcSettings = getPhase(MCSettingsTransformer.class).getMcSettings();
@@ -52,31 +43,38 @@ public class HierarchicalModelCheckingPhase extends AbstractPhase implements Mod
         if (formulae.isEmpty()) {
             logger.debug("No LTL formulae have been provided.");
             return;
-        }        
+        }
+
+        buildRSM();
         	
-        // start hierarchical model checking for one main procedure call (since all initial states are already included in the state space)
+        // start hierarchical model checking for one main procedure call 
+        // other main procedure calls are implied by initial states that are already included in the state space
     	for (LTLFormula formula : formulae) {
     		
     		String formulaString = formula.getFormulaString();
     		logger.info("Checking formula: " + formulaString + "...");
 
-            HierarchicalProofStructure proofStructure = new HierarchicalProofStructure(rsm);           
-            proofStructure.build(mainProcedureCalls.get(0), formula); 
+    		ProcedureCall call = getPhase(StateSpaceTransformer.class).getMainProcedureCalls().get(0);
+            boolean mcSuccessful = rsm.check(call, formula);
             
-            System.err.println("Hierarchical Model Checking Phase successful: " + proofStructure.isSuccessful());            
-            System.err.println("Hierarchical Model Checking Phase: " + proofStructure.getHierarchicalFailureTrace().getTrace());
+            System.err.println("Hierarchical Model Checking Phase successful: " + mcSuccessful);            
+            if (rsm.getHierarchicalFailureTrace(call, formula) != null) {
+            	System.err.println("Hierarchical Model Checking Phase: " + rsm.getHierarchicalFailureTrace(call, formula).getStateTrace());
+            	System.err.println("Hierarchical Model Checking Phase: " + rsm.getHierarchicalFailureTrace(call, formula).getStateIdTrace());
+            	System.err.println("Hierarchical Model Checking Phase: " + rsm.getHierarchicalFailureTrace(call, formula).getStateSpace());
+            }
             
-            if (proofStructure.isSuccessful()) {
+            if (mcSuccessful) {
 
-//                if(stateSpace.containsAbortedStates()) {
-//                    allSatisfied = false;
-//                    formulaResults.put(formula, ModelCheckingResult.UNKNOWN);
-//                    logger.info("done. It is unknown whether the formula is satisfied.");
-//                } else {
+                if(rsm.getOrCreateComponentStateMachine(call.getMethod()).getStateSpace(call.getInput(), null).containsAbortedStates()) {
+                    allSatisfied = false;
+                    formulaResults.put(formula, ModelCheckingResult.UNKNOWN);
+                    logger.info("done. It is unknown whether the formula is satisfied.");
+                } else {
                     formulaResults.put(formula, ModelCheckingResult.SATISFIED);
                     logger.info("done. Formula is satisfied.");
                     numberSatFormulae++;
-//                }
+                }
 
             } else {
                 logger.info("Formula is violated: " + formulaString);
@@ -86,12 +84,19 @@ public class HierarchicalModelCheckingPhase extends AbstractPhase implements Mod
                 if (scene().options().isIndexedMode()) {
                     logger.warn("Counterexample generation for indexed grammars is not supported yet.");
                 } else {
-                    FailureTrace failureTrace = proofStructure.getFailureTrace();
+                    HierarchicalFailureTrace failureTrace = rsm.getHierarchicalFailureTrace(call, formula);
                     traces.put(formula, failureTrace);
                 }
             }
     	}        
     }
+	
+	private void buildRSM() {
+		
+		Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = getPhase(StateSpaceTransformer.class).getProcedureStateSpaces();
+		Map<ProgramState, ProcedureCall> callingStatesToCall = getPhase(StateSpaceTransformer.class).getCallingStatesToCall();
+        rsm = new RecursiveStateMachine(stateSpaceToAnalyzedCall, callingStatesToCall);		
+	}
 
 	@Override
 	public String getName() {
@@ -131,8 +136,8 @@ public class HierarchicalModelCheckingPhase extends AbstractPhase implements Mod
         return formulaResults;
     }
 
-    @Override
-    public ModelCheckingTrace getTraceOf(LTLFormula formula) {
+	@Override
+	public ModelCheckingTrace getTraceOf(LTLFormula formula) {
 
         if (traces.containsKey(formula)) {
             return traces.get(formula);
