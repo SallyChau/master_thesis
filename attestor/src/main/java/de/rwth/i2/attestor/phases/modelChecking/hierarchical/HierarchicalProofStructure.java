@@ -30,18 +30,14 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	
 	private ComponentStateMachine csm;
 	private StateSpace stateSpace;
-	private Map<ProgramState, Set<Assertion2>> stateToAssertions;		
-	private List<Node> outputFormulae;	
+	private Map<ProgramState, Set<Assertion2>> stateToAssertions = new LinkedHashMap<>();		
+	private List<Node> outputFormulae = new LinkedList<>();
 
-	private HierarchicalFailureTrace hierarchicalFailureTrace;
+	private HierarchicalFailureTrace hierarchicalFailureTrace = new HierarchicalFailureTrace();
 	
 	public HierarchicalProofStructure(ComponentStateMachine csm) {
 		
-		super();
 		this.csm = csm;
-		this.stateToAssertions = new LinkedHashMap<>();
-		this.outputFormulae = new LinkedList<>();
-		hierarchicalFailureTrace = new HierarchicalFailureTrace();
 	}
 	
 	public void build(StateSpace stateSpace, LTLFormula formula) {
@@ -56,23 +52,13 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		
 		this.stateSpace = stateSpace;
 
-		Set<ProgramState> initialStates = this.stateSpace.getInitialStates();
-		initProofStructure(initialStates, formulae);
-		
-		run();
-	}
-	
-	private void initProofStructure(Set<ProgramState> initialStates, List<Node> formulae) {
-		
+		Set<ProgramState> initialStates = this.stateSpace.getInitialStates();		
 		for (ProgramState state : initialStates) {
 			Assertion2 assertion = new Assertion2(state, null);
 			assertion.addFormulae(formulae);
 			addAssertion(assertion);
 			queue.add(assertion);
 		}
-	}
-	
-	private void run() {
 
 		while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
@@ -151,12 +137,10 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		SemanticsCommand statement = csm.getSemanticsCommand(state);
 		
 		if (getCalledMethodSignature(statement) != null) {
-			System.out.println("Called method: " + getCalledMethodSignature(statement) + " at state " + state.getProgramCounter());
 			ComponentStateMachine calledCSM = csm.getBox(state);	
 			List<Node> inputFormulae = nextFormulae;
 			nextFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
 			
-			// TODO handle proof structure output and abort
 			if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
 				
 				this.successful = false;				
@@ -165,7 +149,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 				hierarchicalFailureTrace.addHierarchicalFailureTrace(calledCSM.getHierarchicalFailureTrace(state, statement, inputFormulae));
 				
                 // abort proof structure generation, as we already know that it is not successful!
-                if (!buildFullStructure) return Collections.emptyList();  // TODO how to abort complete model checking?
+                if (!buildFullStructure) return Collections.emptyList();
 			}
 			
 			System.out.println("Returned to CSM " + csm.toString());

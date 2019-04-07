@@ -12,19 +12,13 @@ import de.rwth.i2.attestor.generated.node.Node;
 
 public abstract class AbstractProofStructure {	
 
-	protected LinkedList<Assertion2> queue;
-	protected HashMap<Assertion2, HashSet<Assertion2>> edges;		
+	protected LinkedList<Assertion2> queue = new LinkedList<>();
+	protected HashMap<Assertion2, HashSet<Assertion2>> edges = new LinkedHashMap<>();		
 	protected Assertion2 originOfFailure = null;  
 	protected boolean buildFullStructure = false;
 	protected boolean successful = true;
 	protected int checkedAssertions = 0;
 	
-	public AbstractProofStructure() {
-
-		this.edges = new LinkedHashMap<>();
-		this.queue = new LinkedList<>();
-	}
-
 	protected void setOriginOfFailure(Assertion2 assertion) {
 
         if (this.originOfFailure == null) this.originOfFailure = assertion;
