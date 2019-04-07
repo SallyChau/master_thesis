@@ -20,24 +20,12 @@ import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 public class RecursiveStateMachine {
 
-	private Map<Method, ComponentStateMachine> components;	
-	private Map<ProcedureCall, List<ModelCheckingContract>> modelCheckingResults;
+	private Map<Method, ComponentStateMachine> components = new LinkedHashMap<>();
+	private Map<ProcedureCall, List<ModelCheckingContract>> modelCheckingResults = new LinkedHashMap<>();
 	
 	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
 
-		this.components = new LinkedHashMap<>();
-		this.modelCheckingResults = new LinkedHashMap<>();
-		build(stateSpaceToAnalyzedCall, callingStatesToCall);
-	}
-	
-	/**
-	 * Builds a Recursive State Machine based on the given dependencies between state spaces, procedure calls, and calling states.
-	 * @param stateSpaceToAnalyzedCall
-	 * @param callingStatesToCall
-	 */
-	private void build(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
-		
-		// create Component State Machines
+		// build Component State Machines
 		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
 		for (ProcedureCall call : procedureCalls) {
 			
@@ -88,11 +76,6 @@ public class RecursiveStateMachine {
             return result;
         }
 	}	
-	
-	public Collection<ComponentStateMachine> getComponentStateMachines() {
-		
-		return components.values();
-	}
 	
 	/**
 	 * Model checks the underlying state spaces of the procedure call for the given formula using the tableau method.

@@ -28,17 +28,14 @@ public class ComponentStateMachine {
 	
 	private Method method;
 	private HierarchicalProofStructure proofStructure;	
-	private Map<ProgramState, StateSpace> stateSpaces;
-	private Map<ProgramState, ComponentStateMachine> boxes;	
-	private List<ModelCheckingContract> modelCheckingContracts;
+	private Map<ProgramState, StateSpace> stateSpaces = new LinkedHashMap<>();
+	private Map<ProgramState, ComponentStateMachine> boxes = new LinkedHashMap<>();	
+	private List<ModelCheckingContract> modelCheckingContracts = new LinkedList<>();
 	
 	public ComponentStateMachine(Method method) {
 
 		this.method = method;
 		this.proofStructure = new HierarchicalProofStructure(this);
-		this.stateSpaces = new LinkedHashMap<>();
-		this.boxes = new LinkedHashMap<>();
-		this.modelCheckingContracts = new LinkedList<>();
 	}
 	
 	public void addBox(ProgramState callingState, ComponentStateMachine calledCSM) {
