@@ -40,7 +40,6 @@ public class InternalPartialStateSpace implements PartialStateSpace {
 
             Method method = call.getMethod();
             
-            System.out.println("Continuing state space for method " + method.getName());
             ProgramState preconditionState = call.getInput();
 
             if(partialStateSpace.containsAbortedStates()) {
@@ -67,14 +66,14 @@ public class InternalPartialStateSpace implements PartialStateSpace {
     }
     
     @Override
-    public void continueExecution(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure) {
+    public void continueExecutionOnTheFly(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure) {
 
         try {
 
             Method method = call.getMethod();
             ProgramState preconditionState = call.getInput();
 
-            if(partialStateSpace.containsAbortedStates()) {
+            if (partialStateSpace.containsAbortedStates()) {
                 return;
             }
             
@@ -84,45 +83,39 @@ public class InternalPartialStateSpace implements PartialStateSpace {
                     call.getMethod().getBody(),
                     stateToContinue,
                     partialStateSpace,
-                    proofStructure
+                    proofStructure,
+                    formulae
             );
 
-            System.out.println("InternalPartialStateSpace: Continuing execution: for method " + method.getName());
-            StateSpace stateSpace = stateSpaceGenerator.generateAndCheck(stateToContinue, formulae);
+            StateSpace stateSpace = stateSpaceGenerator.generateOnTheFly();
             
             stateToContinue.unflagContinueState();
 
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
-            List<Node> outputFormulae = stateSpaceGenerator.getReturnFormulae();
+            List<Node> resultFormulae = stateSpaceGenerator.getResultFormulae();
             
-            if (proofStructure.isSuccessful() && outputFormulae == null) {
+            if (proofStructure.isSuccessful() && resultFormulae == null) {
 
                 System.out.println("Proofstructure for method: " + method.getName() + " was successful");
                 LTLFormula ltlFormula = new LTLFormula("true");
                 ltlFormula.toPNF();
-                outputFormulae = new LinkedList<>();
-                outputFormulae.add(ltlFormula.getASTRoot().getPLtlform());
+                resultFormulae = new LinkedList<>();
+                resultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
             } else if (!proofStructure.isSuccessful()) {
             	
             	System.out.println("Proofstructure for method: " + method.getName() + " was unsuccessful");
                 // TODO abort model checking here
+            	
             }
             
             Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
-            contract.addFormulaPair(formulae, outputFormulae);
+            contract.addFormulaPair(formulae, resultFormulae);
             method.addContract(contract);
-            
-            if (finalHeaps.isEmpty()) {
-            	System.err.println("Internal Partial State Space: Final heap is empty ");
-            }
-
         } catch (Exception e) {
             throw new IllegalStateException("Failed to continue state space execution.");
         }
     }
-
-	
 
 	@Override
 	public int hashCode() {

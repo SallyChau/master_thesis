@@ -98,11 +98,9 @@ public class InterproceduralAnalysis {
 		return callingStateToCall;
 	}
 	
-	public void run2() {
+	public void runOnTheFly() {
 
 		while(!remainingProcedureCalls.isEmpty() || !remainingPartialStateSpaces.isEmpty()) {
-			
-			System.out.println("Interprocedural Analysis started");
 			
 			ProcedureCall call;
 			List<Node> formulae;
@@ -111,7 +109,7 @@ public class InterproceduralAnalysis {
 				// creates new state space for recursive methods
 				call = remainingProcedureCalls.pop();
 				formulae = callToFormulae.get(call);
-				StateSpace stateSpace = call.execute(formulae);
+				StateSpace stateSpace = call.executeOnTheFly(formulae);
 				contractChanged = stateSpace.getFinalStateIds().size() > 0;
 			} else {
 				// continue partial state space 
@@ -122,8 +120,6 @@ public class InterproceduralAnalysis {
 				OnTheFlyProofStructure proofStructure = callToProofStructure.get(call);
 				List<Node> returnFormulae = partialStateSpaceToReturnFormulae.get(partialStateSpace);
 				
-				System.out.println("Continuing state space for " + call.getMethod().getName() + " with formulae " + returnFormulae.toString());
-				
 				// TODO
 //				if (proofStructure.isSuccessful() && returnFormulae == null) {
 //	                // do not continue execution: tell state space that one path is done but others can be continued
@@ -131,13 +127,13 @@ public class InterproceduralAnalysis {
 //					LTLFormula formula;
 //					PTerm term = new ATrueTerm();
 //	            } else {				
-					partialStateSpace.continueExecution(call, returnFormulae, proofStructure);
+					partialStateSpace.continueExecutionOnTheFly(call, returnFormulae, proofStructure);
 					int newNumberOfFinalsStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
 					contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
 //	            }
 			}
 			if( contractChanged ) {
-				notifyDependenciesMC(call);
+				notifyDependenciesOnTheFly(call);
 			}
 		}
 	}
@@ -171,8 +167,6 @@ public class InterproceduralAnalysis {
 				notifyDependencies(call);
 			}
 		}
-		
-		System.out.println("end of analysis");
 	}
 
 	/**
@@ -186,7 +180,7 @@ public class InterproceduralAnalysis {
 		remainingPartialStateSpaces.addAll(dependencies);
 	}
 	
-	void notifyDependenciesMC(ProcedureCall call) {
+	void notifyDependenciesOnTheFly(ProcedureCall call) {
 
 		Set<PartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);
@@ -200,5 +194,4 @@ public class InterproceduralAnalysis {
 			}
 		}
 	}
-
 }

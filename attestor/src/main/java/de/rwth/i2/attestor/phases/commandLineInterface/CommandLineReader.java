@@ -1,9 +1,5 @@
 package de.rwth.i2.attestor.phases.commandLineInterface;
 
-import org.apache.commons.cli.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +7,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CommandLineReader {
 
@@ -410,6 +417,28 @@ public class CommandLineReader {
                         .desc("Determines the maximal number of nodes encountered within the heap configuration " +
                                 "of any program state until the analysis is aborted. " +
                                 "By default, the maximal number of nodes is set to 50.")
+                        .build()
+        );
+        
+        commandLineOptions.addOption(
+                Option.builder()
+                        .longOpt("mc-mode")
+                        .hasArg()
+                        .argName("mode")
+                        .desc("Determines the model checking mode for the analysis. " +
+                                "By default, model checking only checks the main state space. " +
+                                "Options are default, hierarchical, or onthefly.")
+                        .build()
+        );
+        
+        commandLineOptions.addOption(
+                Option.builder()
+                        .longOpt("mc-skip")
+                        .hasArg()
+                        .argName("method")
+                        .desc("Determines which methods to skip during model checking. " +
+                                "By default, only constructor calls are excluded from model checking. " +
+                                "Method names can be separated by comma.")
                         .build()
         );
 

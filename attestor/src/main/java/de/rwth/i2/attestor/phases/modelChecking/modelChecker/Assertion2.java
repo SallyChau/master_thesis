@@ -64,8 +64,10 @@ public class Assertion2 {
 	
 	public void addNextFormulae(List<Node> formulae) {
 
-		for (Node formula : formulae) {
-			addNextFormula(formula);
+		if (formulae != null) {
+			for (Node formula : formulae) {
+				addNextFormula(formula);
+			}
 		}
 	}
 	
@@ -78,8 +80,10 @@ public class Assertion2 {
 	
 	public void addFormulae(List<Node> formulae) {
 		
-		for (Node formula : formulae) {
-			addFormula(formula);
+		if (formulae != null) {
+			for (Node formula : formulae) {
+				addFormula(formula);
+			}
 		}
 	}
 	

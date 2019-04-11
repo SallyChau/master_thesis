@@ -26,13 +26,13 @@ public class TerminalStatement implements SemanticsCommand {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
 
 		return computeSuccessors(programState);
 	}
     
     @Override
-	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
 
     	return null;
     }

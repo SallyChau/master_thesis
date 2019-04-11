@@ -2,8 +2,10 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
 import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 
@@ -33,6 +35,10 @@ public class StateSpaceGeneratorBuilder {
     
     
     private OnTheFlyProofStructure proofStructure = null;
+    
+    
+    private List<Node> modelCheckingFormulae = new LinkedList<>();
+
 
     /**
      * Creates a new builder representing an everywhere
@@ -106,6 +112,10 @@ public class StateSpaceGeneratorBuilder {
         if(generator.stateRectificationStrategy == null) {
             throw new IllegalStateException("StateSpaceGenerator: No admissibility strategy.");
         }
+        
+//        if(generator.stateSpaceGenerationStrategy == null) {
+//            throw new IllegalStateException("StateSpaceGenerator: No state space generation strategy.");
+//        }
 
         if(initialStateSpace == null) {
             generator.stateSpace = generator.stateSpaceSupplier.get();
@@ -114,7 +124,7 @@ public class StateSpaceGeneratorBuilder {
         }
         
         if(proofStructure == null) {
-            generator.proofStructure = new OnTheFlyProofStructure(); // TODO improve
+            generator.proofStructure = new OnTheFlyProofStructure();
         } else {
             generator.proofStructure = proofStructure;
         }
@@ -127,6 +137,19 @@ public class StateSpaceGeneratorBuilder {
             }
             generator.stateLabelingStrategy.computeAtomicPropositions(state);
             generator.stateExplorationStrategy.addUnexploredState(state, false);
+            if(state.isContinueState()) {
+            	try {
+                	List<ProgramState> successors = generator.computeMCSuccessorStates(state, modelCheckingFormulae); 
+                	for (ProgramState successorState : successors) {    	    		
+                		generator.proofStructure.addAssertion(successorState, modelCheckingFormulae);
+        			}	
+				} catch (StateSpaceGenerationAbortedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            } else {
+            	generator.proofStructure.addAssertion(state, modelCheckingFormulae);
+            }
         }
         
         
@@ -291,4 +314,16 @@ public class StateSpaceGeneratorBuilder {
     	this.proofStructure = proofStructure;
     	return this;
     }
+    
+    public StateSpaceGeneratorBuilder setModelCheckingFormulae(List<Node> modelCheckingFormulae) {
+    	
+    	this.modelCheckingFormulae = modelCheckingFormulae;
+    	return this;
+    }
+    
+//    public StateSpaceGeneratorBuilder setStateSpaceGenerationStrategy(StateSpaceGenerationStrategy stateSpaceGenerationStrategy) {
+//    	
+//    	generator.stateSpaceGenerationStrategy = stateSpaceGenerationStrategy;
+//    	return this;
+//    }
 }

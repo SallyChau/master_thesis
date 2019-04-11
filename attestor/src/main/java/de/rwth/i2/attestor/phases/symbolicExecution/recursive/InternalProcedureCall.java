@@ -49,9 +49,6 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
     	ProgramState initialState = preconditionState.clone();
 
         try {
-        	System.out.println("Generate state space for method " + method.getSignature());
-        	System.out.println("initial state " + initialState);
-        	System.out.println("precodure initial heap " + getInput());
             StateSpace stateSpace = factory.create( method.getBody(), initialState ).generate();
 
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
@@ -72,48 +69,40 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
     }
     
     @Override
-	public StateSpace execute(List<Node> formulae) {
+	public StateSpace executeOnTheFly(List<Node> formulae) {
     	
     	ProgramState initialState = preconditionState.clone();
 
         try {        	
-        	StateSpaceGenerator stateSpaceGenerator = factory.create( method.getBody(), initialState );
+        	StateSpaceGenerator stateSpaceGenerator = factory.create( method.getBody(), initialState, formulae );
         	
         	System.out.println("InternalProcedureCall: Generate state space for method " + method.getName() + " and formulae " + formulae);
-            StateSpace stateSpace = stateSpaceGenerator.generateAndCheck(initialState, formulae);
+            StateSpace stateSpace = stateSpaceGenerator.generateOnTheFly();
             OnTheFlyProofStructure proofStructure = stateSpaceGenerator.getProofStructure();    
-            List<Node> outputFormulae = stateSpaceGenerator.getReturnFormulae();
+            List<Node> resultFormulae = stateSpaceGenerator.getResultFormulae();
             
-            if (proofStructure.isSuccessful() && outputFormulae == null) {
+            if (proofStructure.isSuccessful() && resultFormulae == null) {
 
                 System.out.println("Proofstructure for method: " + method.getName() + " was successful");
                 LTLFormula ltlFormula = new LTLFormula("true");
                 ltlFormula.toPNF();
-                outputFormulae = new LinkedList<>();
-                outputFormulae.add(ltlFormula.getASTRoot().getPLtlform());
+                resultFormulae = new LinkedList<>();
+                resultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
             } else if (!proofStructure.isSuccessful()) {
             	
             	System.out.println("Proofstructure for method: " + method.getName() + " was unsuccessful");
                 // TODO abort model checking here
             }
-
-            if (stateSpaceGenerator.getStateExplorationStrategy().hasUnexploredStates()) {
-            	System.err.println("State Space has unexplored states left");
-            }
             
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
             Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
-            contract.addFormulaPair(formulae, outputFormulae);
+            contract.addFormulaPair(formulae, resultFormulae);
             method.addContract(contract);
-            
-            if (finalHeaps.isEmpty()) System.err.println("Internal Procedure Call: Final heaps is empty ");
             
             registry.registerStateSpace( this, stateSpace );
             registry.registerProofStructure(this, proofStructure);
-            registry.registerReturnFormulae(this, outputFormulae);
-            
-            System.out.println("Method " + method.getName() + " generated output formulae " + outputFormulae + "\n");
+            registry.registerReturnFormulae(this, resultFormulae);
             
             return stateSpace;
         } catch (Exception e) {

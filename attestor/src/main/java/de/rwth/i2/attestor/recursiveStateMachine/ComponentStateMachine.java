@@ -7,6 +7,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -25,6 +28,8 @@ import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 public class ComponentStateMachine {
+	
+	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");
 	
 	private Method method;
 	private HierarchicalProofStructure proofStructure;	
@@ -115,34 +120,23 @@ public class ComponentStateMachine {
 	 */
 	public List<Node> check(ProgramState inputState, SemanticsCommand statement, List<Node> formulae) {
 		
-		System.out.println("Model checking called CSM for method " + method.getSignature());
-		System.out.println("with formulae " + formulae);
+		logger.debug("Model checking method " + method.getSignature() + " for formulae " + formulae);
 		
 		StateSpace stateSpace = getStateSpace(inputState, statement);
 		HeapConfiguration heapInScope = getHeapInScope(inputState, statement);
 		List<Node> returnFormulae = getOutputFormulae(heapInScope, formulae);
-		if (returnFormulae.isEmpty()) {
-		
-			proofStructure.build(stateSpace, formulae);
-			
-			System.err.println("CSM: Proof structure successful for method " + method.getSignature() + ":" + proofStructure.isSuccessful());
-			if (proofStructure.getHierarchicalFailureTrace() != null) {
-				System.err.println("CSM: Failure trace: " + proofStructure.getHierarchicalFailureTrace());
-            	System.err.println("Hierarchical Model Checking Phase: " + proofStructure.getHierarchicalFailureTrace().getStateIdTrace());
-			}
-			
+		if (returnFormulae.isEmpty()) {		
+			proofStructure.build(stateSpace, formulae);		 
 			returnFormulae = proofStructure.getOutputFormulae();
 			addModelCheckingContract(heapInScope, formulae, returnFormulae, proofStructure.isSuccessful(), proofStructure.getHierarchicalFailureTrace());
-		} else {
-			System.err.println("Using existing MC contract");
-		}
+			
+			logger.debug("Proofstructure was successful for " + method.getSignature() + "? " + proofStructure.isSuccessful());
+		} 
 		
-		return returnFormulae;
+		return returnFormulae;		
 	}
 	
 	private ModelCheckingContract matchModelCheckingContract(HeapConfiguration heap, List<Node> formulae) {
-		
-		System.out.println("Matching model checking contracts for " + method.getSignature());
 	    
 		for (ModelCheckingContract mc : modelCheckingContracts) {
 			if (mc.getInput().equals(heap) && mc.getInputFormulae().equals(formulae)) {
@@ -160,8 +154,6 @@ public class ComponentStateMachine {
 	 * @return
 	 */
 	public ModelCheckingContract getModelCheckingContract(ProcedureCall call, LTLFormula formula) {
-		
-		System.out.println("Getting model checking contracts for " + method.getSignature());
 		
 		List<Node> formulae = new LinkedList<>();
 		formulae.add(formula.getASTRoot().getPLtlform());

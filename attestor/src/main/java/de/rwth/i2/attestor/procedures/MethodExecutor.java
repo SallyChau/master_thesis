@@ -12,9 +12,9 @@ public interface MethodExecutor {
 
     Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input);
     
-    Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, List<Node> formulae);
+    Collection<ProgramState> getResultStatesOnTheFly(ProgramState callingState, ProgramState input, List<Node> formulae);
 
 	Collection<Contract> getContractsForExport();
 
-	List<Node> getResultFormulae(ProgramState programState, ProgramState preparedState, List<Node> formulae);
+	List<Node> getResultFormulaeOnTheFly(ProgramState programState, ProgramState preparedState, List<Node> formulae);
 }

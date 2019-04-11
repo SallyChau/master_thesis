@@ -38,5 +38,5 @@ public interface PartialStateSpace {
     StateSpace unfinishedStateSpace();
     
     
-    void continueExecution(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure);
+    void continueExecutionOnTheFly(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure);
 }

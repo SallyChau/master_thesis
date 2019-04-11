@@ -28,5 +28,5 @@ public interface ProcedureCall {
     StateSpace execute();
     Method getMethod();
     ProgramState getInput();
-	StateSpace execute(List<Node> formulae);
+	StateSpace executeOnTheFly(List<Node> formulae);
 }

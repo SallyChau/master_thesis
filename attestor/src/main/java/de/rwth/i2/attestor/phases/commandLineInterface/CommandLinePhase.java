@@ -1,5 +1,13 @@
 package de.rwth.i2.attestor.phases.commandLineInterface;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.Scene;
@@ -11,13 +19,6 @@ import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.OutputSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.StateLabelingStrategyBuilderTransformer;
 import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategyBuilder;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
-
-import java.util.Arrays;
-import java.util.Iterator;
 
 public class CommandLinePhase extends AbstractPhase
         implements InputSettingsTransformer, OutputSettingsTransformer,
@@ -145,6 +146,12 @@ public class CommandLinePhase extends AbstractPhase
             case "model-checking":
                 modelChecking(option);
                 break;
+            case "mc-mode":
+            	modelCheckingMode(option);
+            	break;
+            case "mc-skip":
+            	modelCheckingSkip(option);
+            	break;
             case "no-garbage-collector":
                 noGarbageCollector();
                 break;
@@ -341,6 +348,33 @@ public class CommandLinePhase extends AbstractPhase
         } catch (Exception e) {
             logger.error("The input " + formula + " is not a valid LTL formula. Skipping it.");
         }
+    }
+    
+    private void modelCheckingMode(Option option) {
+
+        String mode = option.getValue();
+        try {
+            modelCheckingSettings.setModelCheckingMode(mode);
+            logger.info("model-checking mode: " + mode);
+        } catch (Exception e) {
+            logger.error("The input " + mode + " is not a valid model checking mode. Skipping it.");
+        }
+    }
+    
+    private void modelCheckingSkip(Option option) {
+
+    	String[] values = option.getValues();
+        if(values.length == 0) {
+            throw new IllegalArgumentException("No method name to skip has been provided.");
+        }
+
+    	String[] methods = values[0].split(",");
+    	
+    	for (int i = 0; i < methods.length; i++) {
+    		String method = methods[i];
+	        modelCheckingSettings.addMethodToSkip(method);
+	        logger.info("excluded method " + method + " from model checking");
+    	}
     }
 
     private void noGarbageCollector() {

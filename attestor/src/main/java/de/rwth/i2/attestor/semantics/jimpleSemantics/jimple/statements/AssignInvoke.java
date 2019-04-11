@@ -76,7 +76,6 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
         
-        System.out.println("Calling state: " + programState.getHeap());
         System.out.println("Called method " + method.getSignature());
 
         Collection<ProgramState> methodResult = method
@@ -85,11 +84,8 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         return getCleanedResultStates(methodResult);
     }
     
-    /**
-     * On the fly model checking
-     */
     @Override
-	public Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
 
         // programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
@@ -97,17 +93,17 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState, formulae);
+                .getResultStatesOnTheFly(programState, preparedState, formulae);
         return getCleanedResultStates(methodResult);
     }
     
     @Override
-	public List<Node> getResultFormulae(ProgramState programState, List<Node> formulae) {
+	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
     	// programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
 
-        return method.getMethodExecutor().getResultFormulae(programState, preparedState, formulae);
+        return method.getMethodExecutor().getResultFormulaeOnTheFly(programState, preparedState, formulae);
     }
 
     protected Collection<ProgramState> getCleanedResultStates(Collection<ProgramState> resultStates) {

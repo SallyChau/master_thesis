@@ -32,26 +32,25 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
-        System.out.println("Scoped heap " + scopedHeap.getHeapInScope());
         Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap);
         return createResultStates(input, postconditions);
     }
     
     @Override
-	public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, List<Node> formulae) {
+	public Collection<ProgramState> getResultStatesOnTheFly(ProgramState callingState, ProgramState input, List<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
-        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap, formulae);
+        Collection<HeapConfiguration> postconditions = getPostconditionsOnTheFly(callingState, scopedHeap, formulae);
         return createResultStates(input, postconditions);
     }
     
     @Override
-	public List<Node> getResultFormulae(ProgramState callingState, ProgramState input, List<Node> formulae) {
+	public List<Node> getResultFormulaeOnTheFly(ProgramState callingState, ProgramState input, List<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
-        return getOutputFormulae(callingState, scopedHeap, formulae);
+        return getOutputFormulaeOnTheFly(callingState, scopedHeap, formulae);
     }
     
     protected Collection<ProgramState> createResultStates(ProgramState input,
@@ -82,10 +81,10 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     	return contractCollection.getContractsForExport();
     }
 
-	protected abstract Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap,
+	protected abstract Collection<HeapConfiguration> getPostconditionsOnTheFly(ProgramState callingState, ScopedHeap scopedHeap,
 			List<Node> formulae);
 	
-	protected abstract List<Node> getOutputFormulae(ProgramState callingState, ScopedHeap scopedHeap,
+	protected abstract List<Node> getOutputFormulaeOnTheFly(ProgramState callingState, ScopedHeap scopedHeap,
 			List<Node> formulae);
 
 }

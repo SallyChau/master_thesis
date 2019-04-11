@@ -25,15 +25,20 @@ public interface SemanticsCommand {
     Collection<ProgramState> computeSuccessors(ProgramState programState);
     
     /**
-     * Works as computeSuccessors(ProgramState) but also model checks formulae
-     * @param programState
-     * @param formula
-     * @param proofStructure
-     * @return
+     * Works as {@SemanticsCommand.computeSuccessors(ProgramState programState)} but also model checks formulae for programState.
+     * @param programState The state on which the abstract program semantics shall be executed.
+     * @param formula The formula to be checked for programState.
+     * @return All states resulting from executing the program semantics on programState.
      */
-    Collection<ProgramState> computeSuccessors(ProgramState programState, List<Node> formulae);
+    Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae);
     
-    List<Node> getResultFormulae(ProgramState programState, List<Node> formulae);
+    /**
+     * Returns the formulae to be checked for successor states of programState after the model checking for programState is done.
+     * @param programState The state on which the abstract program semantics shall be executed.
+     * @param formulae The formula to be checked for programState.
+     * @return All formulae resulting from model checking the program semantics on programState.
+     */
+    List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae);
 
     /**
      * @return All potential violation points that may prevent execution of this statement.
@@ -51,7 +56,11 @@ public interface SemanticsCommand {
      */
     boolean needsCanonicalization();
     
-    // TODO refactor
+    /**
+     * Prepares the heap of programState for the execution of the statement.
+     * @param programState
+     * @return The prepared heap.
+     */
     ProgramState prepareHeap(ProgramState programState);
 
 }

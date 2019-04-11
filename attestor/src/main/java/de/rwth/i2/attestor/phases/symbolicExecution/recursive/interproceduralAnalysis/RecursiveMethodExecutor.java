@@ -27,24 +27,19 @@ public class RecursiveMethodExecutor extends AbstractInterproceduralMethodExecut
      * generated in a later phase in order to detect fixpoints.
      */
 	@Override
-	protected void generateAndAddContract( ProcedureCall call) {
+	protected void generateAndAddContract(ProcedureCall call) {
 		
 		Collection<HeapConfiguration> postconditions = new LinkedHashSet<>();
 		getContractCollection().addContract(new InternalContract(call.getInput().getHeap(), postconditions));
 		
-		procedureRegistry.registerProcedure( call );
+		procedureRegistry.registerProcedure(call);
 	}
 
 	@Override
-	protected void generateAndAddContract(ProcedureCall call, List<Node> formulae) {
+	protected void generateAndAddContractOnTheFly(ProcedureCall call, List<Node> formulae) {
 		
-		Collection<HeapConfiguration> postconditions = new LinkedHashSet<>();
-		getContractCollection().addContract(new InternalContract(call.getInput().getHeap(), postconditions));
-		
-		procedureRegistry.registerProcedure( call );		
-		procedureRegistry.registerFormulae( call, formulae );
-		
-		System.out.println("Registered procedure call to method " + call.getMethod().getName());
+		generateAndAddContract(call);		
+		procedureRegistry.registerFormulae(call, formulae);
 	}
 
 }

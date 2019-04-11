@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.AbstractProofStructure;
@@ -27,6 +30,8 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
 public class HierarchicalProofStructure extends AbstractProofStructure {
+	
+	private static final Logger logger = LogManager.getLogger("hierarchicalProofStructure.java");
 	
 	private ComponentStateMachine csm;
 	private StateSpace stateSpace;
@@ -49,6 +54,8 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	}
 	
 	public void build(StateSpace stateSpace, List<Node> formulae) {
+		
+		logger.debug("Building hierarchical proof structure for formula " + formulae.toString());
 		
 		this.stateSpace = stateSpace;
 
@@ -138,21 +145,22 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		
 		if (getCalledMethodSignature(statement) != null) {
 			ComponentStateMachine calledCSM = csm.getBox(state);	
-			List<Node> inputFormulae = nextFormulae;
-			nextFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
-			
-			if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
+			if (calledCSM != null) {
+				// skip model checking of procedure call if called csm does not exist (can be configured by input settings: mc-skip)
+				List<Node> inputFormulae = nextFormulae;
+				nextFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
 				
-				this.successful = false;				
-				setOriginOfFailure(assertion);
-				hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
-				hierarchicalFailureTrace.addHierarchicalFailureTrace(calledCSM.getHierarchicalFailureTrace(state, statement, inputFormulae));
-				
-                // abort proof structure generation, as we already know that it is not successful!
-                if (!buildFullStructure) return Collections.emptyList();
+				if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
+					
+					this.successful = false;				
+					setOriginOfFailure(assertion);
+					hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
+					hierarchicalFailureTrace.addHierarchicalFailureTrace(calledCSM.getHierarchicalFailureTrace(state, statement, inputFormulae));
+					
+	                // abort proof structure generation, as we already know that it is not successful!
+	                if (!buildFullStructure) return Collections.emptyList();
+				}
 			}
-			
-			System.out.println("Returned to CSM " + csm.toString());
 		} 		
 		
 		// Create Assertions

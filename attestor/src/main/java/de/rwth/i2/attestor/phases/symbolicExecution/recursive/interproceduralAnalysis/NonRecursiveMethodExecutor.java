@@ -28,7 +28,7 @@ public class NonRecursiveMethodExecutor extends AbstractInterproceduralMethodExe
 	}
 	
 	@Override
-	protected void generateAndAddContract(ProcedureCall call, List<Node> formulae) {
-		call.execute(formulae);
+	protected void generateAndAddContractOnTheFly(ProcedureCall call, List<Node> formulae) {
+		call.executeOnTheFly(formulae);
 	}  
 }

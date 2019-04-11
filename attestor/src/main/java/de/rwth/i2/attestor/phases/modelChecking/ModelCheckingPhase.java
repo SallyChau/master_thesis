@@ -1,6 +1,7 @@
 package de.rwth.i2.attestor.phases.modelChecking;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,17 +11,22 @@ import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
+import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.SimpleProofStructure;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
 import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
+import de.rwth.i2.attestor.recursiveStateMachine.RecursiveStateMachine;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingResultsTransformer {
 
+	private ModelCheckingSettings mcSettings;
     private final Map<LTLFormula, ModelCheckingResult> formulaResults = new LinkedHashMap<>();
     private final Map<LTLFormula, ModelCheckingTrace> traces = new LinkedHashMap<>();
     private boolean allSatisfied = true;
@@ -41,14 +47,75 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
     @Override
     public void executePhase() {
 
-        ModelCheckingSettings mcSettings = getPhase(MCSettingsTransformer.class).getMcSettings();
+        mcSettings = getPhase(MCSettingsTransformer.class).getMcSettings();
         Set<LTLFormula> formulae = mcSettings.getFormulae();
         if (formulae.isEmpty()) {
             logger.debug("No LTL formulae have been provided.");
             return;
         }
+        
+        String mode = mcSettings.getModelCheckingMode();
+        
+        switch (mode) {
+        	case "hierarchical":
+        		modelCheckHierarchically(formulae);
+        		break;
+        	case "default":
+        	default:
+        		modelCheck(formulae);
+        }        
+    }
+    
+    private void modelCheckHierarchically(Set<LTLFormula> formulae) {
+    	
+    	logger.info("hierarchical model checking");
+    	
+    	// build RSM
+    	Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = getPhase(StateSpaceTransformer.class).getProcedureStateSpaces();
+		Map<ProgramState, ProcedureCall> callingStatesToCall = getPhase(StateSpaceTransformer.class).getCallingStatesToCall();
+		List<String> methodsToSkip = mcSettings.getMethodsToSkip();
+        RecursiveStateMachine rsm = new RecursiveStateMachine(stateSpaceToAnalyzedCall, callingStatesToCall, methodsToSkip);	
+    	
+        // start hierarchical model checking for one main procedure call 
+        // other main procedure calls are implied by initial states that are already included in the state space
+    	for (LTLFormula formula : formulae) {
+    		
+    		String formulaString = formula.getFormulaString();
+    		logger.info("Checking formula: " + formulaString + "...");
 
-        StateSpace stateSpace = getPhase(StateSpaceTransformer.class).getStateSpace();  
+    		ProcedureCall call = getPhase(StateSpaceTransformer.class).getMainProcedureCalls().get(0);
+            
+            if (rsm.check(call, formula)) {
+
+                if(rsm.getOrCreateComponentStateMachine(call.getMethod()).getStateSpace(call.getInput(), null).containsAbortedStates()) {
+                    allSatisfied = false;
+                    formulaResults.put(formula, ModelCheckingResult.UNKNOWN);
+                    logger.info("done. It is unknown whether the formula is satisfied.");
+                } else {
+                    formulaResults.put(formula, ModelCheckingResult.SATISFIED);
+                    logger.info("done. Formula is satisfied.");
+                    numberSatFormulae++;
+                }
+            } else {
+                logger.info("Formula is violated: " + formulaString);
+                allSatisfied = false;
+                formulaResults.put(formula, ModelCheckingResult.UNSATISFIED);
+
+                if (scene().options().isIndexedMode()) {
+                    logger.warn("Counterexample generation for indexed grammars is not supported yet.");
+                } else {
+                    HierarchicalFailureTrace failureTrace = rsm.getHierarchicalFailureTrace(call, formula);
+                    traces.put(formula, failureTrace);
+                }
+            }
+    	}     		
+	}
+
+	private void modelCheck(Set<LTLFormula> formulae) {
+		
+		logger.info("model checking");
+		
+    	StateSpace stateSpace = getPhase(StateSpaceTransformer.class).getStateSpace();  
         
         // build proof structure for each formula
         for (LTLFormula formula : formulae) {
@@ -70,7 +137,6 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
                     logger.info("done. Formula is satisfied.");
                     numberSatFormulae++;
                 }
-
             } else {
                 logger.info("Formula is violated: " + formulaString);
                 allSatisfied = false;

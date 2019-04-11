@@ -9,6 +9,9 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
@@ -19,30 +22,42 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
 public class RecursiveStateMachine {
+	
+	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");
 
 	private Map<Method, ComponentStateMachine> components = new LinkedHashMap<>();
 	private Map<ProcedureCall, List<ModelCheckingContract>> modelCheckingResults = new LinkedHashMap<>();
 	
-	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, Map<ProgramState, ProcedureCall> callingStatesToCall) {
+	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, 
+								 Map<ProgramState, ProcedureCall> callingStatesToCall,
+								 List<String> methodsToSkip) {
 
 		// build Component State Machines
 		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
 		for (ProcedureCall call : procedureCalls) {
 			
 			Method method = call.getMethod();
-			StateSpace stateSpace = null;
-			for (Entry<StateSpace, ProcedureCall> entry : stateSpaceToAnalyzedCall.entrySet()) {
-	            if (Objects.equals(call, entry.getValue())) {
-	                stateSpace = entry.getKey();
-	            }
-	        }
-	        
-			ProgramState callingState = call.getInput();
 			
-			ComponentStateMachine csm = getOrCreateComponentStateMachine(method);
-			csm.addStateSpace(callingState, stateSpace); 
+			if (!methodsToSkip.contains(method.getName())) {			
 			
-			components.put(method, csm);			
+				StateSpace stateSpace = null;
+				for (Entry<StateSpace, ProcedureCall> entry : stateSpaceToAnalyzedCall.entrySet()) {
+		            if (Objects.equals(call, entry.getValue())) {
+		                stateSpace = entry.getKey();
+		            }
+		        }
+		        
+				ProgramState callingState = call.getInput();
+				
+				ComponentStateMachine csm = getOrCreateComponentStateMachine(method);
+				csm.addStateSpace(callingState, stateSpace); 
+				
+				components.put(method, csm);	
+				
+				logger.debug("Created CSM for method " + method.getName());
+			} else {
+				logger.debug("Skipping method " + method.getName());
+			}
 		}
 		
 		// translate procedure calls to CSM boxes
@@ -50,8 +65,8 @@ public class RecursiveStateMachine {
 		for (ProgramState state : callingStates) {
 			StateSpace stateSpace = state.getContainingStateSpace();
 			ComponentStateMachine caller = getComponentStateMachine(stateSpace);
-			ComponentStateMachine callee = getOrCreateComponentStateMachine(callingStatesToCall.get(state).getMethod());
-			if (caller != null) caller.addBox(state, callee);
+			ComponentStateMachine callee = getComponentStateMachine(callingStatesToCall.get(state).getMethod());
+			if (caller != null && callee != null) caller.addBox(state, callee);
 		}		
 	}
 	
@@ -75,6 +90,11 @@ public class RecursiveStateMachine {
             components.put(method, result);
             return result;
         }
+	}	
+	
+	public ComponentStateMachine getComponentStateMachine(Method method) {
+		
+        return components.get(method);
 	}	
 	
 	/**

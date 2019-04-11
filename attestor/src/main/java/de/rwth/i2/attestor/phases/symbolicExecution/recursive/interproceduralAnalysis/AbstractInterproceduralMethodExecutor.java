@@ -35,9 +35,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
 	    if( contractMatch.hasMatch() ) {
 	    	heapInScope = contractMatch.getPrecondition();
-	    }
-	    
-	    System.out.println("Heap in scope: " + heapInScope);
+	    }	    
 	    
 	    ProcedureCall call = procedureRegistry.getProcedureCall( method, heapInScope );
 	    procedureRegistry.registerDependency( callingState, call );
@@ -45,7 +43,6 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    if(!contractMatch.hasMatch()) {
 	        
 	        ContractCollection contractCollection = getContractCollection();
-	        System.out.println("Input Heap of call: " + call.getInput());
 	        generateAndAddContract( call);
 	        contractMatch = contractCollection.matchContract(heapInScope);
 	    }
@@ -54,7 +51,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	}
 	
 	@Override
-	protected final Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap, List<Node> formulae) {
+	protected final Collection<HeapConfiguration> getPostconditionsOnTheFly(ProgramState callingState, ScopedHeap scopedHeap, List<Node> formulae) {
 		
 	    HeapConfiguration heapInScope = scopedHeap.getHeapInScope();
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
@@ -68,7 +65,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    if(!contractMatch.hasMatch()) {
 	        
 	        ContractCollection contractCollection = getContractCollection();
-	        generateAndAddContract(call, formulae);
+	        generateAndAddContractOnTheFly(call, formulae);
 	        contractMatch = contractCollection.matchContract(heapInScope);
 	    }
 	    
@@ -77,7 +74,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	
 	// TODO refactor so that contracts dont need to be matched twice
 	@Override
-	protected List<Node> getOutputFormulae(ProgramState callingState, ScopedHeap scopedHeap, List<Node> inputFormulae){
+	protected List<Node> getOutputFormulaeOnTheFly(ProgramState callingState, ScopedHeap scopedHeap, List<Node> inputFormulae){
 		HeapConfiguration heapInScope = scopedHeap.getHeapInScope();
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
 	    if( contractMatch.hasMatch() ) {
@@ -90,7 +87,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    if(!contractMatch.hasMatch() && !contractMatch.hasInputFormulaeMatch(inputFormulae)) {
 	        
 	        ContractCollection contractCollection = getContractCollection();
-	        generateAndAddContract(call, inputFormulae);
+	        generateAndAddContractOnTheFly(call, inputFormulae);
 	        contractMatch = contractCollection.matchContract(heapInScope);
 	    }    
 	    
@@ -106,6 +103,6 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	/**
 	 * For on-the-fly
 	 */
-	abstract protected void generateAndAddContract(ProcedureCall call, List<Node> formulae);
+	abstract protected void generateAndAddContractOnTheFly(ProcedureCall call, List<Node> formulae);
 
 }
