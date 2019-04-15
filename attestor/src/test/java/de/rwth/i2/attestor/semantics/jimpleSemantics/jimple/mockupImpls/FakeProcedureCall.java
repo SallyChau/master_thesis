@@ -1,5 +1,10 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.mockupImpls;
 
+import static org.junit.Assert.fail;
+
+import java.util.List;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoStateCounter;
@@ -10,8 +15,6 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerator;
-
-import static org.junit.Assert.fail;
 
 public class FakeProcedureCall implements ProcedureCall {
 
@@ -60,6 +63,9 @@ public class FakeProcedureCall implements ProcedureCall {
 		return initialState;
 	}
 
-
-
+	@Override
+	public StateSpace executeOnTheFly(List<Node> formulae) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

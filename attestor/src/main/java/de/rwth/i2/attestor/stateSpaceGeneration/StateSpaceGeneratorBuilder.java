@@ -2,8 +2,10 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
@@ -37,7 +39,7 @@ public class StateSpaceGeneratorBuilder {
     private OnTheFlyProofStructure proofStructure = null;
     
     
-    private List<Node> modelCheckingFormulae = new LinkedList<>();
+    private Set<Node> modelCheckingFormulae = new HashSet<>();
 
 
     /**
@@ -137,17 +139,20 @@ public class StateSpaceGeneratorBuilder {
             }
             generator.stateLabelingStrategy.computeAtomicPropositions(state);
             generator.stateExplorationStrategy.addUnexploredState(state, false);
+            
+            
+            // for model checking 
             if(state.isContinueState()) {
             	try {
-                	List<ProgramState> successors = generator.computeMCSuccessorStates(state, modelCheckingFormulae); 
+                	Collection<ProgramState> successors = generator.computeControlFlowSuccessors(state, modelCheckingFormulae); 
                 	for (ProgramState successorState : successors) {    	    		
                 		generator.proofStructure.addAssertion(successorState, modelCheckingFormulae);
         			}	
 				} catch (StateSpaceGenerationAbortedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
             } else {
+            	System.out.println("StateSpaceGeneratorBuilder: adding initial assertions to proof structure");
             	generator.proofStructure.addAssertion(state, modelCheckingFormulae);
             }
         }
@@ -315,7 +320,7 @@ public class StateSpaceGeneratorBuilder {
     	return this;
     }
     
-    public StateSpaceGeneratorBuilder setModelCheckingFormulae(List<Node> modelCheckingFormulae) {
+    public StateSpaceGeneratorBuilder setModelCheckingFormulae(Set<Node> modelCheckingFormulae) {
     	
     	this.modelCheckingFormulae = modelCheckingFormulae;
     	return this;

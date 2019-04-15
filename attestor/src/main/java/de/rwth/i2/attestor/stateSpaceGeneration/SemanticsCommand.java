@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.stateSpaceGeneration;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
@@ -30,7 +29,7 @@ public interface SemanticsCommand {
      * @param formula The formula to be checked for programState.
      * @return All states resulting from executing the program semantics on programState.
      */
-    Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae);
+    Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae);
     
     /**
      * Returns the formulae to be checked for successor states of programState after the model checking for programState is done.
@@ -38,7 +37,15 @@ public interface SemanticsCommand {
      * @param formulae The formula to be checked for programState.
      * @return All formulae resulting from model checking the program semantics on programState.
      */
-    List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae);
+    Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae);
+    
+    /**
+     * 
+     * @param lastCheckedState
+     * @param nextFormulae
+     * @return
+     */
+	boolean satisfiesFormulae(ProgramState lastCheckedState, Set<Node> nextFormulae);
 
     /**
      * @return All potential violation points that may prevent execution of this statement.

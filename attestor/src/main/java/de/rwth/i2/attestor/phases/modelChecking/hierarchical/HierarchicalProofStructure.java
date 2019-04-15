@@ -36,7 +36,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	private ComponentStateMachine csm;
 	private StateSpace stateSpace;
 	private Map<ProgramState, Set<Assertion2>> stateToAssertions = new LinkedHashMap<>();		
-	private List<Node> outputFormulae = new LinkedList<>();
+	private Set<Node> outputFormulae = new HashSet<>();
 
 	private HierarchicalFailureTrace hierarchicalFailureTrace = new HierarchicalFailureTrace();
 	
@@ -47,13 +47,13 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	
 	public void build(StateSpace stateSpace, LTLFormula formula) {
 		
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		build(stateSpace, formulae);
 	}
 	
-	public void build(StateSpace stateSpace, List<Node> formulae) {
+	public void build(StateSpace stateSpace, Set<Node> formulae) {
 		
 		logger.debug("Building hierarchical proof structure for formula " + formulae.toString());
 		
@@ -62,7 +62,9 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		Set<ProgramState> initialStates = this.stateSpace.getInitialStates();		
 		for (ProgramState state : initialStates) {
 			Assertion2 assertion = new Assertion2(state, null);
-			assertion.addFormulae(formulae);
+			for (Node formula : formulae) {
+				assertion.addFormula(formula);
+			}
 			addAssertion(assertion);
 			queue.add(assertion);
 		}
@@ -138,7 +140,10 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		ProgramState state = assertion.getProgramState();
 		List<Assertion2> successorAssertions = new LinkedList<>();
 		
-		List<Node> nextFormulae = assertion.getNextFormulae();
+		Set<Node> nextFormulae = new HashSet<>();
+		for (Node formula : assertion.getNextFormulae()) {
+			nextFormulae.add(formula);
+		};
 		
 		// Check for method call
 		SemanticsCommand statement = csm.getSemanticsCommand(state);
@@ -147,7 +152,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			ComponentStateMachine calledCSM = csm.getBox(state);	
 			if (calledCSM != null) {
 				// skip model checking of procedure call if called csm does not exist (can be configured by input settings: mc-skip)
-				List<Node> inputFormulae = nextFormulae;
+				Set<Node> inputFormulae = nextFormulae;
 				nextFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
 				
 				if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
@@ -173,7 +178,9 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			
 			// successor nodes of the current node have to satisfy the Next formulae of the current node
 			Assertion2 successorAssertion = new Assertion2(successorState, assertion, true);
-			successorAssertion.addFormulae(nextFormulae);
+			for (Node formula : nextFormulae) {
+				successorAssertion.addFormula(formula);
+			}
 			successorAssertions.add(successorAssertion);
 		}
 
@@ -285,7 +292,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	 * Output formulae can be used to continue model checking in other states spaces that called this state space.
 	 * @return list of formulae that need to be checked at the successor states of the final states of a state space
 	 */
-	public List<Node> getOutputFormulae() {
+	public Set<Node> getOutputFormulae() {
 		
 		return outputFormulae;
 	}

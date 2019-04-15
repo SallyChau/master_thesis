@@ -1,8 +1,8 @@
 package de.rwth.i2.attestor.phases.modelChecking.onthefly;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +20,10 @@ import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContractCollection;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.ModelCheckingInterproceduralAnalysis;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.NonRecursiveModelCheckingMethodExecutor;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.RecursiveModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContractCollection;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
@@ -27,9 +31,7 @@ import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.scopes.Default
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureRegistry;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.NonRecursiveMethodExecutor;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.RecursiveMethodExecutor;
 import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.InputTransformer;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
@@ -72,7 +74,7 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
 		
 		System.out.println("--- On-the-fly Model Checking ---");
 		
-    	interproceduralAnalysis = new InterproceduralAnalysis();
+    	interproceduralAnalysis = new ModelCheckingInterproceduralAnalysis();
     	loadInitialStates();
     	loadMainMethod();
     	initializeMethodExecutors();    	
@@ -181,18 +183,21 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
         for(Method method : scene ().getRegisteredMethods()) {
             MethodExecutor executor;
             ContractCollection contractCollection = new InternalContractCollection(preconditionMatchingStrategy);
+            ModelCheckingContractCollection mcContractCollection = new ModelCheckingContractCollection(preconditionMatchingStrategy);
             if(method.isRecursive()) {
-                executor = new RecursiveMethodExecutor(
+                executor = new RecursiveModelCheckingMethodExecutor(
                         method,
                         new DefaultScopeExtractor(this, method.getName()),
                         contractCollection,
+                        mcContractCollection,
                         procedureRegistry
                 );
             } else {
-                executor = new NonRecursiveMethodExecutor(
+                executor = new NonRecursiveModelCheckingMethodExecutor(
                 		method,
                         new DefaultScopeExtractor(this, method.getName()),
                         contractCollection,
+                        mcContractCollection,
                         procedureRegistry 
                 );
             }
@@ -200,13 +205,18 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
         }
     }
     
+    /**
+     * Register (current) main state space (incl proofStructure and result formulae) 
+     * in interprocedural analysis to continue model checking for procedure calls
+     */
     private void registerMainProcedureCalls() {
 
         for(ProgramState iState : initialStates) {
             StateSpace stateSpace = iState.getContainingStateSpace();
             ProcedureCall mainCall = new InternalProcedureCall(mainMethod, iState.getHeap(), stateSpaceGeneratorFactory, null);
             interproceduralAnalysis.registerStateSpace(mainCall, stateSpace);
-            interproceduralAnalysis.registerProofStructure(mainCall, proofStructure); // TODO adapt proof structure to initial states
+            interproceduralAnalysis.registerProofStructure(mainCall, proofStructure);
+            // no need to register result formulae for main because it wont be needed while state space is incomplete? TODO
         }
     }
     
@@ -241,6 +251,8 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
     	ModelCheckingSettings settings = getPhase(MCSettingsTransformer.class).getMcSettings();
         modelCheckingFormulae = settings.getFormulae();
         
+        System.out.println("onthefly" + settings.getMethodsToSkip());
+        
         if (modelCheckingFormulae.isEmpty()) {
             logger.debug("No LTL formulae have been provided.");
         }
@@ -250,24 +262,27 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
     	
         logger.info("Checking formula: " + formula.getFormulaString() + "...");
         
-        LinkedList<Node> formulae = new LinkedList<>();
+        Set<Node> formulae = new HashSet<>();
         formulae.add(formula.getASTRoot().getPLtlform());        
         
-        StateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates);
+        StateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates, formulae);
     	
     	try {
-    		System.out.println("Generate state space for method " + mainMethod.getName());
-			mainStateSpace = stateSpaceGenerator.generateAndCheck(initialStates, formulae);
+    		System.out.println("Phase: Generate main state space " + mainMethod.getName());
+			mainStateSpace = stateSpaceGenerator.generateOnTheFly();
 		} catch (StateSpaceGenerationAbortedException e) {	
 			e.printStackTrace();
 		}
     	
     	proofStructure = stateSpaceGenerator.getProofStructure();
+    	System.err.println("Phase: ProofStructure from main state space " + proofStructure);
     
 		registerMainProcedureCalls();
-        interproceduralAnalysis.run2();
+        interproceduralAnalysis.run();
     	
     	// process model checking result
+        System.out.println("Main state space: " + mainStateSpace);
+        System.out.println("Main Proof Structure successful? " + proofStructure.isSuccessful());
     	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
     	if (proofStructure.isSuccessful()) {
             if(mainStateSpace.containsAbortedStates()) {
@@ -288,8 +303,12 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
                 logger.warn("Counterexample generation for indexed grammars is not supported yet.");
             } else {
                 FailureTrace failureTrace = proofStructure.getFailureTrace(mainStateSpace);
+                interproceduralAnalysis.addFailureTrace(failureTrace);
                 System.out.println(failureTrace.toString());
-                traces.put(formula, failureTrace);
+                traces.put(formula, failureTrace);  // TODO adjust to hierarchical                   
+
+            	
+            	System.err.println("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
             }
         }
     }

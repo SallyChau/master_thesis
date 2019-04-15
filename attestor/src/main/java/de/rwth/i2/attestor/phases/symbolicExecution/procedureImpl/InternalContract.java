@@ -2,27 +2,22 @@ package de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.Contract;
 
 public class InternalContract implements Contract {
 
     private final HeapConfiguration precondition;
     private final Collection<HeapConfiguration> postconditions;
-    
-    private Map<List<Node>, List<Node>> inputToOutputFormulae;    
+    private final Collection<ModelCheckingContract> modelCheckingContracts;
 
     public InternalContract(HeapConfiguration precondition, Collection<HeapConfiguration> postconditions) {
 
         this.precondition = precondition;
         this.postconditions = postconditions;
-        
-        this.inputToOutputFormulae = new LinkedHashMap<>();
+        this.modelCheckingContracts = new ArrayList<>();
     }
 
     public InternalContract(HeapConfiguration precondition) {
@@ -47,22 +42,16 @@ public class InternalContract implements Contract {
 
         return postconditions;
     }
-    
-    @Override
-	public List<Node> getOutputFormulae(List<Node> inputFormulae) {
-    	
-    	return inputToOutputFormulae.get(inputFormulae);
-    }
-    
-    @Override
-	public Map<List<Node>, List<Node>> getFormulaeMap() {
 
-    	return this.inputToOutputFormulae;
-    }
-    
-    @Override
-	public void addFormulaPair(List<Node> inputFormulae, List<Node> outputFormulae) {
+	@Override
+	public void addModelCheckingContracts(Collection<ModelCheckingContract> contracts) {
+		
+		this.modelCheckingContracts.addAll(contracts);
+	}
 
-    	this.inputToOutputFormulae.put(inputFormulae, outputFormulae);
-    }
+	@Override
+	public Collection<ModelCheckingContract> getModelCheckingContracts() {
+
+		return modelCheckingContracts;
+	}
 }

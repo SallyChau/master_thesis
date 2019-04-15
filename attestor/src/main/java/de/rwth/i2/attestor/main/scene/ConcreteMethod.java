@@ -2,7 +2,9 @@ package de.rwth.i2.attestor.main.scene;
 
 import java.util.Collection;
 
-import de.rwth.i2.attestor.procedures.*;
+import de.rwth.i2.attestor.procedures.Contract;
+import de.rwth.i2.attestor.procedures.Method;
+import de.rwth.i2.attestor.procedures.MethodExecutor;
 import de.rwth.i2.attestor.stateSpaceGeneration.Program;
 
 class ConcreteMethod implements Method {
@@ -82,7 +84,7 @@ class ConcreteMethod implements Method {
     @Override
     public MethodExecutor getMethodExecutor() {
 
-        assert executor != null;
+        assert executor != null;	
         return executor;
     }
 

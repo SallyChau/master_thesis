@@ -2,9 +2,7 @@ package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAn
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.procedures.ContractCollection;
@@ -34,12 +32,4 @@ public class RecursiveMethodExecutor extends AbstractInterproceduralMethodExecut
 		
 		procedureRegistry.registerProcedure(call);
 	}
-
-	@Override
-	protected void generateAndAddContractOnTheFly(ProcedureCall call, List<Node> formulae) {
-		
-		generateAndAddContract(call);		
-		procedureRegistry.registerFormulae(call, formulae);
-	}
-
 }

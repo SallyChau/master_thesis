@@ -1,9 +1,10 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
-import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -57,7 +58,9 @@ public interface ProcedureRegistry {
 	
 	void registerProofStructure(ProcedureCall call, OnTheFlyProofStructure proofStructure);
 	
-	void registerFormulae(ProcedureCall call, List<Node> formulae);
+	void registerFormulae(ProcedureCall call, Set<Node> formulae);
 
-	void registerReturnFormulae(ProcedureCall call, List<Node> returnFormulae);
+	void registerReturnFormulae(ProcedureCall call, Set<Node> returnFormulae);
+
+	void addFailureTrace(FailureTrace failureTrace);
 }

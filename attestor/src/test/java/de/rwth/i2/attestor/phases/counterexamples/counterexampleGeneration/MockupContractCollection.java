@@ -2,10 +2,17 @@ package de.rwth.i2.attestor.phases.counterexamples.counterexampleGeneration;
 
 import static org.junit.Assert.fail;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.procedures.*;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.procedures.Contract;
+import de.rwth.i2.attestor.procedures.ContractCollection;
+import de.rwth.i2.attestor.procedures.ContractMatch;
 
 public class MockupContractCollection implements ContractCollection {
 
@@ -62,6 +69,18 @@ public class MockupContractCollection implements ContractCollection {
 					}else {
 						throw new IllegalStateException();
 					}
+				}
+
+				@Override
+				public ModelCheckingContract getModelCheckingContract(List<Node> inputFormulae) {
+					// TODO Auto-generated method stub
+					return null;
+				}
+
+				@Override
+				public boolean hasModelCheckingContractMatch(List<Node> inputFormulae) {
+					// TODO Auto-generated method stub
+					return false;
 				}
             };
     }

@@ -1,16 +1,18 @@
 package de.rwth.i2.attestor.procedures;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public abstract class AbstractMethodExecutor implements MethodExecutor {
 
-    private ScopeExtractor scopeExtractor;
+    protected ScopeExtractor scopeExtractor;
     private ContractCollection contractCollection;
 
     public AbstractMethodExecutor(ScopeExtractor scopeExtractor, ContractCollection contractCollection) {
@@ -37,20 +39,27 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     }
     
     @Override
-	public Collection<ProgramState> getResultStatesOnTheFly(ProgramState callingState, ProgramState input, List<Node> formulae) {
+	public Set<Node> getModelCheckingResultFormulae(ProgramState callingState, ProgramState input, Set<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
-        Collection<HeapConfiguration> postconditions = getPostconditionsOnTheFly(callingState, scopedHeap, formulae);
-        return createResultStates(input, postconditions);
+        ModelCheckingContract mcContract = getModelCheckingContract(callingState, scopedHeap, formulae);
+        if (mcContract != null) {
+        	return mcContract.getResultFormulae();
+        }
+        return Collections.emptySet();
     }
     
     @Override
-	public List<Node> getResultFormulaeOnTheFly(ProgramState callingState, ProgramState input, List<Node> formulae) {
+	public boolean satisfiesFormulae(ProgramState callingState, ProgramState input, Set<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
-        return getOutputFormulaeOnTheFly(callingState, scopedHeap, formulae);
+        ModelCheckingContract mcContract = getModelCheckingContract(callingState, scopedHeap, formulae);
+        if (mcContract != null) {
+        	return mcContract.modelCheckingIsSuccessful();
+        }
+        return true;
     }
     
     protected Collection<ProgramState> createResultStates(ProgramState input,
@@ -69,6 +78,9 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
 
     protected abstract Collection<HeapConfiguration> getPostconditions(ProgramState callingState,
                                                                        ScopedHeap scopedHeap);
+	
+	protected abstract ModelCheckingContract getModelCheckingContract(ProgramState callingState, ScopedHeap scopedHeap,
+			Set<Node> formulae);
 
     @Override
     public void addContract(Contract contract) {
@@ -80,11 +92,4 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     public Collection<Contract> getContractsForExport() {
     	return contractCollection.getContractsForExport();
     }
-
-	protected abstract Collection<HeapConfiguration> getPostconditionsOnTheFly(ProgramState callingState, ScopedHeap scopedHeap,
-			List<Node> formulae);
-	
-	protected abstract List<Node> getOutputFormulaeOnTheFly(ProgramState callingState, ScopedHeap scopedHeap,
-			List<Node> formulae);
-
 }

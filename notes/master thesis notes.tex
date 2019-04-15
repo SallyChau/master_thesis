@@ -1599,8 +1599,8 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 
 \begin{todolist}
 	\item CounterExampleGenerator
-	\item InterproceduralAnalysis.run()
-	\item InternalPartialStateSpace.continueExecution()
+	\item[\done] InterproceduralAnalysis.run()
+	\item[\done] InternalPartialStateSpace.continueExecution()
 	\item[\done] InternalProcedureCall.execute()
 	\item InternalContractGenerator
 	\item AbstractMarkingGenerator
@@ -1613,12 +1613,9 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 	\item[\done] Set abort criteria	
 	\item[\done] Example: refSll should visit \textbf{all} states
 	\item[\done] Example: MC\_completeness\_reverseWithInitialList has no final states: \textit{Model checking terminates before reaching final states, thus they do not need to be generated}
-	\item Generate more examples for testing procedure model checking 
 	\item[\done] Generate recursive example
-	\item Debug hierarchical model checking for recursive methods
 	\item[\done] Send back formulae resulting from model checking to upper state spaces 
-	\item Reuse partial graphs for model checking (generate new states if needed) - map proof structure to the same (continuing) state space
-	\item Contract generation
+	\item[\done] Contract generation
 	\begin{itemize}
 		\item when are contracts used? 
 		\item failed Model Checking: abort, no contracts necessary
@@ -1629,36 +1626,63 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 			\item continue generation with unexplored states --> generate() 
 			\item generate post and preconditions
 		\end{itemize} 
+		\item return true when sub-proof structure is successful
+		\item how to handle false proof structures? 
 	\end{itemize}
-	\item totalStatesCounter is at wrong position in generateAndCheck() method.. should only be called once for each state space
-	\item Implement recursive model checking in offline manner, but with hierarchical use of results: generate RSM out of procedure state spaces
-	\item Store model checking results to avoid multiple checks of the same state space/ method $\rightarrow$ store results
-	\item Adjust contract matching method to consider different input formulae for model checking
-	\item Abort model checking as soon as a failure is found in a procedure state space (use boolean variable buildFullStructure to also allow for full model checking)
-	\item Generate output report (diagram)
-	\item Add stats to model checking summary
-	\item Process return of procedure model checking
-	\item Clean up code
+	\item[\done] Store model checking results to avoid multiple checks of the same state space/ method $\rightarrow$ store results
+	\item[\done] Adjust contract matching method to consider different input formulae for model checking
+	\item Abort model checking as soon as a failure is found in a procedure state space (use boolean variable buildFullStructure to also allow for full model checking)	
+	\item Refactor state space generator
 	\item Debug time issue of hierarchical model checking
-	\item Write down implication relations for LTL formula (use for model checking contracts)
-	\item Compare offline and on-the-fly model checking
+	\item Reuse partial graphs for model checking (generate new states if needed) - map proof structure to the same (continuing) state space
+	\item totalStatesCounter is at wrong position in generateAndCheck() method.. should only be called once for each state space	
+	\item Generate more examples for testing procedure model checking 
 \end{todolist}
 
 \subsubsection{Notes}
 
 \begin{itemize}
 	\item Procedure call examples: G \{L(SLL)\} fails if method with list object is called by another method, e.g. main because the main state space is not a list
+	\item Constructor calls fail procedure model checking because they are started with initial empty heap; need to exclude them from procedure model checking and only use contracts on current heap
 \end{itemize}
 
-\subsection{Hierarchical State Space Generation}
+\subsection{Hierarchical Model Checking (offline)}
 (2 weeks)\\
 
-\textbf{Possible approaches:}
-\begin{enumerate}[(A)]
-\item Inject RSM in StateSpaceGenerator?
-\end{enumerate}
+\textbf{Possible approach:}
+\begin{itemize}
+	\item Create RSM from procedure state spaces
+	\item Model check state spaces separately
+	\item Get global failure trace
+\end{itemize}
+
+\subsubsection{To-Do}
+\begin{todolist}
+	\item[\done] Implement recursive model checking in offline manner, but with hierarchical use of results: generate RSM out of procedure state spaces	
+\end{todolist}
+
+\subsection{Global To-Do's}
+\begin{todolist}
+	\item Implement mechanism to decide on which procedures are checked and which not
+	\item Run Java Tests for proof structure
+		\begin{todolist}
+			\item[\done] TableauRulesSwitch2
+			\item[\done] ProofStructure2 (SimpleProofStructure)
+			\item HierarchicalProofStructure
+			\item OntheflyProofStructure
+			\item ModelCheckingContracts
+			\item Mechanism to decide which procedures to check
+			\item RSM
+		\end{todolist}
+	\item Generate output report (diagram)
+	\item Add statistics to model checking summary
+	\item Clean up code
+	\item Write down implication relations for LTL formula (use for model checking contracts)
+	\item Compare offline and on-the-fly model checking
+\end{todolist}
 
 \subsection{Extensions}	
+\subsubsection{Statically imply model checking results from LTL-formulae}
 \subsubsection{Pre-Model Checking of procedures/ contracts}
 (2 weeks)
 After procedure state space has been completely generated, model check state space for all sub-formulae of the initial LTL formula  $\varphi$: $\mathcal{O}(3^n)$ sub-formulae where $n$ is the number of sub-formulae in $\varphi$.	

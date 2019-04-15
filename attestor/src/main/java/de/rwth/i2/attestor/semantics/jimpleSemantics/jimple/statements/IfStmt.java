@@ -1,9 +1,7 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -107,15 +105,21 @@ public class IfStmt extends Statement {
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
+	public Set<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae) {
     	return computeSuccessors(programState);
     }
     
     @Override
-	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
+	public Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae) {
 
     	return null;
     }
+    
+    @Override
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
+
+    	return true;
+	}
 
     @Override
 	public String toString() {

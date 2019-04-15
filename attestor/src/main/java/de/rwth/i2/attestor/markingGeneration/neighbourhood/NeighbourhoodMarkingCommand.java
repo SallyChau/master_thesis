@@ -1,5 +1,12 @@
 package de.rwth.i2.attestor.markingGeneration.neighbourhood;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -9,11 +16,6 @@ import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import gnu.trove.iterator.TIntIterator;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class NeighbourhoodMarkingCommand implements SemanticsCommand {
 
@@ -158,4 +160,22 @@ public class NeighbourhoodMarkingCommand implements SemanticsCommand {
 
         return true;
     }
+    
+	@Override
+	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ProgramState prepareHeap(ProgramState programState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

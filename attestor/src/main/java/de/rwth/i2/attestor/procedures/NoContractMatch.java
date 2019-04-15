@@ -1,10 +1,11 @@
 package de.rwth.i2.attestor.procedures;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 
 public final class NoContractMatch implements ContractMatch {
 
@@ -31,8 +32,16 @@ public final class NoContractMatch implements ContractMatch {
 	public HeapConfiguration getPrecondition() {
 		return null;
 	}
+
 	@Override
-	public List<Node> getOutputFormulae(List<Node> inputFormulae) {
+	public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
+		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

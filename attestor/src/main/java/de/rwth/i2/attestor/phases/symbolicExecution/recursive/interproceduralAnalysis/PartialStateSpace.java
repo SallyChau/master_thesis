@@ -1,6 +1,6 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
-import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
@@ -38,5 +38,5 @@ public interface PartialStateSpace {
     StateSpace unfinishedStateSpace();
     
     
-    void continueExecutionOnTheFly(ProcedureCall call, List<Node> formulae, OnTheFlyProofStructure proofStructure);
+    void continueExecutionOnTheFly(ProcedureCall call, Set<Node> formulae, OnTheFlyProofStructure proofStructure);
 }

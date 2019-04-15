@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -112,13 +112,13 @@ public class RecursiveStateMachine {
 		ModelCheckingContract contract = csm.getModelCheckingContract(call, formula);		
 		addModelCheckingContract(call, contract);
 		
-		return contract.modelCheckingSuccessful();
+		return contract.modelCheckingIsSuccessful();
 	}
 	
 	public boolean modelCheckingSuccessful(ProcedureCall call, LTLFormula formula) {
 		
 		ModelCheckingContract contract = getModelCheckingContract(call, formula);
-		return (contract != null) ? contract.modelCheckingSuccessful() : null;
+		return (contract != null) ? contract.modelCheckingIsSuccessful() : null;
 	}
 	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProcedureCall call, LTLFormula formula) {

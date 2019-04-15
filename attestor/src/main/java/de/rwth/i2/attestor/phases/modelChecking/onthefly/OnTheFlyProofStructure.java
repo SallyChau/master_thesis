@@ -18,32 +18,36 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 
 public class OnTheFlyProofStructure extends AbstractProofStructure {
 	
-	private Assertion2 currentParent; // last checked assertion
-	protected TIntObjectMap<Set<Assertion2>> stateIdToAssertions;
+	private Assertion2 currentParent = null; // last checked assertion
+	protected TIntObjectMap<Set<Assertion2>> stateIdToAssertions = new TIntObjectHashMap<>();
 	
-	public OnTheFlyProofStructure() {
-		
-		super();
-		this.currentParent = null;
-		this.stateIdToAssertions = new TIntObjectHashMap<>();
-	}
+	private Assertion2 currentAssertion = null;
 	
-	public List<Node> build() {
+	public Set<Node> build() {
 		
-		// start model checking until we meet X-formula
+		System.out.println("ProofStructure: Building proofstructure...");
+		
         while (!queue.isEmpty()) {
-			Assertion2 currentAssertion = queue.poll();
-			checkedAssertions++;
+			currentAssertion = queue.poll();
+			checkedAssertions++;			
+
+			System.out.println("ProofStructure: Checking assertion: " + currentAssertion.toString());
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
+				
 				Node currentFormula = currentAssertion.getFirstFormula();
+				
+				System.out.println("ProofStructure: Checking formula: " + currentFormula);
+				
 				HashSet<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
 				if (successorAssertions != null) {
 					for (Assertion2 successorAssertion : successorAssertions) {						
 						addEdge(currentAssertion, successorAssertion);
-						addAssertion(successorAssertion);
+						addAssertionToState(successorAssertion);
 						queue.add(successorAssertion);
+						
+						System.out.println("ProofStructure: added assertion to queue: " + successorAssertion);
 					}
 				}
 			} 
@@ -51,7 +55,17 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 			else if (!currentAssertion.getNextFormulae().isEmpty()) {
 				// set current parent 
 				currentParent = currentAssertion;
-				return currentAssertion.getNextFormulae();
+				
+				List<Node> nextFormulae = currentAssertion.getNextFormulae();
+				Set<Node> result = new HashSet<>();
+				for (Node formula : nextFormulae) {
+					result.add(formula);
+				}
+				
+				System.out.println("ProofStructure: returning formulae for assertion " + currentAssertion);
+				System.out.println("ProofStructure: returning formulae " + result);
+				
+				return result;
 			} 
 			// assertion does not contain any formulae to check (unsuccessful)
 			else {
@@ -70,7 +84,7 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 	 * Links assertions to according state.
 	 * @param assertion to be added to the map between assertions and a state
 	 */
-	private void addAssertion(Assertion2 assertion) {
+	private void addAssertionToState(Assertion2 assertion) {
 			
 		int stateId = assertion.getProgramState().getStateSpaceId();
         Set<Assertion2> assertionsOfId = stateIdToAssertions.get(stateId);
@@ -118,11 +132,14 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 	 * @param formulae to be checked
 	 * @return true if the assertion has successfully been added to the proof structure, false otherwise
 	 */
-	public void addAssertion(ProgramState state, List<Node> formulae) {
+	public void addAssertion(ProgramState state, Set<Node> formulae) {
 				
 		// create assertion from state and formulae
 		Assertion2 assertion = new Assertion2(state, currentParent, true);
-		assertion.addFormulae(formulae);
+		for (Node formula : formulae) {
+
+			assertion.addFormula(formula);
+		}
 		
 		// check if assertion already exists
         Assertion2 presentAssertion = getPresentAssertion(assertion);
@@ -130,7 +147,7 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
         if (assertionPresent) assertion = presentAssertion;
 
         if (currentParent != null) addEdge(currentParent, assertion);
-        addAssertion(assertion);
+        addAssertionToState(assertion);
         
         // Process the assertion further only in case it is not one, that was already processed.                       
         if (!assertionPresent) {
@@ -140,6 +157,8 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
             this.successful = false;                                    
             setOriginOfFailure(assertion);
         } 
+        
+        System.out.println("ProofStructure: Added assertion " + assertion.toString());
 	}
     
 	/**
@@ -168,6 +187,11 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 	public Assertion2 getCurrentParent() {
 
 		return currentParent;
+	}
+	
+	public void abort() {
+		setOriginOfFailure(currentAssertion);
+		this.successful = false;
 	}
     
     @Override

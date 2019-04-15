@@ -17,7 +17,7 @@ public class InternalPreconditionMatchingStrategy implements PreconditionMatchin
         if(checker.hasMatching()) {
             int[] externalReordering = getExternalReordering(checker, contract.getPrecondition(), heapInScope);
             return new InternalContractMatch(	externalReordering, contract.getPrecondition(), 
-            									contract.getPostconditions(), contract.getFormulaeMap()	);
+            									contract.getPostconditions(), contract.getModelCheckingContracts());
         }
         return ContractMatch.NO_CONTRACT_MATCH;
     }

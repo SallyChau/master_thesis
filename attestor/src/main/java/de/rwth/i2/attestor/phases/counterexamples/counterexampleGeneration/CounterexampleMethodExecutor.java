@@ -1,12 +1,20 @@
 package de.rwth.i2.attestor.phases.counterexamples.counterexampleGeneration;
 
-import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
-import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.procedures.*;
-import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
-
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+
+import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
+import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
+import de.rwth.i2.attestor.procedures.Contract;
+import de.rwth.i2.attestor.procedures.ContractCollection;
+import de.rwth.i2.attestor.procedures.ContractMatch;
+import de.rwth.i2.attestor.procedures.ScopeExtractor;
+import de.rwth.i2.attestor.procedures.ScopedHeap;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public class CounterexampleMethodExecutor extends AbstractMethodExecutor {
 
@@ -49,4 +57,22 @@ public class CounterexampleMethodExecutor extends AbstractMethodExecutor {
         contractCollection.addContract(generatedContract);
         return contractCollection.matchContract(heapInScope);
     }
+
+	@Override
+	protected List<Node> getModelCheckingContract(ProgramState callingState, ScopedHeap scopedHeap, List<Node> formulae) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setModelCheckingFormulae(List<Node> formulae) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addModelCheckingContract(ModelCheckingContract contract) {
+		// TODO Auto-generated method stub
+		
+	}
 }

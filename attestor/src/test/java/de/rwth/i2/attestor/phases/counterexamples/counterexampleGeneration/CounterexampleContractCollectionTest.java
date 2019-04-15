@@ -4,11 +4,16 @@ import static fj.data.Validation.fail;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.Test;
 
+import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.procedures.*;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.procedures.Contract;
+import de.rwth.i2.attestor.procedures.ContractCollection;
+import de.rwth.i2.attestor.procedures.ContractMatch;
 
 public class CounterexampleContractCollectionTest {
 
@@ -46,6 +51,18 @@ public class CounterexampleContractCollectionTest {
 					public HeapConfiguration getPrecondition() {
 						return null;
 					}
+
+					@Override
+					public ModelCheckingContract getModelCheckingContract(List<Node> inputFormulae) {
+						// TODO Auto-generated method stub
+						return null;
+					}
+
+					@Override
+					public boolean hasModelCheckingContractMatch(List<Node> inputFormulae) {
+						// TODO Auto-generated method stub
+						return false;
+					}
                 };
             }
 
@@ -72,6 +89,18 @@ public class CounterexampleContractCollectionTest {
             public Collection<HeapConfiguration> getPostconditions() {
                 return null;
             }
+
+			@Override
+			public void addModelCheckingContract(ModelCheckingContract contract) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public List<ModelCheckingContract> getModelCheckingContracts() {
+				// TODO Auto-generated method stub
+				return null;
+			}
         });
         // should not fail
 

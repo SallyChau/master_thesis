@@ -2,10 +2,12 @@ package de.rwth.i2.attestor.recursiveStateMachine;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,8 +17,8 @@ import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalProofStructure;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -102,9 +104,9 @@ public class ComponentStateMachine {
 	 * @param formula
 	 * @return list of formulae to be checked in above lying state space
 	 */
-	public List<Node> check(ProcedureCall call, LTLFormula formula) {
+	public Set<Node> check(ProcedureCall call, LTLFormula formula) {
 
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		return check(call.getInput(), null, formulae);
@@ -118,13 +120,13 @@ public class ComponentStateMachine {
 	 * @param formulae
 	 * @return
 	 */
-	public List<Node> check(ProgramState inputState, SemanticsCommand statement, List<Node> formulae) {
+	public Set<Node> check(ProgramState inputState, SemanticsCommand statement, Set<Node> formulae) {
 		
 		logger.debug("Model checking method " + method.getSignature() + " for formulae " + formulae);
 		
 		StateSpace stateSpace = getStateSpace(inputState, statement);
 		HeapConfiguration heapInScope = getHeapInScope(inputState, statement);
-		List<Node> returnFormulae = getOutputFormulae(heapInScope, formulae);
+		Set<Node> returnFormulae = getOutputFormulae(heapInScope, formulae);
 		if (returnFormulae.isEmpty()) {		
 			proofStructure.build(stateSpace, formulae);		 
 			returnFormulae = proofStructure.getOutputFormulae();
@@ -136,10 +138,10 @@ public class ComponentStateMachine {
 		return returnFormulae;		
 	}
 	
-	private ModelCheckingContract matchModelCheckingContract(HeapConfiguration heap, List<Node> formulae) {
+	private ModelCheckingContract matchModelCheckingContract(HeapConfiguration heap, Set<Node> formulae) {
 	    
 		for (ModelCheckingContract mc : modelCheckingContracts) {
-			if (mc.getInput().equals(heap) && mc.getInputFormulae().equals(formulae)) {
+			if (mc.getInputHeap().equals(heap) && mc.getInputFormulae().equals(formulae)) {
 				return mc;
 			}
 		}
@@ -155,27 +157,27 @@ public class ComponentStateMachine {
 	 */
 	public ModelCheckingContract getModelCheckingContract(ProcedureCall call, LTLFormula formula) {
 		
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 	   
 		return matchModelCheckingContract(call.getInput().getHeap(), formulae);
 	}
 	
-	private void addModelCheckingContract(HeapConfiguration heapInScope, List<Node> formulae, List<Node> returnFormulae, boolean successful, HierarchicalFailureTrace failureTrace) {
+	private void addModelCheckingContract(HeapConfiguration heapInScope, Set<Node> formulae, Set<Node> returnFormulae, boolean successful, HierarchicalFailureTrace failureTrace) {
 		
 		ModelCheckingResult mcResult = successful ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;		
 		modelCheckingContracts.add(new ModelCheckingContract(heapInScope, formulae, returnFormulae, mcResult, failureTrace));
 	}
 	
-	private List<Node> getOutputFormulae(HeapConfiguration heap, List<Node> formulae) {
+	private Set<Node> getOutputFormulae(HeapConfiguration heap, Set<Node> formulae) {
 		
 		ModelCheckingContract mc = matchModelCheckingContract(heap, formulae);
 		
 		if (mc != null) {
-			return mc.getOutputFormulae();
+			return mc.getResultFormulae();
 		} 
 		
-		return Collections.emptyList();
+		return Collections.emptySet();
 	}
 	
 	public HeapConfiguration getHeapInScope(ProgramState state, SemanticsCommand statement) {
@@ -207,19 +209,19 @@ public class ComponentStateMachine {
 	 */
 	private ModelCheckingResult getModelCheckingResult(HeapConfiguration heap, LTLFormula formula) {
 		
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		return getModelCheckingResult(heap, formulae);
 	}
 	
 	/**
-	 * Gets the model checking result for a heap and a list of formulae.
+	 * Gets the model checking result for a heap and a set of formulae.
 	 * @param heap
 	 * @param formulae
-	 * @return model checking result for a heap and a list of formulae
+	 * @return model checking result for a heap and a set of formulae
 	 */
-	private ModelCheckingResult getModelCheckingResult(HeapConfiguration heap, List<Node> formulae) {
+	private ModelCheckingResult getModelCheckingResult(HeapConfiguration heap, Set<Node> formulae) {
 		
 		ModelCheckingContract mc = matchModelCheckingContract(heap, formulae);
 		
@@ -230,7 +232,7 @@ public class ComponentStateMachine {
 		return ModelCheckingResult.UNKNOWN;
 	}
 	
-	public boolean modelCheckingSuccessful(HeapConfiguration heap, List<Node> formulae) {
+	public boolean modelCheckingSuccessful(HeapConfiguration heap, Set<Node> formulae) {
 		
 		return (getModelCheckingResult(heap, formulae) == ModelCheckingResult.SATISFIED);
 	}
@@ -245,7 +247,7 @@ public class ComponentStateMachine {
 		return (getModelCheckingResult(call.getInput().getHeap(), formula) == ModelCheckingResult.SATISFIED);
 	}
 	
-	public boolean modelCheckingSuccessful(ProgramState state, SemanticsCommand statement, List<Node> formulae) {
+	public boolean modelCheckingSuccessful(ProgramState state, SemanticsCommand statement, Set<Node> formulae) {
 		
 		HeapConfiguration heap = getHeapInScope(state, statement);
 		return (getModelCheckingResult(heap, formulae) == ModelCheckingResult.SATISFIED);
@@ -259,7 +261,7 @@ public class ComponentStateMachine {
 	 */
 	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProgramState state, SemanticsCommand statement, LTLFormula formula) {
 		
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		return getHierarchicalFailureTrace(state, statement, formulae);
@@ -271,7 +273,7 @@ public class ComponentStateMachine {
 	 * @param formulae LTLformulae to be checked
 	 * @return failure trace resulting from model checking
 	 */
-	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProgramState state, SemanticsCommand statement, List<Node> formulae) {
+	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProgramState state, SemanticsCommand statement, Set<Node> formulae) {
 
 		HeapConfiguration heap = getHeapInScope(state, statement);
 		return getHierarchicalFailureTrace(heap, formulae);
@@ -279,13 +281,13 @@ public class ComponentStateMachine {
 	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace(HeapConfiguration heap, LTLFormula formula) {
 		
-		List<Node> formulae = new LinkedList<>();
+		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		return getHierarchicalFailureTrace(heap, formulae);
 	}
 	
-	public HierarchicalFailureTrace getHierarchicalFailureTrace(HeapConfiguration heap, List<Node> formulae) {
+	public HierarchicalFailureTrace getHierarchicalFailureTrace(HeapConfiguration heap, Set<Node> formulae) {
 		
 		ModelCheckingContract mc = matchModelCheckingContract(heap, formulae);
 		

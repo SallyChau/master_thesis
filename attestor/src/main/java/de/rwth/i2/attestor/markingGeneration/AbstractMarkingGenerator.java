@@ -1,15 +1,27 @@
 package de.rwth.i2.attestor.markingGeneration;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
-import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.*;
-import de.rwth.i2.attestor.stateSpaceGeneration.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoPostProcessingStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoStateCounter;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoStateLabelingStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoStateRefinementStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.TerminalStatementFinalStateStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.AbortStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.Program;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateCanonicalizationStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateRectificationStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
+import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerator;
 
 public abstract  class AbstractMarkingGenerator {
 
@@ -73,6 +85,7 @@ public abstract  class AbstractMarkingGenerator {
                 .setStateRefinementStrategy(new NoStateRefinementStrategy())
                 .setPostProcessingStrategy(new NoPostProcessingStrategy())
                 .setFinalStateStrategy(new TerminalStatementFinalStateStrategy())
+//                .setStateSpaceGenerationStrategy(new OfflineStateSpaceGenerationStrategy())
                 .build();
 
         try {

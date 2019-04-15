@@ -1,11 +1,12 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.ContractMatch;
 
 class InternalContractMatch implements ContractMatch {
@@ -14,7 +15,7 @@ class InternalContractMatch implements ContractMatch {
     private Collection<HeapConfiguration> postconditions;
 	private HeapConfiguration matchedPrecondition;
 	
-	private Map<List<Node>, List<Node>> inputToOutputFormulae;
+	private Collection<ModelCheckingContract> modelCheckingContracts;
 
     public InternalContractMatch( int[] externalReordering,
     							  HeapConfiguration matchedPrecondition,
@@ -24,16 +25,16 @@ class InternalContractMatch implements ContractMatch {
         this.matchedPrecondition = matchedPrecondition;
         
         this.postconditions = postconditions;
+        this.modelCheckingContracts = new ArrayList<>();
     }
     
     public InternalContractMatch( int[] externalReordering,
-			  HeapConfiguration matchedPrecondition,
-			  Collection<HeapConfiguration> postconditions,
-			  Map<List<Node>, List<Node>> inputToOutputFormulae) {
+			  					  HeapConfiguration matchedPrecondition,
+		  					  	  Collection<HeapConfiguration> postconditions,
+		  					  	  Collection<ModelCheckingContract> mcContracts) {
 
-		this(externalReordering, matchedPrecondition, postconditions);
-		
-		this.inputToOutputFormulae = inputToOutputFormulae;
+		this(externalReordering, matchedPrecondition, postconditions);		
+		this.modelCheckingContracts = mcContracts;
 	}
 
     @Override
@@ -57,14 +58,28 @@ class InternalContractMatch implements ContractMatch {
 	public HeapConfiguration getPrecondition() {
 		return this.matchedPrecondition;
 	}
-	
+
 	@Override
-	public boolean hasInputFormulaeMatch(List<Node> inputFormulae) {
-		return this.inputToOutputFormulae.containsKey(inputFormulae);
+	public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
+
+		for (ModelCheckingContract contract : modelCheckingContracts) {
+			if (contract.getInputFormulae().equals(inputFormulae)) {
+				return contract;
+			}
+		}
+		
+		return null;
 	}
-	
+
 	@Override
-	public List<Node> getOutputFormulae(List<Node> inputFormulae) {
-		return this.inputToOutputFormulae.get(inputFormulae);
+	public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
+
+		for (ModelCheckingContract contract : modelCheckingContracts) {
+			if (contract.getInputFormulae().equals(inputFormulae)) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 }

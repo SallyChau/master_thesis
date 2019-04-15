@@ -174,4 +174,10 @@ public class Assertion2 {
 				containsAllNextFormulae(nodeTest.getNextFormulae()) && 
 				this.programState.getStateSpaceId() == nodeTest.programState.getStateSpaceId();
 	}
+	
+	@Override
+	public String toString() {
+		return "(state: " + programState.getStateSpaceId() + ", PC: " + programState.getProgramCounter() 
+		+ ", formulae: " + formulae + ", nextFormulae: " + nextFormulae + ")";
+	}
 }

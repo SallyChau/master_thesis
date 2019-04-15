@@ -1,9 +1,9 @@
 package de.rwth.i2.attestor.phases.counterexamples.counterexampleGeneration;
 
+import java.util.LinkedList;
+
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateExplorationStrategy;
-
-import java.util.LinkedList;
 
 public class TraceBasedStateExplorationStrategy implements StateExplorationStrategy {
 
@@ -65,4 +65,16 @@ public class TraceBasedStateExplorationStrategy implements StateExplorationStrat
 
         return false;
     }
+
+    @Override
+	public void removeUnexploredState(ProgramState state) {
+
+		unexploredStates.remove(state);
+	}
+
+	@Override
+	public boolean containsState(ProgramState state) {
+
+		return unexploredStates.contains(state);
+	}
 }

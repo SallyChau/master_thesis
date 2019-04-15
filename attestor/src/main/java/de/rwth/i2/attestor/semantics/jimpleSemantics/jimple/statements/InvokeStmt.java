@@ -1,13 +1,13 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.procedures.Method;
+import de.rwth.i2.attestor.procedures.MethodExecutor;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -67,30 +67,40 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae) {
 
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
 
-        Collection<ProgramState> methodResult = method
-                .getMethodExecutor()
-                .getResultStatesOnTheFly(programState, preparedState, formulae);
+        MethodExecutor methodExecutor = method.getMethodExecutor();
+        methodExecutor.setModelCheckingFormulae(formulae);
+        Collection<ProgramState> methodResult = methodExecutor.getResultStates(programState, preparedState);
 
         methodResult.forEach(invokePrepare::cleanHeap);
         methodResult.forEach(ProgramState::clone);
         methodResult.forEach(x -> x.setProgramCounter(nextPC));
+        
+        System.out.println("Invoke: Computed successors for " + programState.getStateSpaceId() + " and formulae " + formulae);
 
         return methodResult;
     }
     
     @Override
-	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
+	public Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae) {
     	// programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
 
-        return method.getMethodExecutor().getResultFormulaeOnTheFly(programState, preparedState, formulae);
+        return method.getMethodExecutor().getModelCheckingResultFormulae(programState, preparedState, formulae);
     }
+
+	@Override
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
+		ProgramState preparedState = programState.clone();
+        invokePrepare.prepareHeap(preparedState);
+
+        return method.getMethodExecutor().satisfiesFormulae(programState, preparedState, formulae);
+	}
 
     @Override
 	public ProgramState getCleanedResultState(ProgramState state) {

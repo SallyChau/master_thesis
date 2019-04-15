@@ -1,15 +1,19 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -69,35 +73,47 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
     }
     
     @Override
-	public StateSpace executeOnTheFly(List<Node> formulae) {
+	public StateSpace executeOnTheFly(Set<Node> formulae) {
     	
     	ProgramState initialState = preconditionState.clone();
 
         try {        	
         	StateSpaceGenerator stateSpaceGenerator = factory.create( method.getBody(), initialState, formulae );
         	
-        	System.out.println("InternalProcedureCall: Generate state space for method " + method.getName() + " and formulae " + formulae);
+        	System.out.println("InternalProcedureCall: Generate state space for method " + method.getSignature() + " and formulae " + formulae);
             StateSpace stateSpace = stateSpaceGenerator.generateOnTheFly();
             OnTheFlyProofStructure proofStructure = stateSpaceGenerator.getProofStructure();    
-            List<Node> resultFormulae = stateSpaceGenerator.getResultFormulae();
+            Set<Node> resultFormulae = stateSpaceGenerator.getResultFormulae();
+            System.err.println("InternalProcedureCall: Received result formulae from " + method.getSignature() + ": " + resultFormulae);
             
             if (proofStructure.isSuccessful() && resultFormulae == null) {
 
-                System.out.println("Proofstructure for method: " + method.getName() + " was successful");
+                System.out.println("InternalProcedureCall: Proofstructure for method: " + method.getSignature() + " was successful");
                 LTLFormula ltlFormula = new LTLFormula("true");
                 ltlFormula.toPNF();
-                resultFormulae = new LinkedList<>();
+                resultFormulae = new HashSet<>();
                 resultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
             } else if (!proofStructure.isSuccessful()) {
             	
-            	System.out.println("Proofstructure for method: " + method.getName() + " was unsuccessful");
-                // TODO abort model checking here
+            	System.out.println("InternalProcedureCall: Proofstructure for method: " + method.getSignature() + " was unsuccessful");
+            	System.out.println("InternalProcedureCall: FailureTrace: " + proofStructure.getFailureTrace(stateSpace));
+            	registry.addFailureTrace(proofStructure.getFailureTrace(stateSpace));
             }
             
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
             Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
-            contract.addFormulaPair(formulae, resultFormulae);
+            
+            ModelCheckingResult mcResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
+            ModelCheckingContract mcContract = new ModelCheckingContract(preconditionState.getHeap(), 
+            															 formulae, 
+            															 resultFormulae, 
+            															 mcResult,
+            															 proofStructure.getFailureTrace());
+
+            Collection<ModelCheckingContract> mcContracts = new ArrayList<>();
+            mcContracts.add(mcContract);
+            contract.addModelCheckingContracts(mcContracts);
             method.addContract(contract);
             
             registry.registerStateSpace( this, stateSpace );
@@ -149,8 +165,8 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
                 preconditionState.equals(call.preconditionState);
     }
     
-    @Override
-    public String toString() {
-    	return method.getName();
-    }
+//    @Override
+//    public String toString() {
+//    	return method.getName();
+//    }
 }

@@ -38,6 +38,7 @@ public class InternalContractCollection implements ContractCollection {
                 ContractMatch match = preconditionMatchingStrategy.match(c, contract.getPrecondition());
                 if (match.hasMatch()) {
                     c.addPostconditions(contract.getPostconditions());
+                    c.addModelCheckingContracts(contract.getModelCheckingContracts());
                     return;
                 }
             }

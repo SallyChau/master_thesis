@@ -1,11 +1,9 @@
 package de.rwth.i2.attestor.procedures;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
 
 public interface Contract {
 
@@ -14,7 +12,6 @@ public interface Contract {
     HeapConfiguration getPrecondition();
     Collection<HeapConfiguration> getPostconditions();
     
-	List<Node> getOutputFormulae(List<Node> inputFormulae);
-	void addFormulaPair(List<Node> inputFormulae, List<Node> outputFormulae);
-	Map<List<Node>, List<Node>> getFormulaeMap();
+    void addModelCheckingContracts(Collection<ModelCheckingContract> contract);
+    Collection<ModelCheckingContract> getModelCheckingContracts();
 }
