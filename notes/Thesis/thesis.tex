@@ -1,0 +1,146 @@
+\documentclass[a4paper,12pt]{report}
+
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{soul}
+\usepackage{upgreek}
+\usepackage{amssymb}
+\usepackage{dsfont}
+\usepackage{stmaryrd}
+\usepackage{xcolor}
+\usepackage[shortlabels]{enumitem}
+\usepackage{hyperref}
+\usepackage{pifont}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{graphicx}
+
+\setlength\parindent{0pt}
+
+% Definition
+\newcounter{definition}[section]\setcounter{definition}{0}
+\renewcommand{\thedefinition}{\arabic{section}.\arabic{definition}}
+\newenvironment{definition}[2][]{%
+\refstepcounter{definition}%
+\ifstrempty{#1}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Definition~\thedefinition};}}
+}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Definition~\thedefinition:~#1};}}%
+}%
+\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
+linewidth=2pt,topline=true,%
+frametitleaboveskip=\dimexpr-\ht\strutbox\relax
+}
+\begin{mdframed}[]\relax%
+\label{#2}}{\end{mdframed}}
+%%
+
+% Theorem
+\newcounter{theorem}[section]\setcounter{theorem}{0}
+\renewcommand{\thetheorem}{\arabic{section}.\arabic{theorem}}
+\newenvironment{theorem}[2][]{%
+\refstepcounter{theorem}%
+\ifstrempty{#1}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Theorem~\thetheorem};}}
+}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Theorem~\thetheorem:~#1};}}%
+}%
+\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
+linewidth=2pt,topline=true,%
+frametitleaboveskip=\dimexpr-\ht\strutbox\relax
+}
+\begin{mdframed}[]\relax%
+\label{#2}}{\end{mdframed}}
+%%
+
+% Lemma
+\newcounter{lemma}[section]\setcounter{lemma}{0}
+\renewcommand{\thelemma}{\arabic{section}.\arabic{lemma}}
+\newenvironment{lemma}[2][]{%
+\refstepcounter{lemma}%
+\ifstrempty{#1}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Lemma~\thelemma};}}
+}%
+{\mdfsetup{%
+frametitle={%
+\tikz[baseline=(current bounding box.east),outer sep=0pt]
+\node[anchor=east,rectangle,fill=white]
+{\strut Lemma~\thelemma:~#1};}}%
+}%
+\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
+linewidth=2pt,topline=true,%
+frametitleaboveskip=\dimexpr-\ht\strutbox\relax
+}
+\begin{mdframed}[]\relax%
+\label{#2}}{\end{mdframed}}
+%%
+
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$}
+
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+\hspace{-2.5pt}}
+\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
+
+
+\title{Hierarchical Model Checking}
+\date{\today}
+\author{Sally Chau}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\chapter{Introduction}
+
+\section{Attestor}
+% include current model checking approach (only checking main state space)
+
+\section{Related Work}
+
+\chapter{Linear Time Temporal Logic}
+
+\chapter{Recursive State Machines}
+
+\chapter{Hierarchical Model Checking}
+
+\chapter{RSM Approach}
+
+\section{Implementation}
+
+
+\chapter{On-the-fly Approach}
+\section{Implementation}
+
+\chapter{Benchmarks}
+
+\chapter{Conclusion and Future Work}
+
+\section{Possible Extensions}
+
+\end{document}
