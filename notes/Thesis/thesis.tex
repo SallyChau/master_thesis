@@ -1,146 +1,130 @@
-\documentclass[a4paper,12pt]{report}
-
-\usepackage{amsthm}
-\usepackage{amsmath}
-\usepackage[framemethod=TikZ]{mdframed}
-\usepackage{soul}
-\usepackage{upgreek}
-\usepackage{amssymb}
-\usepackage{dsfont}
-\usepackage{stmaryrd}
-\usepackage{xcolor}
-\usepackage[shortlabels]{enumitem}
-\usepackage{hyperref}
-\usepackage{pifont}
+\documentclass[a4paper, 12pt, twoside]{report}
+\usepackage[english]{babel}
+\usepackage[top=4cm,bottom=4cm,left=3cm,right=3cm,asymmetric]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsfonts, amsthm, dsfont}
+\usepackage{relsize}
 \usepackage{tikz}
-\usepackage{verbatim}
-\usepackage{graphicx}
+\usetikzlibrary{arrows.meta, calc, positioning}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{fancyhdr}
+\usepackage{bibgerm} 
+\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+\usepackage[all]{hypcap}
+\usepackage{subcaption} 
+\usepackage{setspace}
+\usepackage{mdframed}
+\captionsetup[figure]{labelfont=it, font=footnotesize}
+\captionsetup[subfigure]{labelfont=it,font=footnotesize}
 
-\setlength\parindent{0pt}
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
 
-% Definition
-\newcounter{definition}[section]\setcounter{definition}{0}
-\renewcommand{\thedefinition}{\arabic{section}.\arabic{definition}}
-\newenvironment{definition}[2][]{%
-\refstepcounter{definition}%
-\ifstrempty{#1}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Definition~\thedefinition};}}
-}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Definition~\thedefinition:~#1};}}%
-}%
-\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
-linewidth=2pt,topline=true,%
-frametitleaboveskip=\dimexpr-\ht\strutbox\relax
-}
-\begin{mdframed}[]\relax%
-\label{#2}}{\end{mdframed}}
-%%
-
-% Theorem
-\newcounter{theorem}[section]\setcounter{theorem}{0}
-\renewcommand{\thetheorem}{\arabic{section}.\arabic{theorem}}
-\newenvironment{theorem}[2][]{%
-\refstepcounter{theorem}%
-\ifstrempty{#1}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Theorem~\thetheorem};}}
-}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Theorem~\thetheorem:~#1};}}%
-}%
-\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
-linewidth=2pt,topline=true,%
-frametitleaboveskip=\dimexpr-\ht\strutbox\relax
-}
-\begin{mdframed}[]\relax%
-\label{#2}}{\end{mdframed}}
-%%
-
-% Lemma
-\newcounter{lemma}[section]\setcounter{lemma}{0}
-\renewcommand{\thelemma}{\arabic{section}.\arabic{lemma}}
-\newenvironment{lemma}[2][]{%
-\refstepcounter{lemma}%
-\ifstrempty{#1}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Lemma~\thelemma};}}
-}%
-{\mdfsetup{%
-frametitle={%
-\tikz[baseline=(current bounding box.east),outer sep=0pt]
-\node[anchor=east,rectangle,fill=white]
-{\strut Lemma~\thelemma:~#1};}}%
-}%
-\mdfsetup{innertopmargin=3pt,linecolor=gray!50,%
-linewidth=2pt,topline=true,%
-frametitleaboveskip=\dimexpr-\ht\strutbox\relax
-}
-\begin{mdframed}[]\relax%
-\label{#2}}{\end{mdframed}}
-%%
-
-\newlist{todolist}{itemize}{2}
-\setlist[todolist]{label=$\square$}
-
-\newcommand{\cmark}{\ding{51}}%
-\newcommand{\xmark}{\ding{55}}%
-\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
-\hspace{-2.5pt}}
-\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
+\newcommand*\ruleline[1]{\par\noindent\raisebox{.8ex}{\makebox[\linewidth]{\hrulefill\hspace{1ex}\raisebox{-.8ex}{#1}\hspace{1ex}\hrulefill}}}
 
 
-\title{Hierarchical Model Checking}
-\date{\today}
-\author{Sally Chau}
+\parindent0em
 
 \begin{document}
-
-\maketitle
-\tableofcontents
-
-
-\chapter{Introduction}
-
-\section{Attestor}
-% include current model checking approach (only checking main state space)
-
-\section{Related Work}
-
-\chapter{Linear Time Temporal Logic}
-
-\chapter{Recursive State Machines}
-
-\chapter{Hierarchical Model Checking}
-
-\chapter{RSM Approach}
-
-\section{Implementation}
-
-
-\chapter{On-the-fly Approach}
-\section{Implementation}
-
-\chapter{Benchmarks}
-
-\chapter{Conclusion and Future Work}
-
-\section{Possible Extensions}
-
+	
+	\begin{titlepage}
+		\centering
+		{\large \scshape Rheinisch-Westfälische Technische Hochschule Aachen}\\
+		{\large
+			Chair for Software Modeling and Verification\\
+			Prof. Dr. Ir. Dr. h. c. Joost-Pieter Katoen\\}
+		\vspace*{\fill}
+		{\large \ruleline{Master Thesis}}\\
+		\vspace{1cm}
+		\textbf{\Huge Comparing Hierarchical and On-The-Fly Model Checking for Java Pointer Programs}\\
+		\vspace{1cm}
+		\hrule
+		\vspace{1cm}
+		{\Large \textbf{Sally Chau} \\}
+		\vspace{0.25cm}
+		{\large Matriculation Number 370584} \\
+		%\vspace{0.3cm}
+		{\large \today}\\
+		\vspace{3cm}
+		{\large First Reviewer: apl. Prof. Dr. Thomas Noll \\ Second Reviewer: Prof. Dr. Ir. Dr. h. c. Joost-Pieter Katoen \\ Supervisor: Christoph Matheja} \\ 
+		\vspace{1cm}
+		\vspace*{\fill}
+	\end{titlepage}
+	
+	\pagestyle{empty}
+	
+	\clearpage\mbox{}\clearpage
+	
+	\chapter*{Acknowledgement} 
+	
+	
+	\clearpage\mbox{}\clearpage
+	
+	\chapter*{Eidesstattliche Erklärung}
+	
+	Hiermit versichere ich an Eides statt und durch meine Unterschrift, dass die vorliegende Arbeit von mir selbstständig, ohne fremde Hilfe angefertigt worden ist. Inhalte und Passagen, die aus fremden Quellen stammen und direkt oder indirekt übernommen worden sind, wurden als solche kenntlich gemacht. Ferner versichere ich, dass ich keine andere, außer der im Literaturverzeichnis angegebenen Literatur verwendet habe. Die Arbeit wurde bisher keiner Prüfungsbehörde vorgelegt und auch noch nicht veröffentlicht.
+	\vspace{20 mm}
+	
+	\noindent\line(1,0){250}\\
+	Bonn, den 28. September 2015, Sally Chau
+	
+	\clearpage\mbox{}\clearpage
+	
+	\chapter*{Abstract}
+	
+	\clearpage\mbox{}\clearpage
+	
+	\doublespacing
+	\tableofcontents
+	\singlespacing
+	\clearpage\mbox{}\clearpage
+	\thispagestyle{empty} 
+	
+	\pagestyle{fancy}
+	\fancyhead[RE]{\nouppercase\leftmark}
+	\fancyhead[LO]{\nouppercase\rightmark}
+	\fancyhead[LE,RO]{\thepage}
+	\cfoot{}
+	
+	
+	\chapter{Introduction}
+	
+	\section{Attestor}
+	% include current model checking approach (only checking main state space)
+	
+	\section{Related Work}
+	
+	\chapter{Linear Temporal Logic}
+	
+	\chapter{Recursive State Machines}
+	
+	\begin{definition}[Recursive State Machine]\label{def:rsm}
+		Ein \textup{Spiel} $\mathcal{G}$ ist ein Tupel $(\mathcal{N}, (\Sigma_i)_{i \in \mathcal{N}}, (U_i)_{i \in \mathcal{N}})$, wobei $\mathcal{N} = \{1, \dotsc, n\}$ die Menge der Spieler beschreibt, $\Sigma_i$ den \textup{Strategieraum} eines Spielers $i \in \mathcal{N}$ und  $U_i: \Sigma_1 \times \dotsb \times \Sigma_n \rightarrow \mathds{R}^n$ die \textup{Auszahlungsfunktion} für einen Spieler $i \in \mathcal{N}$ in einem Zustand $S$.
+		Mit $S = (S_1, \dotsc, S_n) \in \Sigma_1 \times \dotsb \times \Sigma_n$ beschreiben wir den \textup{Zustand} eines Spieles, in dem Spieler $i$ Strategie $S_i \in \Sigma_i$ spielt. 
+	\end{definition}
+	
+	\chapter{Hierarchical Model Checking}
+	
+	\chapter{RSM Approach}
+	
+	\section{Implementation}
+	
+	
+	\chapter{On-the-fly Approach}
+	\section{Implementation}
+	
+	\chapter{Benchmarks}
+	
+	\chapter{Conclusion and Future Work}
+	
+	\section{Possible Extensions}
+	
+	%\bibliographystyle{gerplain}
+	%\bibliography{lit}{}
+	
 \end{document}
