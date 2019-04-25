@@ -9,10 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
@@ -36,13 +32,8 @@ public class InterproceduralAnalysis {
 	protected Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall = new LinkedHashMap<>();
 	
 	Map<ProgramState, ProcedureCall> callingStateToCall = new LinkedHashMap<>();	
-	protected Map<ProcedureCall, OnTheFlyProofStructure> callToProofStructure = new LinkedHashMap<>();
-	protected Map<ProcedureCall, Set<Node>> callToFormulae = new LinkedHashMap<>();
-	protected Map<ProcedureCall, Set<Node>> callToReturnFormulae = new LinkedHashMap<>();	
-	protected Map<PartialStateSpace, Set<Node>> partialStateSpaceToContinueFormulae = new LinkedHashMap<>();
-	
-	protected HierarchicalFailureTrace hierarchicalFailureTrace = new HierarchicalFailureTrace();
 
+	
 
 	public void registerStateSpace(ProcedureCall call, StateSpace stateSpace) {
 
@@ -68,47 +59,16 @@ public class InterproceduralAnalysis {
 
 		if(!remainingProcedureCalls.contains(procedureCall)) {
 			remainingProcedureCalls.push(procedureCall);
-			System.out.println("InterproceduralAnalysis: Call added: " + procedureCall.getMethod().getSignature() + " (" + procedureCall + ")");
-		} else {
-			System.out.println("InterproceduralAnalysis: Call already added: " + procedureCall.getMethod().getSignature() + " (" + procedureCall + ")");
-		}
-	}
-
-	public void registerProofStructure(ProcedureCall procedureCall, OnTheFlyProofStructure proofStructure) {
-		callToProofStructure.put(procedureCall, proofStructure);
-	}
-	
-	public void registerFormulae(ProcedureCall procedureCall, Set<Node> formulae) {
-		if(!callToFormulae.containsKey(procedureCall)) {
-			callToFormulae.put(procedureCall, formulae);
-		} else {
-			callToFormulae.get(procedureCall).addAll(formulae);
-		}
-	}
-	
-	public void registerReturnFormulae(ProcedureCall procedureCall, Set<Node> returnFormulae) {
-		if(!callToReturnFormulae.containsKey(procedureCall)) {
-			callToReturnFormulae.put(procedureCall, returnFormulae);
-		} else {
-			callToReturnFormulae.get(procedureCall).addAll(returnFormulae);
-		}
-	}
-	
-	public void addFailureTrace(FailureTrace failureTrace) {
-		
-		hierarchicalFailureTrace.addFailureTrace(failureTrace);
-	}
-	
-	public HierarchicalFailureTrace getHierarchicalFailureTrace() {
-		
-		return hierarchicalFailureTrace;
+		} 
 	}
 	
 	public Map<StateSpace, ProcedureCall> getStateSpaceToCallMap() {
+		
 		return stateSpaceToAnalyzedCall;
 	}
 	
 	public Map<ProgramState, ProcedureCall> getCallingStateToCall() {
+		
 		return callingStateToCall;
 	}
 	

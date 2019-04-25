@@ -2,14 +2,9 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
-import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.
@@ -32,14 +27,7 @@ public class StateSpaceGeneratorBuilder {
     protected final StateSpaceGenerator generator;
 
 
-
     private StateSpace initialStateSpace = null;
-    
-    
-    private OnTheFlyProofStructure proofStructure = null;
-    
-    
-    private Set<Node> modelCheckingFormulae = new HashSet<>();
 
 
     /**
@@ -51,7 +39,6 @@ public class StateSpaceGeneratorBuilder {
         initialStates = new ArrayList<>();
         generator = new StateSpaceGenerator();
     }
-
 
     /**
      * Attempts to construct a new StateSpaceGenerator.
@@ -114,21 +101,11 @@ public class StateSpaceGeneratorBuilder {
         if(generator.stateRectificationStrategy == null) {
             throw new IllegalStateException("StateSpaceGenerator: No admissibility strategy.");
         }
-        
-//        if(generator.stateSpaceGenerationStrategy == null) {
-//            throw new IllegalStateException("StateSpaceGenerator: No state space generation strategy.");
-//        }
 
         if(initialStateSpace == null) {
             generator.stateSpace = generator.stateSpaceSupplier.get();
         } else {
             generator.stateSpace = initialStateSpace;
-        }
-        
-        if(proofStructure == null) {
-            generator.proofStructure = new OnTheFlyProofStructure();
-        } else {
-            generator.proofStructure = proofStructure;
         }
 
         for (ProgramState state : initialStates) {
@@ -139,22 +116,6 @@ public class StateSpaceGeneratorBuilder {
             }
             generator.stateLabelingStrategy.computeAtomicPropositions(state);
             generator.stateExplorationStrategy.addUnexploredState(state, false);
-            
-            
-            // for model checking 
-            if(state.isContinueState()) {
-            	try {
-                	Collection<ProgramState> successors = generator.computeControlFlowSuccessors(state, modelCheckingFormulae); 
-                	for (ProgramState successorState : successors) {    	    		
-                		generator.proofStructure.addAssertion(successorState, modelCheckingFormulae);
-        			}	
-				} catch (StateSpaceGenerationAbortedException e) {
-					e.printStackTrace();
-				}
-            } else {
-            	System.out.println("StateSpaceGeneratorBuilder: adding initial assertions to proof structure");
-            	generator.proofStructure.addAssertion(state, modelCheckingFormulae);
-            }
         }
         
         
@@ -313,22 +274,4 @@ public class StateSpaceGeneratorBuilder {
         generator.alwaysCanonicalize = alwaysCanonicalize;
         return this;
     }
-    
-    public StateSpaceGeneratorBuilder setProofStructure(OnTheFlyProofStructure proofStructure) {
-    	
-    	this.proofStructure = proofStructure;
-    	return this;
-    }
-    
-    public StateSpaceGeneratorBuilder setModelCheckingFormulae(Set<Node> modelCheckingFormulae) {
-    	
-    	this.modelCheckingFormulae = modelCheckingFormulae;
-    	return this;
-    }
-    
-//    public StateSpaceGeneratorBuilder setStateSpaceGenerationStrategy(StateSpaceGenerationStrategy stateSpaceGenerationStrategy) {
-//    	
-//    	generator.stateSpaceGenerationStrategy = stateSpaceGenerationStrategy;
-//    	return this;
-//    }
 }

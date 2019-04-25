@@ -7,8 +7,4 @@ public interface StateExplorationStrategy {
     ProgramState getNextUnexploredState();
 
     void addUnexploredState(ProgramState state, boolean isMaterializedState);
-    
-    void removeUnexploredState(ProgramState state);
-    
-    boolean containsState(ProgramState state);
 }

@@ -7,7 +7,7 @@ import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public abstract class AbstractMethodExecutor implements MethodExecutor {
@@ -38,7 +38,6 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
         return createResultStates(input, postconditions);
     }
     
-    @Override
 	public Set<Node> getModelCheckingResultFormulae(ProgramState callingState, ProgramState input, Set<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();
@@ -50,7 +49,6 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
         return Collections.emptySet();
     }
     
-    @Override
 	public boolean satisfiesFormulae(ProgramState callingState, ProgramState input, Set<Node> formulae) {
 
         HeapConfiguration inputHeap = input.getHeap();

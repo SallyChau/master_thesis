@@ -56,16 +56,4 @@ public class TargetBasedStateExplorationStrategy implements StateExplorationStra
 
         return !targetStates.isEmpty();
     }
-
-	@Override
-	public void removeUnexploredState(ProgramState state) {
-
-		unexploredStates.remove(state);
-	}
-
-	@Override
-	public boolean containsState(ProgramState state) {
-
-		return unexploredStates.contains(state);
-	}
 }

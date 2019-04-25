@@ -4,37 +4,34 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContractCollection;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProcedureCall;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProcedureRegistry;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureRegistry;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.procedures.ScopeExtractor;
 
 public class RecursiveModelCheckingMethodExecutor extends AbstractModelCheckingMethodExecutor {
 
-	
-	public RecursiveModelCheckingMethodExecutor( Method method, 
-			ScopeExtractor scopeExtractor, 
-			ContractCollection contractCollection,
-			ModelCheckingContractCollection mcContractCollection,
-            ProcedureRegistry procedureRegistry ) {
+	public RecursiveModelCheckingMethodExecutor(Method method, 
+												ScopeExtractor scopeExtractor, 
+												ContractCollection contractCollection,
+												OnTheFlyProcedureRegistry procedureRegistry) {
 
-		super(method, scopeExtractor, contractCollection, mcContractCollection, procedureRegistry);
+		super(method, scopeExtractor, contractCollection, procedureRegistry);
 	}
+	
+	
 
 	@Override
-	protected void generateAndAddContract(ProcedureCall call) {
+	protected void generateAndAddContract(OnTheFlyProcedureCall call) {
 		
-	    System.err.println("RecursiveModelCheckingMethodExecutor: called for method " + call.getMethod().getSignature());
+	    System.err.println("RecursiveModelCheckingMethodExecutor: register method " + call.getMethod().getSignature());
 	
 		Collection<HeapConfiguration> postconditions = new LinkedHashSet<>();
 		getContractCollection().addContract(new InternalContract(call.getInput().getHeap(), postconditions));
 		
-		System.err.println("RecursiveModelCheckingMethodExecutor: Register procedure call " + call.getMethod().getSignature());
-		
 		procedureRegistry.registerProcedure(call);	
-		procedureRegistry.registerFormulae(call, inputFormulae);
+		procedureRegistry.registerFormulae(call, modelCheckingFormulae);
 	}
 }

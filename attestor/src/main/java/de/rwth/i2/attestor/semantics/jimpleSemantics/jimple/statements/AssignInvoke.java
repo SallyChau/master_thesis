@@ -11,8 +11,8 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.AbstractModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.procedures.Method;
-import de.rwth.i2.attestor.procedures.MethodExecutor;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.ConcreteValue;
@@ -89,7 +89,7 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
 
-        MethodExecutor methodExecutor = method.getMethodExecutor();
+        AbstractModelCheckingMethodExecutor methodExecutor = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
         methodExecutor.setModelCheckingFormulae(formulae);
         Collection<ProgramState> methodResult = methodExecutor.getResultStates(programState, preparedState);
         
@@ -103,16 +103,16 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
     	// programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
-
-        return method.getMethodExecutor().getModelCheckingResultFormulae(programState, preparedState, formulae);
+        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
+        return ex.getModelCheckingResultFormulae(programState, preparedState, formulae);
     }
     
     @Override
 	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
 		ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
-
-        return method.getMethodExecutor().satisfiesFormulae(programState, preparedState, formulae);
+        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
+        return ex.satisfiesFormulae(programState, preparedState, formulae);
 	}
 
     protected Collection<ProgramState> getCleanedResultStates(Collection<ProgramState> resultStates) {

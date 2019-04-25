@@ -1,11 +1,6 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
-import java.util.Set;
-
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -49,25 +44,5 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
 	@Override
 	public void registerStateSpace(ProcedureCall call, StateSpace generatedStateSpace) {
 		analysis.registerStateSpace(call, generatedStateSpace);		
-	}
-
-	@Override
-	public void registerProofStructure(ProcedureCall call, OnTheFlyProofStructure proofStructure) {
-		analysis.registerProofStructure(call, proofStructure);		
-	}
-	
-	@Override
-	public void registerFormulae(ProcedureCall call, Set<Node> formulae) {
-		analysis.registerFormulae(call, formulae);		
-	}
-	
-	@Override
-	public void registerReturnFormulae(ProcedureCall call, Set<Node> returnFormulae) {
-		analysis.registerReturnFormulae(call, returnFormulae);		
-	}
-
-	@Override
-	public void addFailureTrace(FailureTrace failureTrace) {
-		analysis.addFailureTrace(failureTrace);		
 	}
 }

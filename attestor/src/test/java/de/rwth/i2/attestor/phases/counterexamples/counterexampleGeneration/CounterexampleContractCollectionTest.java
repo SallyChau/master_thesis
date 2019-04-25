@@ -5,12 +5,13 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.Contract;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -53,13 +54,13 @@ public class CounterexampleContractCollectionTest {
 					}
 
 					@Override
-					public ModelCheckingContract getModelCheckingContract(List<Node> inputFormulae) {
+					public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
 						// TODO Auto-generated method stub
 						return null;
 					}
 
 					@Override
-					public boolean hasModelCheckingContractMatch(List<Node> inputFormulae) {
+					public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
 						// TODO Auto-generated method stub
 						return false;
 					}
@@ -91,15 +92,15 @@ public class CounterexampleContractCollectionTest {
             }
 
 			@Override
-			public void addModelCheckingContract(ModelCheckingContract contract) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
 			public List<ModelCheckingContract> getModelCheckingContracts() {
 				// TODO Auto-generated method stub
 				return null;
+			}
+
+			@Override
+			public void addModelCheckingContracts(Collection<ModelCheckingContract> contract) {
+				// TODO Auto-generated method stub
+				
 			}
         });
         // should not fail

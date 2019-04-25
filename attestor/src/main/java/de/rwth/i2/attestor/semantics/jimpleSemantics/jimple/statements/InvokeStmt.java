@@ -6,8 +6,8 @@ import java.util.Set;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.AbstractModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.procedures.Method;
-import de.rwth.i2.attestor.procedures.MethodExecutor;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeHelper;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -90,16 +90,18 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
     	// programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
+        
+        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
 
-        return method.getMethodExecutor().getModelCheckingResultFormulae(programState, preparedState, formulae);
+        return ex.getModelCheckingResultFormulae(programState, preparedState, formulae);
     }
 
 	@Override
 	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
 		ProgramState preparedState = programState.clone();
         invokePrepare.prepareHeap(preparedState);
-
-        return method.getMethodExecutor().satisfiesFormulae(programState, preparedState, formulae);
+        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
+        return ex.satisfiesFormulae(programState, preparedState, formulae);
 	}
 
     @Override

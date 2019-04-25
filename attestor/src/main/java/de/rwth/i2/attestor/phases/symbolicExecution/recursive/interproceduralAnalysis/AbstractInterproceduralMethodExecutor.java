@@ -5,7 +5,7 @@ import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -40,8 +40,6 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    
 	    ProcedureCall call = procedureRegistry.getProcedureCall( method, heapInScope );
 	    procedureRegistry.registerDependency( callingState, call );
-	    System.out.println("Postconditions: Created procedure call " + call);
-	    System.out.println("Heap: " + heapInScope);
 	    
 	    if(!contractMatch.hasMatch()) {
 	        
@@ -53,10 +51,6 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    return scopedHeap.merge(contractMatch);
 	}
 	
-	@Override
-	public void setModelCheckingFormulae(Set<Node> formulae) {
-		// NOP		
-	}
 	@Override
 	protected ModelCheckingContract getModelCheckingContract(ProgramState callingState, ScopedHeap scopedHeap,
 			Set<Node> formulae) {

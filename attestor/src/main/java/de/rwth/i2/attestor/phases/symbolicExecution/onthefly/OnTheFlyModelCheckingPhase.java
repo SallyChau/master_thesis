@@ -1,4 +1,4 @@
-package de.rwth.i2.attestor.phases.modelChecking.onthefly;
+package de.rwth.i2.attestor.phases.symbolicExecution.onthefly;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,18 +20,14 @@ import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContractCollection;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.ModelCheckingInterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.NonRecursiveModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.RecursiveModelCheckingMethodExecutor;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContractCollection;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
-import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
+import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.scopes.DefaultScopeExtractor;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureCall;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureRegistry;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
-import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.InputTransformer;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
@@ -40,60 +36,220 @@ import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.procedures.MethodExecutor;
 import de.rwth.i2.attestor.procedures.PreconditionMatchingStrategy;
+import de.rwth.i2.attestor.stateSpaceGeneration.OnTheFlyStateSpaceGenerator;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
-import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerator;
 
 public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCheckingResultsTransformer {
 	
-	private final StateSpaceGeneratorFactory stateSpaceGeneratorFactory;
+	private final OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory;	
+
+	private ModelCheckingInterproceduralAnalysis interproceduralAnalysis;	
+	private List<ProgramState> initialStates;
+	private Method mainMethod;
 	
-	Method mainMethod;
-	private List<ProgramState> initialStates; // states before any statement has been executed (independent from code)
-	private StateSpace mainStateSpace;
-	private OnTheFlyProofStructure proofStructure;
-	private InterproceduralAnalysis interproceduralAnalysis;
+	private StateSpace mainStateSpace = null;	
 	
 	private Set<LTLFormula> modelCheckingFormulae;
+	private OnTheFlyProofStructure proofStructure;
 	
 	private final Map<LTLFormula, ModelCheckingResult> formulaResults = new LinkedHashMap<>();
     private final Map<LTLFormula, ModelCheckingTrace> traces = new LinkedHashMap<>();
+    
     private boolean allSatisfied = true;
-
     private int numberSatFormulae = 0;
+    
+    
 	
 	public OnTheFlyModelCheckingPhase(Scene scene) {
 		
 		super(scene);
-		stateSpaceGeneratorFactory = new StateSpaceGeneratorFactory(scene);
+		stateSpaceGeneratorFactory = new OnTheFlyStateSpaceGeneratorFactory(scene);
 	}
 	
-	@Override
-    public void executePhase() {
-		
-		System.out.println("--- On-the-fly Model Checking ---");
-		
-    	interproceduralAnalysis = new ModelCheckingInterproceduralAnalysis();
-    	loadInitialStates();
-    	loadMainMethod();
-    	initializeMethodExecutors();    	
-    	loadModelCheckingFormulae();  
-    	
-    	if (modelCheckingFormulae != null) {
-	        for (LTLFormula formula : modelCheckingFormulae) { // TODO do not generate state space again for each formula
-	        	modelCheckOnTheFly(formula); 
-	        }
-    	}
-        
-        System.out.println("--- END On-the-fly Model Checking ---");
-    }
-
-	@Override
+	
+    
+    @Override
 	public String getName() {
 		
 		return "On-the-fly Model Checking";
 	}
+	
+	@Override
+    public void executePhase() {	    	
+    	
+		loadModelCheckingFormulae();
+    	for (LTLFormula formula : modelCheckingFormulae) {
+    		interproceduralAnalysis = new ModelCheckingInterproceduralAnalysis();
+        	loadMethodsToSkip();
+        	loadInitialStates();
+        	loadMainMethod();
+        	initializeMethodExecutors(); 
+    		startOnTheFlyModelChecking(formula); 
+    		registerMainProcedureCalls();
+	        interproceduralAnalysis.run();
+	        processModelCheckingResults(formula);
+    	}
+    }
+    
+    private void loadModelCheckingFormulae() {
+
+    	ModelCheckingSettings settings = getPhase(MCSettingsTransformer.class).getMcSettings();
+    	
+    	modelCheckingFormulae = settings.getFormulae();        
+        if (modelCheckingFormulae.isEmpty()) {
+            logger.debug("No LTL formulae have been provided.");
+        }
+    }
+    
+    private void loadMethodsToSkip() {
+
+    	ModelCheckingSettings settings = getPhase(MCSettingsTransformer.class).getMcSettings();
+        
+        List<String> methodsToSkip = settings.getMethodsToSkip();    	
+    	for(Method method : scene ().getRegisteredMethods()) {
+    		if (methodsToSkip.contains(method.getName())) {
+    			System.out.println("Phase: Skipping method " + method.getSignature() + " for model checking.");
+    			interproceduralAnalysis.registerMethodToSkip(method);
+    		}
+    	}
+    }
+    
+    private void loadInitialStates() {
+
+        List<HeapConfiguration> inputs = getPhase(InputTransformer.class).getInputs();
+        initialStates = new ArrayList<>(inputs.size());
+        for(HeapConfiguration hc : inputs) {
+        	initialStates.add(scene().createProgramState(hc));
+        }
+    }
+    
+    private void loadMainMethod() {
+
+        InputSettings inputSettings = getPhase(InputSettingsTransformer.class).getInputSettings();
+        String methodName = inputSettings.getMethodName();
+        try {
+			mainMethod = scene().getMethodIfPresent(methodName);
+		} catch (ElementNotPresentException e) {
+			mainMethod = findMatchingMethod(methodName);
+		}
+        if(mainMethod.getBody() == null) {
+            mainMethod = findMatchingMethod(methodName);
+        }
+    }
+    
+    private Method findMatchingMethod(String methodName) { 
+
+        for(Method method : scene().getRegisteredMethods()) {
+            if(methodName.equals(method.getName())) {
+                logger.info("Found matching top-level method with signature: " + method.getSignature());
+                return method;
+            }
+        }
+
+        throw new IllegalArgumentException("Could not find top-level method '" + methodName + "'.");
+    }  
+
+    private void initializeMethodExecutors() {
+
+        OnTheFlyProcedureRegistry procedureRegistry = new OnTheFlyProcedureRegistry(
+                interproceduralAnalysis,
+                stateSpaceGeneratorFactory
+        );
+
+        PreconditionMatchingStrategy preconditionMatchingStrategy = new InternalPreconditionMatchingStrategy();
+
+        for(Method method : scene ().getRegisteredMethods()) {
+            MethodExecutor executor;
+            ContractCollection contractCollection = new InternalContractCollection(preconditionMatchingStrategy);
+            if(method.isRecursive()) {
+                executor = new RecursiveModelCheckingMethodExecutor(
+                        method,
+                        new DefaultScopeExtractor(this, method.getName()),
+                        contractCollection,
+                        procedureRegistry
+                );
+            } else {
+                executor = new NonRecursiveModelCheckingMethodExecutor(
+                		method,
+                        new DefaultScopeExtractor(this, method.getName()),
+                        contractCollection,
+                        procedureRegistry 
+                );
+            }
+            method.setMethodExecution(executor);
+        }
+    }
+    
+    private void startOnTheFlyModelChecking(LTLFormula formula) {   	    	
+    		
+        logger.info("Checking formula: " + formula.getFormulaString() + "...");
+        
+        Set<Node> formulae = new HashSet<>();
+        formulae.add(formula.getASTRoot().getPLtlform());        
+        
+        OnTheFlyStateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates, formulae);
+    	
+    	try {
+    		System.out.println("Phase: Generate main state space " + mainMethod.getName());
+			mainStateSpace = stateSpaceGenerator.generateAndCheck();
+		} catch (StateSpaceGenerationAbortedException e) {	
+			e.printStackTrace();
+		}
+    	
+    	proofStructure = stateSpaceGenerator.getProofStructure();
+    	System.err.println("Phase: ProofStructure from main state space " + proofStructure);			
+    }
+    
+    /**
+     * Register (current) main state space (incl proofStructure and result formulae) 
+     * in interprocedural analysis to continue model checking for procedure calls
+     */
+    private void registerMainProcedureCalls() {
+
+        for(ProgramState iState : initialStates) {
+            StateSpace stateSpace = iState.getContainingStateSpace();
+            OnTheFlyProcedureCall mainCall = new OnTheFlyProcedureCall(mainMethod, iState.getHeap(), stateSpaceGeneratorFactory, null);
+            interproceduralAnalysis.registerStateSpace(mainCall, stateSpace);
+            interproceduralAnalysis.registerProofStructure(mainCall, proofStructure);
+        }
+    }    
+    
+    private void processModelCheckingResults(LTLFormula formula) {
+   
+        System.out.println("Main state space: " + mainStateSpace);
+        System.out.println("Main Proof Structure successful? " + proofStructure.isSuccessful());
+    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
+    	
+    	if (proofStructure.isSuccessful()) {
+            if(mainStateSpace.containsAbortedStates()) {
+                allSatisfied = false;
+                formulaResults.put(formula, ModelCheckingResult.UNKNOWN);
+                logger.info("done. It is unknown whether the formula is satisfied.");
+            } else {
+                formulaResults.put(formula, ModelCheckingResult.SATISFIED);
+                logger.info("done. Formula is satisfied.");
+                numberSatFormulae++;
+            }
+        } else {
+            logger.info("Formula is violated: " + formula.getFormulaString());
+            allSatisfied = false;
+            formulaResults.put(formula, ModelCheckingResult.UNSATISFIED);
+
+            if (scene().options().isIndexedMode()) {
+                logger.warn("Counterexample generation for indexed grammars is not supported yet.");
+            } else {
+                FailureTrace failureTrace = proofStructure.getFailureTrace(mainStateSpace);
+                interproceduralAnalysis.addFailureTrace(failureTrace);
+                System.out.println(failureTrace.toString());
+//            	HierarchicalFailureTrace failureTrace = interproceduralAnalysis.getHierarchicalFailureTrace(); // for recursive MC
+                traces.put(formula, failureTrace);               
+            	
+            	System.err.println("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
+            }
+        }    	
+    }
 
 	@Override
 	public void logSummary() {
@@ -160,156 +316,5 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
     @Override
     public int getNumberSatFormulae() {
         return numberSatFormulae;
-    }
-    
-    private void loadInitialStates() {
-
-        List<HeapConfiguration> inputs = getPhase(InputTransformer.class).getInputs();
-        initialStates = new ArrayList<>(inputs.size());
-        for(HeapConfiguration hc : inputs) {
-        	initialStates.add(scene().createProgramState(hc));
-        }
-    }
-
-    private void initializeMethodExecutors() {
-
-        InternalProcedureRegistry procedureRegistry = new InternalProcedureRegistry(
-                interproceduralAnalysis,
-                stateSpaceGeneratorFactory
-        );
-
-        PreconditionMatchingStrategy preconditionMatchingStrategy = new InternalPreconditionMatchingStrategy();
-
-        for(Method method : scene ().getRegisteredMethods()) {
-            MethodExecutor executor;
-            ContractCollection contractCollection = new InternalContractCollection(preconditionMatchingStrategy);
-            ModelCheckingContractCollection mcContractCollection = new ModelCheckingContractCollection(preconditionMatchingStrategy);
-            if(method.isRecursive()) {
-                executor = new RecursiveModelCheckingMethodExecutor(
-                        method,
-                        new DefaultScopeExtractor(this, method.getName()),
-                        contractCollection,
-                        mcContractCollection,
-                        procedureRegistry
-                );
-            } else {
-                executor = new NonRecursiveModelCheckingMethodExecutor(
-                		method,
-                        new DefaultScopeExtractor(this, method.getName()),
-                        contractCollection,
-                        mcContractCollection,
-                        procedureRegistry 
-                );
-            }
-            method.setMethodExecution(executor);
-        }
-    }
-    
-    /**
-     * Register (current) main state space (incl proofStructure and result formulae) 
-     * in interprocedural analysis to continue model checking for procedure calls
-     */
-    private void registerMainProcedureCalls() {
-
-        for(ProgramState iState : initialStates) {
-            StateSpace stateSpace = iState.getContainingStateSpace();
-            ProcedureCall mainCall = new InternalProcedureCall(mainMethod, iState.getHeap(), stateSpaceGeneratorFactory, null);
-            interproceduralAnalysis.registerStateSpace(mainCall, stateSpace);
-            interproceduralAnalysis.registerProofStructure(mainCall, proofStructure);
-            // no need to register result formulae for main because it wont be needed while state space is incomplete? TODO
-        }
-    }
-    
-    private void loadMainMethod() {
-
-        InputSettings inputSettings = getPhase(InputSettingsTransformer.class).getInputSettings();
-        String methodName = inputSettings.getMethodName();
-        try {
-			mainMethod = scene().getMethodIfPresent(methodName);
-		} catch (ElementNotPresentException e) {
-			mainMethod = findMatchingMethod(methodName);
-		}
-        if(mainMethod.getBody() == null) {
-            mainMethod = findMatchingMethod(methodName);
-        }
-    }
-    
-    private Method findMatchingMethod(String methodName) { 
-
-        for(Method method : scene().getRegisteredMethods()) {
-            if(methodName.equals(method.getName())) {
-                logger.info("Found matching top-level method with signature: " + method.getSignature());
-                return method;
-            }
-        }
-
-        throw new IllegalArgumentException("Could not find top-level method '" + methodName + "'.");
-    }
-    
-    private void loadModelCheckingFormulae() {
-    	
-    	ModelCheckingSettings settings = getPhase(MCSettingsTransformer.class).getMcSettings();
-        modelCheckingFormulae = settings.getFormulae();
-        
-        System.out.println("onthefly" + settings.getMethodsToSkip());
-        
-        if (modelCheckingFormulae.isEmpty()) {
-            logger.debug("No LTL formulae have been provided.");
-        }
-    }
-    
-    private void modelCheckOnTheFly(LTLFormula formula) {    	
-    	
-        logger.info("Checking formula: " + formula.getFormulaString() + "...");
-        
-        Set<Node> formulae = new HashSet<>();
-        formulae.add(formula.getASTRoot().getPLtlform());        
-        
-        StateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates, formulae);
-    	
-    	try {
-    		System.out.println("Phase: Generate main state space " + mainMethod.getName());
-			mainStateSpace = stateSpaceGenerator.generateOnTheFly();
-		} catch (StateSpaceGenerationAbortedException e) {	
-			e.printStackTrace();
-		}
-    	
-    	proofStructure = stateSpaceGenerator.getProofStructure();
-    	System.err.println("Phase: ProofStructure from main state space " + proofStructure);
-    
-		registerMainProcedureCalls();
-        interproceduralAnalysis.run();
-    	
-    	// process model checking result
-        System.out.println("Main state space: " + mainStateSpace);
-        System.out.println("Main Proof Structure successful? " + proofStructure.isSuccessful());
-    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
-    	if (proofStructure.isSuccessful()) {
-            if(mainStateSpace.containsAbortedStates()) {
-                allSatisfied = false;
-                formulaResults.put(formula, ModelCheckingResult.UNKNOWN);
-                logger.info("done. It is unknown whether the formula is satisfied.");
-            } else {
-                formulaResults.put(formula, ModelCheckingResult.SATISFIED);
-                logger.info("done. Formula is satisfied.");
-                numberSatFormulae++;
-            }
-        } else {
-            logger.info("Formula is violated: " + formula.getFormulaString());
-            allSatisfied = false;
-            formulaResults.put(formula, ModelCheckingResult.UNSATISFIED);
-
-            if (scene().options().isIndexedMode()) {
-                logger.warn("Counterexample generation for indexed grammars is not supported yet.");
-            } else {
-                FailureTrace failureTrace = proofStructure.getFailureTrace(mainStateSpace);
-                interproceduralAnalysis.addFailureTrace(failureTrace);
-                System.out.println(failureTrace.toString());
-                traces.put(formula, failureTrace);  // TODO adjust to hierarchical                   
-
-            	
-            	System.err.println("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
-            }
-        }
     }
 }

@@ -65,16 +65,4 @@ public class TraceBasedStateExplorationStrategy implements StateExplorationStrat
 
         return false;
     }
-
-    @Override
-	public void removeUnexploredState(ProgramState state) {
-
-		unexploredStates.remove(state);
-	}
-
-	@Override
-	public boolean containsState(ProgramState state) {
-
-		return unexploredStates.contains(state);
-	}
 }

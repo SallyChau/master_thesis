@@ -5,11 +5,11 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.Contract;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -72,13 +72,13 @@ public class MockupContractCollection implements ContractCollection {
 				}
 
 				@Override
-				public ModelCheckingContract getModelCheckingContract(List<Node> inputFormulae) {
+				public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
 					// TODO Auto-generated method stub
 					return null;
 				}
 
 				@Override
-				public boolean hasModelCheckingContractMatch(List<Node> inputFormulae) {
+				public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
 					// TODO Auto-generated method stub
 					return false;
 				}
