@@ -18,7 +18,6 @@ import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.AbstractProofStructure;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.Assertion2;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
-import de.rwth.i2.attestor.recursiveStateMachine.ComponentStateMachine;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.AssignInvoke;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.InvokeStmt;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;

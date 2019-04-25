@@ -1,4 +1,4 @@
-package de.rwth.i2.attestor.recursiveStateMachine;
+package de.rwth.i2.attestor.phases.modelChecking.hierarchical;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,10 +15,8 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalProofStructure;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractMatch;

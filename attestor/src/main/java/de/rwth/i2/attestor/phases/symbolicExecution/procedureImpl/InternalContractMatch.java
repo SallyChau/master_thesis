@@ -6,10 +6,10 @@ import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.ContractMatch;
 
-class InternalContractMatch implements ContractMatch {
+public class InternalContractMatch implements ContractMatch {
 
     private int[] externalReordering;
     private Collection<HeapConfiguration> postconditions;

@@ -1,4 +1,4 @@
-package de.rwth.i2.attestor.phases.symbolicExecution.onthefly;
+package de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking;
 
 import java.util.Set;
 
