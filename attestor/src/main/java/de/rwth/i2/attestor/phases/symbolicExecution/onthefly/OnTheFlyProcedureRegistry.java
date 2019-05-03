@@ -11,7 +11,6 @@ import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateS
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureRegistry;
 import de.rwth.i2.attestor.procedures.Method;
-import de.rwth.i2.attestor.procedures.ScopedHeap;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
@@ -33,9 +32,9 @@ public class OnTheFlyProcedureRegistry implements ProcedureRegistry {
 		return new OnTheFlyProcedureCall(method, initialHeap, stateSpaceGeneratorFactory, this);
 	}
 	
-	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeap scopedHeap) {
+	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeapHierarchy scopeHierarchy) {
 
-		return new OnTheFlyProcedureCall(method, initialHeap, scopedHeap, stateSpaceGeneratorFactory, this);
+		return new OnTheFlyProcedureCall(method, initialHeap, scopeHierarchy, stateSpaceGeneratorFactory, this);
 	}
 
 	@Override

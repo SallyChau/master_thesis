@@ -47,7 +47,86 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
     
     
 
-    public void setModelCheckingFormulae(Set<Node> formulae) {
+    @Override
+	public void continueExecution(ProcedureCall call) {
+	
+	    try {
+	
+	    	OnTheFlyProcedureCall onTheFlyCall = (OnTheFlyProcedureCall) call;
+	        Method method = onTheFlyCall.getMethod();
+	        ProgramState preconditionState = onTheFlyCall.getInput();
+	        
+	        System.out.println("InternalPartialStateSpace: Continuing execution for " + onTheFlyCall.getMethod().getSignature() + " (" + onTheFlyCall + ")");
+	
+	        if (partialStateSpace.containsAbortedStates()) {
+	            return;
+	        }
+	        
+	        stateToContinue.flagAsContinueState();
+	        
+	        OnTheFlyStateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(
+	        		onTheFlyCall.getMethod().getBody(),
+	                stateToContinue,
+	                partialStateSpace,
+	                onTheFlyCall.getScopeHierarchy(),
+	                proofStructure,
+	                modelCheckingFormulae
+	        );
+	
+	        StateSpace stateSpace = null;
+	        Set<Node> modelCheckingResultFormulae;
+	        ModelCheckingResult modelCheckingResult = null;
+	        
+	        if (modelCheck) {
+	        	stateSpace = stateSpaceGenerator.generateAndCheck();
+	        	
+	        	modelCheckingResultFormulae = stateSpaceGenerator.getResultFormulae();
+	            
+	            if (proofStructure.isSuccessful() && modelCheckingResultFormulae == null) {
+	
+	                System.err.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was successful");
+	                LTLFormula ltlFormula = new LTLFormula("true");
+	                ltlFormula.toPNF();
+	                modelCheckingResultFormulae = new HashSet<>();
+	                modelCheckingResultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
+	            } else if (!proofStructure.isSuccessful()) {
+	            	
+	            	System.out.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was unsuccessful");  
+	            }
+	            
+	            modelCheckingResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
+	        } else {
+	        	System.err.println("InternalPartialStateSpace: SKIPPING MC for method: " + method.getName());
+	        	stateSpace = stateSpaceGenerator.generate();
+	        	
+	        	modelCheckingResultFormulae = modelCheckingFormulae;
+	        	modelCheckingResult = ModelCheckingResult.SATISFIED;
+	        }
+	        
+	        stateToContinue.unflagContinueState();
+	
+	        List<HeapConfiguration> finalHeaps = new ArrayList<>();
+	        stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );            
+	        
+	        Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
+	        
+	        ModelCheckingContract modelCheckingContract = new ModelCheckingContract(preconditionState.getHeap(), modelCheckingFormulae, 
+	        		modelCheckingResultFormulae, modelCheckingResult, proofStructure.getFailureTrace());
+	        Collection<ModelCheckingContract> modelCheckingContracts = new ArrayList<>();
+	        modelCheckingContracts.add(modelCheckingContract);
+	        contract.addModelCheckingContracts(modelCheckingContracts);            
+	        method.addContract(contract);
+	    } catch (Exception e) {
+	        throw new IllegalStateException("Failed to continue state space execution.");
+	    }
+	}
+
+	public void modelCheck(boolean modelCheck) {
+		
+		this.modelCheck = modelCheck;
+	}
+
+	public void setModelCheckingFormulae(Set<Node> formulae) {
     	
     	this.modelCheckingFormulae = formulae;
     }
@@ -57,88 +136,6 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
 		this.proofStructure = proofStructure;
     }
 	
-	public void modelCheck(boolean modelCheck) {
-		
-		this.modelCheck = modelCheck;
-	}
-    
-    @Override
-    public void continueExecution(ProcedureCall call) {
-
-        try {
-
-            Method method = call.getMethod();
-            ProgramState preconditionState = call.getInput();
-            
-            System.out.println("InternalPartialStateSpace: Continuing execution for " + call.getMethod().getSignature() + " (" + call + ")");
-
-            if (partialStateSpace.containsAbortedStates()) {
-                return;
-            }
-            
-            stateToContinue.flagAsContinueState();
-            
-            OnTheFlyStateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(
-                    call.getMethod().getBody(),
-                    stateToContinue,
-                    partialStateSpace,
-                    proofStructure,
-                    modelCheckingFormulae
-            );
-
-            StateSpace stateSpace = null;
-            Set<Node> modelCheckingResultFormulae;
-            ModelCheckingResult modelCheckingResult = null;
-            
-            if (modelCheck) {
-            	stateSpace = stateSpaceGenerator.generateAndCheck();
-            	
-            	modelCheckingResultFormulae = stateSpaceGenerator.getResultFormulae();
-                
-                if (proofStructure.isSuccessful() && modelCheckingResultFormulae == null) {
-
-                    System.err.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was successful");
-                    LTLFormula ltlFormula = new LTLFormula("true");
-                    ltlFormula.toPNF();
-                    modelCheckingResultFormulae = new HashSet<>();
-                    modelCheckingResultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
-                } else if (!proofStructure.isSuccessful()) {
-                	
-                	System.out.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was unsuccessful");  
-                }
-                
-                modelCheckingResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
-            } else {
-            	System.err.println("InternalPartialStateSpace: SKIPPING MC for method: " + method.getName());
-            	stateSpace = stateSpaceGenerator.generate();
-            	
-            	modelCheckingResultFormulae = modelCheckingFormulae;
-            	modelCheckingResult = ModelCheckingResult.SATISFIED;
-            }
-            
-            stateToContinue.unflagContinueState();
-
-            List<HeapConfiguration> finalHeaps = new ArrayList<>();
-            stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );            
-            
-            Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
-
-            
-            ModelCheckingContract modelCheckingContract = new ModelCheckingContract(
-            		preconditionState.getHeap(), 
-            		modelCheckingFormulae, 
-					modelCheckingResultFormulae, 
-					modelCheckingResult,
-					proofStructure.getFailureTrace());
-            Collection<ModelCheckingContract> modelCheckingContracts = new ArrayList<>();
-            modelCheckingContracts.add(modelCheckingContract);
-            contract.addModelCheckingContracts(modelCheckingContracts);            
-            method.addContract(contract);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to continue state space execution.");
-        }
-    }
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;

@@ -11,6 +11,7 @@ import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.markingGeneration.Markings;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import gnu.trove.iterator.TIntIterator;
@@ -44,18 +45,18 @@ public class ReturnVoidStmt extends Statement {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
     	return computeSuccessors(programState);
     }
     
     @Override
-	public Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
-    	return null;
+    	return Collections.emptySet();
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
     	return true;
 	}
@@ -107,8 +108,8 @@ public class ReturnVoidStmt extends Statement {
 
 	@Override
 	public ProgramState prepareHeap(ProgramState programState) {
-		// TODO Auto-generated method stub
-		return null;
+
+		return programState;
 	}
 
 }

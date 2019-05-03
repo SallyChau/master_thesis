@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.AbstractModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.invoke.InvokeCleanup;
@@ -83,36 +84,34 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
         // programState is callingState, prepared state is new input
-        ProgramState preparedState = programState.clone();
-        invokePrepare.prepareHeap(preparedState);
+    	ProgramState preparedState = prepareHeap(programState);
 
         AbstractModelCheckingMethodExecutor methodExecutor = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
         methodExecutor.setModelCheckingFormulae(formulae);
-        Collection<ProgramState> methodResult = methodExecutor.getResultStates(programState, preparedState);
-        
-        System.out.println("AssignInvoke: Computed successors for " + programState.getStateSpaceId() + " and formulae " + formulae);
+        Collection<ProgramState> methodResult = methodExecutor.getResultStates(programState, preparedState, new ScopedHeapHierarchy(scopeHierarchy));
         
         return getCleanedResultStates(methodResult);
     }
     
     @Override
-	public Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
     	// programState is callingState, prepared state is new input
-        ProgramState preparedState = programState.clone();
-        invokePrepare.prepareHeap(preparedState);
-        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
-        return ex.getModelCheckingResultFormulae(programState, preparedState, formulae);
+    	ProgramState preparedState = prepareHeap(programState);
+    	
+        AbstractModelCheckingMethodExecutor methodExecutor = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
+        return methodExecutor.getModelCheckingResultFormulae(programState, preparedState, formulae, new ScopedHeapHierarchy(scopeHierarchy));
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
-		ProgramState preparedState = programState.clone();
-        invokePrepare.prepareHeap(preparedState);
-        AbstractModelCheckingMethodExecutor ex = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
-        return ex.satisfiesFormulae(programState, preparedState, formulae);
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+		
+    	ProgramState preparedState = prepareHeap(programState);
+    	
+        AbstractModelCheckingMethodExecutor methodExecutor = (AbstractModelCheckingMethodExecutor) method.getMethodExecutor();
+        return methodExecutor.satisfiesFormulae(programState, preparedState, formulae, new ScopedHeapHierarchy(scopeHierarchy));
 	}
 
     protected Collection<ProgramState> getCleanedResultStates(Collection<ProgramState> resultStates) {
@@ -183,5 +182,4 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
     public boolean needsCanonicalization() {
         return true;
     }
-
 }

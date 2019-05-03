@@ -2,6 +2,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.ConcreteValue;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.NullPointerDereferenceException;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue;
@@ -103,18 +105,18 @@ public class AssignStmt extends Statement {
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
     	return computeSuccessors(programState);
     }
     
     @Override
-	public Set<Node> getResultFormulaeOnTheFly(ProgramState programState, Set<Node> formulae) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
-    	return null;
+    	return Collections.emptySet();
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae) {
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
     	return true;
 	}
@@ -144,7 +146,7 @@ public class AssignStmt extends Statement {
 
 	@Override
 	public ProgramState prepareHeap(ProgramState programState) {
-		// TODO Auto-generated method stub
-		return null;
+
+		return programState;
 	}
 }

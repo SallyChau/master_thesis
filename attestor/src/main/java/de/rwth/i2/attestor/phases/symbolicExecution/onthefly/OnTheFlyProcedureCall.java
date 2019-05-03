@@ -22,7 +22,6 @@ import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateS
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Contract;
 import de.rwth.i2.attestor.procedures.Method;
-import de.rwth.i2.attestor.procedures.ScopedHeap;
 import de.rwth.i2.attestor.stateSpaceGeneration.OnTheFlyStateSpaceGenerator;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
@@ -35,66 +34,48 @@ import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedExcep
  */
 public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall {
 	
-	private OnTheFlyStateSpaceGeneratorFactory factory;
 	private OnTheFlyProcedureRegistry registry;
+	private OnTheFlyStateSpaceGeneratorFactory factory;	
 	
     private Method method;
     private ProgramState preconditionState;
-    private ScopedHeap scopedHeap;
     
     private Set<Node> modelCheckingFormulae;
+    private ScopedHeapHierarchy scopeHierarchy;
 	
     
     
-    public OnTheFlyProcedureCall(Method method, HeapConfiguration precondition, 
-								 OnTheFlyStateSpaceGeneratorFactory factory, 
-								 OnTheFlyProcedureRegistry registry) {
+    public OnTheFlyProcedureCall(Method method, HeapConfiguration precondition, ScopedHeapHierarchy hierarchicalScopedHeap, 
+    		OnTheFlyStateSpaceGeneratorFactory factory, OnTheFlyProcedureRegistry registry) {
 
 		super(factory); //as SceneObject
 		this.registry = registry; 
+		this.factory = factory;
 		
 		this.method = method;
 		this.preconditionState = scene().createProgramState(precondition);
-		this.scopedHeap = null;
-		this.factory = factory;
 		
 		this.modelCheckingFormulae = new HashSet<>();
+		this.scopeHierarchy = hierarchicalScopedHeap;
 	}
-    
-	public OnTheFlyProcedureCall(Method method, HeapConfiguration precondition, 
-								 ScopedHeap scopedHeap,
-			  					 OnTheFlyStateSpaceGeneratorFactory factory, 
-			  					 OnTheFlyProcedureRegistry registry) {
+	 
+	public OnTheFlyProcedureCall(Method method, HeapConfiguration precondition, OnTheFlyStateSpaceGeneratorFactory factory, 
+    		OnTheFlyProcedureRegistry registry) {
 
-		super(factory); //as SceneObject
-		this.registry = registry; 
-		
-		this.method = method;
-		this.preconditionState = scene().createProgramState(precondition);
-		this.scopedHeap = scopedHeap;
-		this.factory = factory;
-		
-		this.modelCheckingFormulae = new HashSet<>();
+		this(method, precondition, new ScopedHeapHierarchy(), factory, registry);
 	}
 	
-	
-	
-	public void setModelCheckingFormulae(Set<Node> formulae) {
-		this.modelCheckingFormulae = formulae;
-	}
 	
 	@Override
     public StateSpace execute() {
     	
-    	ProgramState initialState = preconditionState.clone();
-    	
-    	
+    	ProgramState initialState = preconditionState.clone();    	
     	Set<Method> methodsToSkip = registry.getMethodsToSkip();
 
     	// if method is not contained in list of methods to be skipped, else generate state space, but do not model check
     	// output formulae = input formulae for registry
         try {        	
-        	OnTheFlyStateSpaceGenerator stateSpaceGenerator = factory.create( method.getBody(), initialState, scopedHeap, modelCheckingFormulae );
+        	OnTheFlyStateSpaceGenerator stateSpaceGenerator = factory.create(method.getBody(), initialState, scopeHierarchy, modelCheckingFormulae);
         	
         	System.out.println("InternalProcedureCall: Generate state space for method " + method.getSignature() + " and formulae " + modelCheckingFormulae);
         	
@@ -110,6 +91,13 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
         } 
     }
     
+	/**
+	 * Executes the procedure call and model check formulae.
+	 * @param stateSpaceGenerator
+	 * @param formulae The formulae to be model checked.
+	 * @return The stateSpace resulting from executing the procedure call.
+	 * @throws StateSpaceGenerationAbortedException
+	 */
     private StateSpace executeAndCheck(OnTheFlyStateSpaceGenerator stateSpaceGenerator, Set<Node> formulae) throws StateSpaceGenerationAbortedException {
     	
     	StateSpace stateSpace = stateSpaceGenerator.generateAndCheck();
@@ -137,16 +125,15 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
         }
         
         List<HeapConfiguration> finalHeaps = new ArrayList<>();
-        stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
+        stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()));
         Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
         
-        ModelCheckingResult mcResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
-        ModelCheckingContract mcContract = new ModelCheckingContract(preconditionState.getHeap(), formulae, resultFormulae, 
-        															 mcResult, proofStructure.getFailureTrace());
-
-        Collection<ModelCheckingContract> mcContracts = new ArrayList<>();
-        mcContracts.add(mcContract);
-        contract.addModelCheckingContracts(mcContracts);
+        ModelCheckingResult modelCheckingResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
+        ModelCheckingContract modelCheckingContract = new ModelCheckingContract(preconditionState.getHeap(), formulae, resultFormulae, 
+        		modelCheckingResult, proofStructure.getFailureTrace());
+        Collection<ModelCheckingContract> modelCheckingContracts = new ArrayList<>();
+        modelCheckingContracts.add(modelCheckingContract);
+        contract.addModelCheckingContracts(modelCheckingContracts);
         method.addContract(contract);
         
         registry.registerStateSpace(this, stateSpace);
@@ -156,10 +143,18 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
         return stateSpace;
     }
     
+    /**
+     * Executes the procedure call without model checking.
+     * @param stateSpaceGenerator
+     * @param formulae The formulae to be model checked, but is skipped for this procedure. Formulae is transferred to return state.
+     * @return The stateSpace resulting from executing the procedure call.
+     * @throws StateSpaceGenerationAbortedException
+     */
     private StateSpace executeWithoutCheck(OnTheFlyStateSpaceGenerator stateSpaceGenerator, Set<Node> formulae) throws StateSpaceGenerationAbortedException {
     	
     	StateSpace stateSpace = stateSpaceGenerator.generate();
-        OnTheFlyProofStructure proofStructure = stateSpaceGenerator.getProofStructure(); // proofstructure should be empty
+    	
+        OnTheFlyProofStructure proofStructure = stateSpaceGenerator.getProofStructure(); // proofstructure is empty
         Set<Node> resultFormulae = formulae;
         System.err.println("InternalProcedureCall: Received result formulae from " + method.getSignature() + ": " + resultFormulae);
         
@@ -167,23 +162,27 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
         stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
         Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
         
-        ModelCheckingResult mcResult = ModelCheckingResult.SATISFIED; // actually unknown, but need to be set to satisfied to return true
-        ModelCheckingContract mcContract = new ModelCheckingContract(preconditionState.getHeap(), formulae, resultFormulae, 
-        															 mcResult, proofStructure.getFailureTrace());
-
-        Collection<ModelCheckingContract> mcContracts = new ArrayList<>();
-        mcContracts.add(mcContract);
-        contract.addModelCheckingContracts(mcContracts);
+        ModelCheckingResult modelCheckingResult = ModelCheckingResult.SATISFIED; // actually unknown, but need to be set to satisfied to return true
+        ModelCheckingContract modelCheckingContract = new ModelCheckingContract(preconditionState.getHeap(), formulae, resultFormulae, 
+        		modelCheckingResult, proofStructure.getFailureTrace());
+        Collection<ModelCheckingContract> modelCheckingContracts = new ArrayList<>();
+        modelCheckingContracts.add(modelCheckingContract);
+        contract.addModelCheckingContracts(modelCheckingContracts);
         method.addContract(contract);
         
-        registry.registerStateSpace( this, stateSpace );
+        registry.registerStateSpace(this, stateSpace);
         registry.registerProofStructure(this, proofStructure);
         registry.registerReturnFormulae(this, resultFormulae);
         
         return stateSpace;
     }
 
-    @Override
+    public ScopedHeapHierarchy getScopeHierarchy() {
+		
+		return scopeHierarchy;
+	}
+
+	@Override
     public Method getMethod() {
 
         return method;
@@ -194,8 +193,16 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
 
         return preconditionState;
     }
+    
+    /**
+	 * Set formulae to be checked during Contract computation for this call.
+	 * @param formulae
+	 */
+	public void setModelCheckingFormulae(Set<Node> formulae) {
+		this.modelCheckingFormulae = formulae;
+	}
 
-    @Override
+	@Override
     public int hashCode() {
 
         if(preconditionState == null) {
