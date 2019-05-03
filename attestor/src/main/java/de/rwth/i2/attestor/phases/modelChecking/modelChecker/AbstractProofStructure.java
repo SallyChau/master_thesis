@@ -65,6 +65,17 @@ public abstract class AbstractProofStructure {
         return successorAssertions;
     }
     
+	protected void addEdge(Assertion2 assertion, Assertion2 successorAssertion) {
+
+        if (!edges.containsKey(assertion)) {
+            HashSet<Assertion2> successorAssertions = new LinkedHashSet<>();
+            successorAssertions.add(successorAssertion);
+            edges.put(assertion, successorAssertions);
+        } else {
+            edges.get(assertion).add(successorAssertion);
+        }
+    }
+	
 	/**
 	 * Do one step in the tableau according to tableau rules.
 	 * 
@@ -77,7 +88,7 @@ public abstract class AbstractProofStructure {
 	 */
 	@SuppressWarnings("unchecked")
 	protected HashSet<Assertion2> expand(Assertion2 node, Node formula) {
-
+	
 		TableauRulesSwitch2 rulesSwitch = new TableauRulesSwitch2(node.getProgramState());
 		rulesSwitch.setIn(formula, node);
 		formula.apply(rulesSwitch);
@@ -85,17 +96,6 @@ public abstract class AbstractProofStructure {
 		return (LinkedHashSet<Assertion2>) rulesSwitch.getOut(formula);
 	}
 
-    protected void addEdge(Assertion2 assertion, Assertion2 successorAssertion) {
-
-        if (!edges.containsKey(assertion)) {
-            HashSet<Assertion2> successorAssertions = new LinkedHashSet<>();
-            successorAssertions.add(successorAssertion);
-            edges.put(assertion, successorAssertions);
-        } else {
-            edges.get(assertion).add(successorAssertion);
-        }
-    }
-	
 	public void setBuildFullStructure() {
 
         buildFullStructure = true;
@@ -112,9 +112,9 @@ public abstract class AbstractProofStructure {
     
     public abstract Set<Assertion2> getLeaves();
 
-    public abstract Integer size();
-
     public abstract Set<Assertion2> getVertices();
     
     public abstract FailureTrace getFailureTrace();
+
+	public abstract Integer size();
 }

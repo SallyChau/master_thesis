@@ -26,18 +26,4 @@ public class DepthFirstStateExplorationStrategy implements StateExplorationStrat
 
         unexploredStates.addLast(state);
     }
-    
-	@Override
-	public void removeUnexploredState(ProgramState state) {
-
-		if (unexploredStates.contains(state)) {
-			unexploredStates.remove(state);
-		}		
-	}
-
-	@Override
-	public boolean containsState(ProgramState state) {
-
-		return unexploredStates.contains(state);
-	}
 }

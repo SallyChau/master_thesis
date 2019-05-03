@@ -3,7 +3,6 @@ package de.rwth.i2.attestor.markingGeneration.neighbourhood;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
@@ -12,6 +11,7 @@ import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.HeapConfigurationBuilder;
 import de.rwth.i2.attestor.markingGeneration.Markings;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
@@ -160,22 +160,31 @@ public class NeighbourhoodMarkingCommand implements SemanticsCommand {
 
         return true;
     }
-    
-	@Override
-	public Collection<ProgramState> computeSuccessorsOnTheFly(ProgramState programState, List<Node> formulae) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Node> getResultFormulaeOnTheFly(ProgramState programState, List<Node> formulae) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public ProgramState prepareHeap(ProgramState programState) {
-		// TODO Auto-generated method stub
-		return null;
+
+		return programState;
+	}
+
+	@Override
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae,
+			ScopedHeapHierarchy scopeHierarchy) {
+		
+		return computeSuccessors(programState);
+	}
+
+	@Override
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae,
+			ScopedHeapHierarchy scopeHierarchy) {
+
+		return Collections.emptySet();
+	}
+
+	@Override
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae,
+			ScopedHeapHierarchy scopeHierarchy) {
+
+		return true;
 	}
 }

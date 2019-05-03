@@ -1,11 +1,8 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
 import java.util.Collection;
-import java.util.Set;
 
-import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -18,15 +15,17 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 
 	protected final Method method;
 	protected ProcedureRegistry procedureRegistry;
+	
+	
 
-	public AbstractInterproceduralMethodExecutor( Method method, 
-												  ScopeExtractor scopeExtractor, 
-												  ContractCollection contractCollection, 
-												  ProcedureRegistry procedureRegistry ) {
+	public AbstractInterproceduralMethodExecutor(Method method, ScopeExtractor scopeExtractor, ContractCollection contractCollection, 
+			ProcedureRegistry procedureRegistry ) {
 		super(scopeExtractor, contractCollection);
 		this.method = method;
 		this.procedureRegistry = procedureRegistry;
 	}
+	
+	
 
 	// template method. can be configured by overriding generateAndAddContract.
 	@Override
@@ -49,13 +48,6 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    }
 	    
 	    return scopedHeap.merge(contractMatch);
-	}
-	
-	@Override
-	protected ModelCheckingContract getModelCheckingContract(ProgramState callingState, ScopedHeap scopedHeap,
-			Set<Node> formulae) {
-		
-		return null;
 	}
 	
 	/**

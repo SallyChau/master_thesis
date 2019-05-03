@@ -3,16 +3,14 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
-import de.rwth.i2.attestor.procedures.ScopedHeap;
 import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
 
 /**
@@ -34,9 +32,6 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
 
 
     private StateSpace initialStateSpace = null;   
-    
-    
-    private Map<ProgramState, ScopedHeap> initialStateToScopedHeap = new HashMap<>();
     
     
     private OnTheFlyProofStructure proofStructure = null;
@@ -129,6 +124,14 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
         } else {
             generator.proofStructure = proofStructure;
         }
+        
+        if(generator.resultFormulae == null) {
+            generator.resultFormulae = new HashSet<>();
+        }
+        
+        if(generator.scopeHierarchy == null) {
+            generator.scopeHierarchy = new ScopedHeapHierarchy();
+        }
 
         for (ProgramState state : initialStates) {
 
@@ -136,9 +139,18 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
                 state.setProgramCounter(0);
                 generator.stateSpace.addInitialState(state);
             }
-            generator.stateLabelingStrategy.computeAtomicPropositions(state); // TODO might not be null
-            generator.stateExplorationStrategy.addUnexploredState(state, false);
+            if (state.isFromTopLevelStateSpace()) {
+            	generator.stateLabelingStrategy.computeAtomicPropositions(state);
+            } 
+            else {
+            	if (generator.stateLabelingStrategy instanceof AutomatonStateLabelingStrategy) {
             
+		        	AutomatonStateLabelingStrategy stateLabelingStrategy = (AutomatonStateLabelingStrategy) generator.stateLabelingStrategy;
+		        	stateLabelingStrategy.computeAtomicPropositionsFromGlobalHeap(state, generator.scopeHierarchy);   
+            	}
+            }
+          
+            generator.stateExplorationStrategy.addUnexploredState(state, false);            
             
             // for model checking 
             if(state.isContinueState()) {            	
@@ -154,8 +166,7 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
             	System.out.println("StateSpaceGeneratorBuilder: adding initial assertions to proof structure");                
             	generator.proofStructure.addAssertion(state, modelCheckingFormulae);
             }
-        }
-        
+        }        
         
         return generator;
     }
@@ -182,9 +193,9 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
         return this;
     }
     
-    public OnTheFlyStateSpaceGeneratorBuilder setScopedHeap(ScopedHeap scopedHeap) {
-    	
-    	generator.scopedHeap = scopedHeap;
+    public OnTheFlyStateSpaceGeneratorBuilder setScopeHierarchy(ScopedHeapHierarchy scopeHierarchy) {
+
+    	generator.scopeHierarchy = scopeHierarchy;
     	return this;
     }
 
@@ -240,7 +251,7 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
      */
     public OnTheFlyStateSpaceGeneratorBuilder setStateLabelingStrategy(StateLabelingStrategy stateLabelingStrategy) {
     	
-        generator.stateLabelingStrategy = (AutomatonStateLabelingStrategy) stateLabelingStrategy;
+        generator.stateLabelingStrategy = stateLabelingStrategy;
         return this;
     }
 

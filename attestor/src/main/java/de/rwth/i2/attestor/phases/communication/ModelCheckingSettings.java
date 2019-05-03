@@ -30,16 +30,10 @@ public class ModelCheckingSettings {
     private String modelCheckingMode = "default";
     
     private List<String> methodsToSkip = new LinkedList<>();
-    
-    private boolean skipConstructors = true;
-    
-    private final String CONSTRUCTOR = "<init>";
 
     public ModelCheckingSettings() {
 
         this.formulae = new LinkedHashSet<>();
-        
-        if(skipConstructors) addMethodToSkip(CONSTRUCTOR);
     }
 
     public boolean isModelCheckingEnabled() {
@@ -97,33 +91,12 @@ public class ModelCheckingSettings {
     	return modelCheckingMode;
     }
     
-    public void setSkipConstructors(boolean skip) {
-    	
-    	if (skip) {
-    		addMethodToSkip(CONSTRUCTOR);
-    	} else {
-    		removeMethodToSkip(CONSTRUCTOR);
-    	}
-    	
-    	skipConstructors = skip;
-    }
-    
-    public boolean skipConstructors() {
-    	
-    	return skipConstructors;
-    }
-    
     public void addMethodToSkip(String method) {
     	
     	if (!methodsToSkip.contains(method)) {
     		methodsToSkip.add(method);
     	}
     }
-    
-    private void removeMethodToSkip(String method) {
-    	
-    	if (method.contains(method)) methodsToSkip.remove(method);
-    }    
     
     public List<String> getMethodsToSkip() {
     	

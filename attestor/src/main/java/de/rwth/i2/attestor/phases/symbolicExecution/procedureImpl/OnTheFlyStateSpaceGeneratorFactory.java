@@ -8,6 +8,7 @@ import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.main.scene.Strategies;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.AggressivePostProcessingStrategy;
@@ -15,7 +16,6 @@ import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstSta
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.FinalStateSubsumptionPostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoPostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.TerminalStatementFinalStateStrategy;
-import de.rwth.i2.attestor.procedures.ScopedHeap;
 import de.rwth.i2.attestor.stateSpaceGeneration.OnTheFlyStateSpaceGenerator;
 import de.rwth.i2.attestor.stateSpaceGeneration.OnTheFlyStateSpaceGeneratorBuilder;
 import de.rwth.i2.attestor.stateSpaceGeneration.PostProcessingStrategy;
@@ -29,29 +29,65 @@ public class OnTheFlyStateSpaceGeneratorFactory extends SceneObject {
     public OnTheFlyStateSpaceGeneratorFactory(Scene scene) {
         super(scene);
     }
+    
+    public OnTheFlyStateSpaceGenerator create(Program program, List<ProgramState> initialStates, Set<Node> modelCheckingFormulae) {
+		
+		return createBuilder()
+				.addInitialStates(initialStates)
+				.setProgram(program)
+				.setModelCheckingFormulae(modelCheckingFormulae)
+				.build();
+	}
+    
+    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, OnTheFlyProofStructure proofStructure, 
+    		Set<Node> modelCheckingFormulae) {
 
-    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState) {
+        if(stateSpace == null) {
+            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
+        }
 
         return createBuilder()
                 .addInitialState(initialState)
                 .setProgram(program)
+                .setInitialStateSpace(stateSpace)
+                .setProofStructure(proofStructure)
+                .setModelCheckingFormulae(modelCheckingFormulae)
                 .build();
     }
+    
+    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState, ScopedHeapHierarchy scopeHierarchy, Set<Node> modelCheckingFormulae) {
 
-    public OnTheFlyStateSpaceGenerator create(Program program, List<ProgramState> initialStates) {
+		return createBuilder()
+				.addInitialState(initialState)
+				.setScopeHierarchy(scopeHierarchy)
+				.setProgram(program)
+				.setModelCheckingFormulae(modelCheckingFormulae)
+				.build();
+	}
+    
+    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, ScopedHeapHierarchy scopeHierarchy, 
+    		OnTheFlyProofStructure proofStructure, Set<Node> modelCheckingFormulae) {
+
+        if(stateSpace == null) {
+            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
+        }
 
         return createBuilder()
-                .addInitialStates(initialStates)
+                .addInitialState(initialState)
                 .setProgram(program)
+                .setInitialStateSpace(stateSpace)
+                .setScopeHierarchy(scopeHierarchy)
+                .setProofStructure(proofStructure)
+                .setModelCheckingFormulae(modelCheckingFormulae)
                 .build();
     }
-
+    
     protected OnTheFlyStateSpaceGeneratorBuilder createBuilder() {
 
         Strategies strategies = scene().strategies();
 
         return OnTheFlyStateSpaceGenerator
-                .builder()
+                .ontheflyBuilder()
                 .setStateLabelingStrategy(
                         strategies.getStateLabelingStrategy()
                 )
@@ -102,103 +138,4 @@ public class OnTheFlyStateSpaceGeneratorFactory extends SceneObject {
                 scene().options().isAdmissibleAbstractionEnabled()
         );
     }
-
-
-    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace) {
-
-        if(stateSpace == null) {
-            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
-        }
-
-        return createBuilder()
-                .addInitialState(initialState)
-                .setProgram(program)
-                .setInitialStateSpace(stateSpace)
-                .build();
-    }
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, OnTheFlyProofStructure proofStructure) {
-
-        if(stateSpace == null) {
-            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
-        }
-
-        return createBuilder()
-                .addInitialState(initialState)
-                .setProgram(program)
-                .setInitialStateSpace(stateSpace)
-                .setProofStructure(proofStructure)
-                .build();
-    }
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, 
-    							      ProgramState initialState, 
-    							      StateSpace stateSpace, 
-    							      OnTheFlyProofStructure proofStructure, 
-    							      Set<Node> modelCheckingFormulae) {
-
-        if(stateSpace == null) {
-            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
-        }
-
-        return createBuilder()
-                .addInitialState(initialState)
-                .setProgram(program)
-                .setInitialStateSpace(stateSpace)
-                .setProofStructure(proofStructure)
-                .setModelCheckingFormulae(modelCheckingFormulae)
-                .build();
-    }
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, 
-								      ProgramState initialState, 
-								      StateSpace stateSpace, 
-								      Set<Node> modelCheckingFormulae) {
-
-    	if(stateSpace == null) {
-			throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
-		}
-				
-		return createBuilder()
-				.addInitialState(initialState)
-				.setProgram(program)
-				.setInitialStateSpace(stateSpace)
-				.setModelCheckingFormulae(modelCheckingFormulae)
-				.build();
-	}
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, 
-								      List<ProgramState> initialStates, 
-								      Set<Node> modelCheckingFormulae) {
-		
-		return createBuilder()
-			.addInitialStates(initialStates)
-			.setProgram(program)
-			.setModelCheckingFormulae(modelCheckingFormulae)
-			.build();
-	}
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, 
-								      ProgramState initialState, 
-								      Set<Node> modelCheckingFormulae) {
-
-		return createBuilder()
-			.addInitialState(initialState)
-			.setProgram(program)
-			.setModelCheckingFormulae(modelCheckingFormulae)
-			.build();
-	}
-    
-    public OnTheFlyStateSpaceGenerator create(Program program, 
-								      ProgramState initialState, 
-								      ScopedHeap scopedHeap,
-								      Set<Node> modelCheckingFormulae) {
-
-		return createBuilder()
-			.addInitialState(initialState)
-			.setScopedHeap(scopedHeap)
-			.setProgram(program)
-			.setModelCheckingFormulae(modelCheckingFormulae)
-			.build();
-	}
 }

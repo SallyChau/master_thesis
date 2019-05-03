@@ -58,10 +58,7 @@ public class ModelCheckingInterproceduralAnalysis {
 
 		if(!remainingProcedureCalls.contains(procedureCall)) {
 			remainingProcedureCalls.push(procedureCall);
-			System.out.println("InterproceduralAnalysis: Call added: " + procedureCall.getMethod().getSignature() + " (" + procedureCall + ")");
-		} else {
-			System.out.println("InterproceduralAnalysis: Call already added: " + procedureCall.getMethod().getSignature() + " (" + procedureCall + ")");
-		}
+		} 
 	}
 
 	public void registerProofStructure(ProcedureCall procedureCall, OnTheFlyProofStructure proofStructure) {
@@ -179,7 +176,7 @@ public class ModelCheckingInterproceduralAnalysis {
 				contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
 			}
 			
-			if( contractChanged ) {
+			if(contractChanged) {
 				notifyDependencies(call);
 			}
 		}
@@ -189,9 +186,6 @@ public class ModelCheckingInterproceduralAnalysis {
 
 		Set<OnTheFlyPartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);
-		for (OnTheFlyPartialStateSpace dependency : dependencies) {
-			System.err.println("ModelCheckingInterproceduralAnalysis: Added dependency " + dependency);
-		}
 		
 		// map return formulae and partial state spaces
 		for (PartialStateSpace dependency : dependencies) {
@@ -210,7 +204,7 @@ public class ModelCheckingInterproceduralAnalysis {
 
 			ProcedureCall dependenedCall = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
 
-			System.out.println("ModelCheckingInterproceduralAnalysis: aaborting proofstructure for " + dependenedCall.getMethod().getSignature());
+			System.out.println("ModelCheckingInterproceduralAnalysis: aborting proofstructure for " + dependenedCall.getMethod().getSignature());
 			OnTheFlyProofStructure proofStructure = callToProofStructure.get(dependenedCall);
 			proofStructure.abort();			
 		}

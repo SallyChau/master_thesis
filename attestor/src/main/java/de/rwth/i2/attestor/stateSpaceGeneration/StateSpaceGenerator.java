@@ -236,7 +236,7 @@ public class StateSpaceGenerator {
         return stateSpace;
     }
 
-    private boolean checkAbortCriteria(ProgramState state) throws StateSpaceGenerationAbortedException {
+    protected boolean checkAbortCriteria(ProgramState state) throws StateSpaceGenerationAbortedException {
 
         try {
             abortStrategy.checkAbort(stateSpace);
@@ -262,7 +262,7 @@ public class StateSpaceGenerator {
     }
 
 
-    private SemanticsCommand semanticsOf(ProgramState state) {
+    protected SemanticsCommand semanticsOf(ProgramState state) {
 
         return program.getStatement(state.getProgramCounter());
     }
@@ -277,7 +277,7 @@ public class StateSpaceGenerator {
      * @param state     The program state that should be materialized.
      * @return True if and only if no materialization is needed.
      */
-    private boolean materializationPhase(SemanticsCommand semanticsCommand, ProgramState state) {
+    protected boolean materializationPhase(SemanticsCommand semanticsCommand, ProgramState state) {
 
         Collection<ProgramState> materialized = materializationStrategy.materialize(
                 state,
@@ -293,14 +293,14 @@ public class StateSpaceGenerator {
         return materialized.isEmpty();
     }
 
-    private void labelWithAtomicPropositions(ProgramState state) {
+    protected void labelWithAtomicPropositions(ProgramState state) {
 
         if(state.isFromTopLevelStateSpace()) {
             stateLabelingStrategy.computeAtomicPropositions(state);
         }
     }
 
-    private void handleSuccessorState(ProgramState state, ProgramState nextState) {
+    protected void handleSuccessorState(ProgramState state, ProgramState nextState) {
 
         SemanticsCommand semanticsCommand = semanticsOf(nextState);
         nextState = stateRefinementStrategy.refine(semanticsCommand, nextState);

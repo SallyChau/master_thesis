@@ -8,21 +8,21 @@ import de.rwth.i2.attestor.procedures.ScopeExtractor;
 
 public class NonRecursiveModelCheckingMethodExecutor extends AbstractModelCheckingMethodExecutor {
 
-	public NonRecursiveModelCheckingMethodExecutor(Method method, 
-												   ScopeExtractor scopeExtractor, 
-												   ContractCollection contractCollection,
-												   OnTheFlyProcedureRegistry procedureRegistry) {
+	public NonRecursiveModelCheckingMethodExecutor(Method method, ScopeExtractor scopeExtractor, ContractCollection contractCollection,
+			OnTheFlyProcedureRegistry procedureRegistry) {
 
 		super(method, scopeExtractor, contractCollection, procedureRegistry);
 	}
 	
 	
 	
+	/**
+	 * generates the Contract and model checks formulae by executing the call
+	 */
 	@Override
 	protected void generateAndAddContract(OnTheFlyProcedureCall call) {
 		
 		System.out.println("NonRecursiveModelCheckingMethodExecutor: Executing procedure call " + call.getMethod().getSignature());
-		call.setModelCheckingFormulae(modelCheckingFormulae);
 		call.execute();
 	}
 }

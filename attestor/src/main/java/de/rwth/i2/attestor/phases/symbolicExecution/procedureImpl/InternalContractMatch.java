@@ -74,12 +74,6 @@ public class InternalContractMatch implements ContractMatch {
 	@Override
 	public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
 
-		for (ModelCheckingContract contract : modelCheckingContracts) {
-			if (contract.getInputFormulae().equals(inputFormulae)) {
-				return true;
-			}
-		}
-		
-		return false;
+		return (getModelCheckingContract(inputFormulae) != null);
 	}
 }

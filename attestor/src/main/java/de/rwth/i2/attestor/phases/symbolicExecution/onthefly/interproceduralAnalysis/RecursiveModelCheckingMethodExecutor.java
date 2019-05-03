@@ -23,6 +23,11 @@ public class RecursiveModelCheckingMethodExecutor extends AbstractModelCheckingM
 	
 	
 
+	/**
+     * Adds an empty contract and registers the call as for recursive Methods the contract is 
+     * generated in a later phase in order to detect fixpoints.
+     * Registers the formulae to be checked during model checking.
+     */
 	@Override
 	protected void generateAndAddContract(OnTheFlyProcedureCall call) {
 		

@@ -1,4 +1,4 @@
-package de.rwth.i2.attestor.phases.modelChecking.onthefly;
+package de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -23,7 +23,7 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 	
 	private Assertion2 currentAssertion = null;
 	
-	public Set<Node> build() {
+	public Set<Node> buildAndGetNextFormulaeToCheck() {
 		
 		System.out.println("ProofStructure: Building proofstructure...");
 		
@@ -41,7 +41,10 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 				System.out.println("ProofStructure: Checking formula: " + currentFormula);
 				
 				HashSet<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
+				
 				if (successorAssertions != null) {
+
+					System.out.println("ProofStructure: Successor assertions: " + successorAssertions.size());
 					for (Assertion2 successorAssertion : successorAssertions) {						
 						addEdge(currentAssertion, successorAssertion);
 						addAssertionToState(successorAssertion);
@@ -49,6 +52,8 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 						
 						System.out.println("ProofStructure: added assertion to queue: " + successorAssertion);
 					}
+				} else {
+					System.out.println("ProofStructure: no successor assertions");
 				}
 			} 
 			// return formulae with X operator
@@ -73,11 +78,15 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 				setOriginOfFailure(currentAssertion);
 				
                 // abort proof structure generation, as we already know that it is not successful!
-                if (!buildFullStructure) return null;                
+                if (!buildFullStructure) {
+                	System.out.println("Proofstructure: abort since assertion does not contain formulae to check");
+                	return null;                
+                }
 			}
 		}
         
-		return null;		
+        System.out.println("Proofstructure: queue is completely done.");
+		return null;		// TODO how to handle successful proofstructures?
 	}
 	
 	/**
@@ -151,24 +160,25 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
         
         // Process the assertion further only in case it is not one, that was already processed.                       
         if (!assertionPresent) {
+        	System.out.println("ProofStructure: Added assertion " + assertion.toString());
             queue.add(assertion);
         } // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
         else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
             this.successful = false;                                    
             setOriginOfFailure(assertion);
-        } 
+        }        
         
-        System.out.println("ProofStructure: Added assertion " + assertion.toString());
+        System.out.println("ProofStructure: Queue contains " + queue.size() + " elements.");
 	}
     
 	/**
-	 * Gets the state of the next assertion in the model checking queue.
-	 * @return the state of the next assertion in the model checking queue
+	 * States whether the proofstructure can be continued, i.e. there exists a next assertion in the model checking queue
+	 * and the proofstructure is (still) successful.
+	 * @return true if there is at least one assertion in the model checking queue and the proofstructure is (still) successful
 	 */
-    public ProgramState getNextStateToCheck() {
+    public boolean isContinuable() {
     	
-		Assertion2 nextAssertion = queue.peekFirst();
-		return nextAssertion != null ? nextAssertion.getProgramState() : null;
+		return ((queue.peekFirst() != null) && isSuccessful());
 	}
 	
     /**
