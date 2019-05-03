@@ -1663,7 +1663,7 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 
 \subsection{Global To-Do's}
 \begin{todolist}
-	\item Implement mechanism to decide on which procedures are checked and which not
+	\item[\done] Implement mechanism to decide on which procedures are checked and which not: use option --mc-skip and --mc-mode to, "$<$init$>$" excludes all constructor calls
 	\item Run Java Tests for proof structure
 		\begin{todolist}
 			\item[\done] TableauRulesSwitch2
@@ -1677,7 +1677,7 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 	\item Generate output report (diagram)
 	\item Add statistics to model checking summary
 	\item Clean up code
-	\item Write down implication relations for LTL formula (use for model checking contracts)
+	\item[\wontfix] Write down implication relations for LTL formula (use for model checking contracts)
 	\item Compare offline and on-the-fly model checking
 \end{todolist}
 
@@ -1686,8 +1686,10 @@ On-the-fly model checking is basically based on the new method generateAndCheck(
 \subsubsection{Pre-Model Checking of procedures/ contracts}
 (2 weeks)
 After procedure state space has been completely generated, model check state space for all sub-formulae of the initial LTL formula  $\varphi$: $\mathcal{O}(3^n)$ sub-formulae where $n$ is the number of sub-formulae in $\varphi$.	
+-- discard
 
 \subsubsection{Program generation from counterexample trace}
 (2 weeks)
+-- discard
 
 \end{document}
