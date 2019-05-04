@@ -26,12 +26,7 @@ public class OnTheFlyProcedureRegistry implements ProcedureRegistry {
         this.stateSpaceGeneratorFactory = stateSpaceGeneratorFactory;
     }
 
-	@Override
-	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap) {
-
-		return new OnTheFlyProcedureCall(method, initialHeap, stateSpaceGeneratorFactory, this);
-	}
-	
+	@Override	
 	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeapHierarchy scopeHierarchy) {
 
 		return new OnTheFlyProcedureCall(method, initialHeap, scopeHierarchy, stateSpaceGeneratorFactory, this);

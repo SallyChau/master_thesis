@@ -42,7 +42,7 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
 
     /**
      * Creates a new builder representing an everywhere
-     * uninitialized StateSpaceGenerator.
+     * uninitialized OnTheFlyStateSpaceGenerator.
      */
     OnTheFlyStateSpaceGeneratorBuilder() {
 
@@ -193,6 +193,10 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
         return this;
     }
     
+    /**
+     * @param scopeHierarchy The scopedHeaps build for the procedure call.
+     * @return The builder.
+     */
     public OnTheFlyStateSpaceGeneratorBuilder setScopeHierarchy(ScopedHeapHierarchy scopeHierarchy) {
 
     	generator.scopeHierarchy = scopeHierarchy;

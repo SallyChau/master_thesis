@@ -37,7 +37,7 @@ public class VisitedMarkingCommand implements SemanticsCommand {
     }
 
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState programState) {
+    public Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         HeapConfiguration hc = programState.getHeap();
         int variable = hc.variableWith(MARKING_NAME);
@@ -110,7 +110,7 @@ public class VisitedMarkingCommand implements SemanticsCommand {
 	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae,
 			ScopedHeapHierarchy scopeHierarchy) {
 		
-		return computeSuccessors(programState);
+		return computeSuccessors(programState, scopeHierarchy);
 	}
 
 	@Override

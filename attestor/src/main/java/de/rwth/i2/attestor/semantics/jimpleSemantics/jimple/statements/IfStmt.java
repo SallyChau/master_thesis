@@ -66,7 +66,7 @@ public class IfStmt extends Statement {
      * it will be removed from the heap to enable abstraction.
      */
     @Override
-    public Set<ProgramState> computeSuccessors(ProgramState programState) {
+    public Set<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         Set<ProgramState> defaultRes = new LinkedHashSet<>();
         defaultRes.add(programState.shallowCopyUpdatePC(truePC));
@@ -106,18 +106,18 @@ public class IfStmt extends Statement {
     }
 
     @Override
-	public Set<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Set<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override
-	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return Collections.emptySet();
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return true;
 	}

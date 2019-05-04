@@ -3,6 +3,9 @@ package de.rwth.i2.attestor.stateSpaceGeneration;
 
 import java.util.Collection;
 
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
+import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
+
 /**
  * A StateSpaceGenerator takes an analysis and generates a
  * state space from it. <br>
@@ -32,6 +35,10 @@ public class StateSpaceGenerator {
      * abstract semantics of each statement
      */
     Program program;  
+    /**
+     * Contains heap out of scope. Important for AP labeling of states of method calls.
+     */
+    ScopedHeapHierarchy scopeHierarchy;
     /**
      * Strategy guiding the materialization of states.
      * This strategy is invoked whenever an abstract transfer
@@ -219,7 +226,7 @@ public class StateSpaceGenerator {
 
             boolean isMaterialized = materializationPhase(stateSemanticsCommand, state) ;
             if(isMaterialized) {
-                Collection<ProgramState> successorStates = stateSemanticsCommand.computeSuccessors(state);
+                Collection<ProgramState> successorStates = stateSemanticsCommand.computeSuccessors(state, scopeHierarchy);
                 if(finalStateStrategy.isFinalState(state, successorStates, stateSemanticsCommand)) {
                     stateSpace.setFinal(state);
                     stateSpace.addArtificialInfPathsTransition(state); // Add self-loop to each final state
@@ -297,7 +304,14 @@ public class StateSpaceGenerator {
 
         if(state.isFromTopLevelStateSpace()) {
             stateLabelingStrategy.computeAtomicPropositions(state);
-        }
+        } else {
+        	// comment out this part if no APs should be computed for procedure state spaces
+	    	if (stateLabelingStrategy instanceof AutomatonStateLabelingStrategy) {        
+	        	System.out.println("StateSpaceGenerator: adding APs for state in statespace " + stateSpace);
+	        	AutomatonStateLabelingStrategy labelingStrategy = (AutomatonStateLabelingStrategy) stateLabelingStrategy;
+	        	labelingStrategy.computeAtomicPropositionsFromGlobalHeap(state, scopeHierarchy);
+	    	}
+	    }
     }
 
     protected void handleSuccessorState(ProgramState state, ProgramState nextState) {

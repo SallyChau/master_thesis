@@ -46,7 +46,7 @@ public class BranchingSkip extends Statement {
      * copies the input heap to both successor states
      */
     @Override
-    public Set<ProgramState> computeSuccessors(ProgramState programState) {
+    public Set<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         ProgramState leftResult = programState.shallowCopy();
         leftResult.setProgramCounter(leftSuccessor);
@@ -60,8 +60,8 @@ public class BranchingSkip extends Statement {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override

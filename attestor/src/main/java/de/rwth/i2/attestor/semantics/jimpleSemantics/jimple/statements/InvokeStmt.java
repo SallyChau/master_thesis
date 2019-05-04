@@ -51,13 +51,13 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
      * it will be removed from the heap to enable abstraction.
      */
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState programState) {
+    public Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
     	ProgramState preparedState = prepareHeap(programState);
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState);
+                .getResultStates(programState, preparedState, scopeHierarchy);
 
         methodResult.forEach(invokePrepare::cleanHeap);
         methodResult.forEach(ProgramState::clone);

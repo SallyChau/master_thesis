@@ -3,6 +3,7 @@ package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAn
 import java.util.Collection;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -29,7 +30,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 
 	// template method. can be configured by overriding generateAndAddContract.
 	@Override
-	protected final Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap) {
+	protected final Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap, ScopedHeapHierarchy scopedHierarchy) {
 	
 	    HeapConfiguration heapInScope = scopedHeap.getHeapInScope();
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
@@ -37,7 +38,7 @@ public abstract class AbstractInterproceduralMethodExecutor extends AbstractMeth
 	    	heapInScope = contractMatch.getPrecondition();
 	    }	    
 	    
-	    ProcedureCall call = procedureRegistry.getProcedureCall( method, heapInScope );
+	    ProcedureCall call = procedureRegistry.getProcedureCall( method, heapInScope, scopedHierarchy );
 	    procedureRegistry.registerDependency( callingState, call );
 	    
 	    if(!contractMatch.hasMatch()) {

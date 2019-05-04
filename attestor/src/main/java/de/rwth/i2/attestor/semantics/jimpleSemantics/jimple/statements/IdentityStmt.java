@@ -54,7 +54,7 @@ public class IdentityStmt extends Statement {
      * (i.e. this statement can only be called once per intermediate)
      */
     @Override
-    public Set<ProgramState> computeSuccessors(ProgramState programState) {
+    public Set<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         programState = programState.clone();
         ConcreteValue concreteRHS = programState.removeIntermediate(rhs);
@@ -69,12 +69,12 @@ public class IdentityStmt extends Statement {
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override
-	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return Collections.emptySet();
     }

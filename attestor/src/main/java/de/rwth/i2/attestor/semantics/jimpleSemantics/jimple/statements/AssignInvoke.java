@@ -71,7 +71,7 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
      * as it is clearly not live at this point.
      */
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState programState) {
+    public Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         // programState is callingState, prepared state is new input
         ProgramState preparedState = programState.clone();
@@ -79,7 +79,7 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState);
+                .getResultStates(programState, preparedState, scopeHierarchy);
         return getCleanedResultStates(methodResult);
     }
     

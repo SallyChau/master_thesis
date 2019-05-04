@@ -1,6 +1,7 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
@@ -19,7 +20,7 @@ public interface ProcedureRegistry {
 	 * @param initialHeap the initialHeap from which the procedureCall should start
 	 * @return the corresponding procedureCall
 	 */
-	ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap);
+	ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeapHierarchy scopedHierarchy);
 
 	/**
 	 * Enqueues the procedureCall to be analyzed later on.

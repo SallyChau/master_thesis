@@ -48,7 +48,8 @@ public class InternalPartialStateSpace implements PartialStateSpace {
             StateSpace stateSpace = stateSpaceGeneratorFactory.create(
                     call.getMethod().getBody(),
                     stateToContinue,
-                    partialStateSpace
+                    partialStateSpace,
+                    call.getScopeHierarchy()
             ).generate();
             
             stateToContinue.unflagContinueState();

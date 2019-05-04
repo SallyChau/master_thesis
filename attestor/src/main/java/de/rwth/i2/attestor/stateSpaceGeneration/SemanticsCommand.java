@@ -22,7 +22,7 @@ public interface SemanticsCommand {
      * @param programState The state on which the abstract program semantics shall be executed.
      * @return All states resulting from executing the program semantics on programState.
      */
-    Collection<ProgramState> computeSuccessors(ProgramState programState);
+    Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy);
     
     /**
      * Works similar as {@SemanticsCommand.computeSuccessors(ProgramState programState)} but also model checks formulae for programState

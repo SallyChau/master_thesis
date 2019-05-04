@@ -21,25 +21,25 @@ public class TerminalStatement implements SemanticsCommand {
 
 
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState executable) {
+    public Collection<ProgramState> computeSuccessors(ProgramState executable, ScopedHeapHierarchy scopeHierarchy) {
 
         return new LinkedHashSet<>();
     }
     
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
-		return computeSuccessors(programState);
+		return computeSuccessors(programState, scopeHierarchy);
 	}
     
     @Override
-	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return Collections.emptySet();
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return true;
 	}

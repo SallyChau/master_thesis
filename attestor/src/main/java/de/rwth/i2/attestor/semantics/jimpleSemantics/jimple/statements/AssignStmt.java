@@ -71,7 +71,7 @@ public class AssignStmt extends Statement {
      * to enable abstraction at this point.
      */
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState programState) {
+    public Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         programState = programState.clone();
         ConcreteValue concreteRHS;
@@ -105,8 +105,8 @@ public class AssignStmt extends Statement {
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override

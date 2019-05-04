@@ -8,10 +8,8 @@ public class NonRecursiveMethodExecutor extends AbstractInterproceduralMethodExe
 
 
 
-    public NonRecursiveMethodExecutor( Method method,
-    								   ScopeExtractor scopeExtractor, 
-    								   ContractCollection contractCollection,
-                                       ProcedureRegistry procedureRegistry ) {
+    public NonRecursiveMethodExecutor( Method method, ScopeExtractor scopeExtractor, 
+    		ContractCollection contractCollection, ProcedureRegistry procedureRegistry ) {
 
         super( method, scopeExtractor, contractCollection, procedureRegistry);
     }

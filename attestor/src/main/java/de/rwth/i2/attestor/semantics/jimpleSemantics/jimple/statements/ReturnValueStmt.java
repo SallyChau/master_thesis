@@ -50,7 +50,7 @@ public class ReturnValueStmt extends Statement {
     }
 
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState programState) {
+    public Collection<ProgramState> computeSuccessors(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 
         programState = programState.clone();
 
@@ -79,18 +79,18 @@ public class ReturnValueStmt extends Statement {
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override
-	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return Collections.emptySet();
     }
     
     @Override
-	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
+	public boolean satisfiesFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
     	return true;
 	}

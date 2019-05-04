@@ -6,6 +6,7 @@ import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.main.scene.Strategies;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.stateSpaceGenerationImpl.InternalStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.AggressivePostProcessingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
@@ -42,7 +43,43 @@ public class StateSpaceGeneratorFactory extends SceneObject{
                 .build();
     }
 
-    protected StateSpaceGeneratorBuilder createBuilder() {
+    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace) {
+	
+	    if(stateSpace == null) {
+	        throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
+	    }
+	
+	    return createBuilder()
+	            .addInitialState(initialState)
+	            .setProgram(program)
+	            .setInitialStateSpace(stateSpace)
+	            .build();
+	}
+    
+    public StateSpaceGenerator create(Program program, ProgramState initialState, ScopedHeapHierarchy scopeHierarchy) {
+
+        return createBuilder()
+                .addInitialState(initialState)
+                .setProgram(program)
+                .setScopeHierarchy(scopeHierarchy)
+                .build();
+    }
+
+    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace, ScopedHeapHierarchy scopeHierarchy) {
+	
+	    if(stateSpace == null) {
+	        throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
+	    }
+	
+	    return createBuilder()
+	            .addInitialState(initialState)
+	            .setProgram(program)
+	            .setScopeHierarchy(scopeHierarchy)
+	            .setInitialStateSpace(stateSpace)
+	            .build();
+	}
+
+	protected StateSpaceGeneratorBuilder createBuilder() {
 
         Strategies strategies = scene().strategies();
 
@@ -97,19 +134,5 @@ public class StateSpaceGeneratorFactory extends SceneObject{
                 strategy,
                 scene().options().isAdmissibleAbstractionEnabled()
         );
-    }
-
-
-    public StateSpaceGenerator create(Program program, ProgramState initialState, StateSpace stateSpace) {
-
-        if(stateSpace == null) {
-            throw new IllegalArgumentException("Attempt to continue state space generation with empty state space.");
-        }
-
-        return createBuilder()
-                .addInitialState(initialState)
-                .setProgram(program)
-                .setInitialStateSpace(stateSpace)
-                .build();
     }
 }

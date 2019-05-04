@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -23,18 +24,27 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
 	
     private Method method;
     private ProgramState preconditionState;
+    
+    private ScopedHeapHierarchy scopeHierarchy;
 
     
     public InternalProcedureCall( Method method, HeapConfiguration precondition, 
     							  StateSpaceGeneratorFactory factory, ProcedureRegistry registry ) {
 
-    	super( factory );//as SceneObject
-    	this.registry = registry; 
-    	
-        this.method = method;
-        this.preconditionState = scene().createProgramState(precondition);
-        this.factory = factory;
+    	this(method, precondition, factory, registry, new ScopedHeapHierarchy());
     }
+    
+    public InternalProcedureCall( Method method, HeapConfiguration precondition, 
+			  StateSpaceGeneratorFactory factory, ProcedureRegistry registry, ScopedHeapHierarchy scopedHierarchy) {
+
+		super( factory );//as SceneObject
+		this.registry = registry; 
+		
+		this.method = method;
+		this.preconditionState = scene().createProgramState(precondition);
+		this.factory = factory;
+		this.scopeHierarchy = scopedHierarchy;
+	}
     
     
 
@@ -44,7 +54,7 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
     	ProgramState initialState = preconditionState.clone();
 
         try {
-            StateSpace stateSpace = factory.create( method.getBody(), initialState ).generate();
+            StateSpace stateSpace = factory.create( method.getBody(), initialState, scopeHierarchy ).generate();
 
             List<HeapConfiguration> finalHeaps = new ArrayList<>();
             stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );
@@ -58,6 +68,12 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
             throw new IllegalStateException("Procedure call execution failed.");
         }
     }
+    
+    @Override
+    public ScopedHeapHierarchy getScopeHierarchy() {
+		
+		return scopeHierarchy;
+	}
 
     @Override
     public Method getMethod() {

@@ -13,10 +13,8 @@ import de.rwth.i2.attestor.procedures.ScopeExtractor;
 
 public class RecursiveModelCheckingMethodExecutor extends AbstractModelCheckingMethodExecutor {
 
-	public RecursiveModelCheckingMethodExecutor(Method method, 
-												ScopeExtractor scopeExtractor, 
-												ContractCollection contractCollection,
-												OnTheFlyProcedureRegistry procedureRegistry) {
+	public RecursiveModelCheckingMethodExecutor(Method method, ScopeExtractor scopeExtractor, 
+			ContractCollection contractCollection, OnTheFlyProcedureRegistry procedureRegistry) {
 
 		super(method, scopeExtractor, contractCollection, procedureRegistry);
 	}

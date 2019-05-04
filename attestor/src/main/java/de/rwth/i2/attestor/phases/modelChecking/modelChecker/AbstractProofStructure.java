@@ -19,7 +19,7 @@ public abstract class AbstractProofStructure {
 	protected boolean successful = true;
 	protected int checkedAssertions = 0;
 	
-	protected void setOriginOfFailure(Assertion2 assertion) {
+	public void setOriginOfFailure(Assertion2 assertion) {
 
         if (this.originOfFailure == null) this.originOfFailure = assertion;
 	}

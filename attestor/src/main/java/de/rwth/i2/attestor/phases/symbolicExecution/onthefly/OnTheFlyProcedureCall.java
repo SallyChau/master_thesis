@@ -177,6 +177,7 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
         return stateSpace;
     }
 
+    @Override
     public ScopedHeapHierarchy getScopeHierarchy() {
 		
 		return scopeHierarchy;

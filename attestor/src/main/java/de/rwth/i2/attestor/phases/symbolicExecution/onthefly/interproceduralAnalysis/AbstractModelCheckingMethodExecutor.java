@@ -37,6 +37,7 @@ public abstract class AbstractModelCheckingMethodExecutor extends AbstractMethod
 
 	
 	
+	@Override
 	public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, ScopedHeapHierarchy scopeHierarchy) {
 	
 	    HeapConfiguration inputHeap = input.getHeap();
@@ -51,12 +52,7 @@ public abstract class AbstractModelCheckingMethodExecutor extends AbstractMethod
 	    return createResultStates(input, postconditions);
 	}
 
-	@Override
-	protected Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap) {
-		
-		return getPostconditions(callingState, scopedHeap, null);
-	}
-	
+	@Override	
 	protected Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap, ScopedHeapHierarchy scopeHierarchy) {
 		
 		HeapConfiguration heapInScope = scopedHeap.getHeapInScope();		

@@ -1,6 +1,7 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.recursive;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.InterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -23,8 +24,8 @@ public class InternalProcedureRegistry implements ProcedureRegistry {
     }
     
     @Override
-	public InternalProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap ) {
-		return new InternalProcedureCall(method, initialHeap, stateSpaceGeneratorFactory, this);
+	public InternalProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeapHierarchy scopedHierarchy ) {
+		return new InternalProcedureCall(method, initialHeap, stateSpaceGeneratorFactory, this, scopedHierarchy);
 	}
 
     @Override

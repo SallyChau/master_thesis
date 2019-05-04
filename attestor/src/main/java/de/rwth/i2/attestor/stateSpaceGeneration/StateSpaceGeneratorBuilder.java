@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.
@@ -101,6 +102,10 @@ public class StateSpaceGeneratorBuilder {
         if(generator.stateRectificationStrategy == null) {
             throw new IllegalStateException("StateSpaceGenerator: No admissibility strategy.");
         }
+        
+        if(generator.scopeHierarchy == null) {
+            generator.scopeHierarchy = new ScopedHeapHierarchy();
+        }
 
         if(initialStateSpace == null) {
             generator.stateSpace = generator.stateSpaceSupplier.get();
@@ -152,6 +157,16 @@ public class StateSpaceGeneratorBuilder {
 
         generator.program = program;
         return this;
+    }
+    
+    /**
+     * @param scopeHierarchy The scopedHeaps build for the procedure call.
+     * @return
+     */
+    public StateSpaceGeneratorBuilder setScopeHierarchy(ScopedHeapHierarchy scopeHierarchy) {
+
+    	generator.scopeHierarchy = scopeHierarchy;
+    	return this;
     }
 
     /**

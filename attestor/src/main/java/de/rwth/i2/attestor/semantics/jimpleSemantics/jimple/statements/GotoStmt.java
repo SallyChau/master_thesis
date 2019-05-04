@@ -37,14 +37,14 @@ public class GotoStmt extends Statement {
     }
 
     @Override
-    public Collection<ProgramState> computeSuccessors(ProgramState state) {
+    public Collection<ProgramState> computeSuccessors(ProgramState state, ScopedHeapHierarchy scopeHierarchy) {
 
         return Collections.singleton(state.shallowCopyUpdatePC(nextPC));
     }
 
     @Override
-	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
-    	return computeSuccessors(programState);
+	public Collection<ProgramState> computeSuccessorsAndCheck(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
+    	return computeSuccessors(programState, scopeHierarchy);
     }
     
     @Override

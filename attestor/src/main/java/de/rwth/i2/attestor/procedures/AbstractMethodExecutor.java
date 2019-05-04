@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public abstract class AbstractMethodExecutor implements MethodExecutor {
@@ -30,12 +31,12 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     }
 
     @Override
-    public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input) {
+    public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, ScopedHeapHierarchy scopedHierarchy) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
         
-        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap);
+        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap, scopedHierarchy);
         return createResultStates(input, postconditions);
     }
     
@@ -52,7 +53,7 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
         return result;
     }
 
-    protected abstract Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap);
+    protected abstract Collection<HeapConfiguration> getPostconditions(ProgramState callingState, ScopedHeap scopedHeap, ScopedHeapHierarchy scopedHierarchy);
 
     @Override
     public void addContract(Contract contract) {
