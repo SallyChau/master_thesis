@@ -1,12 +1,10 @@
-package de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking;
+package de.rwth.i2.attestor.phases.modelChecking.modelChecker;
 
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 
 public class ModelCheckingContract {
 	

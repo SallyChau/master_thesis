@@ -7,10 +7,10 @@ import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProcedureRegistry;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.ContractMatch;

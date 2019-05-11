@@ -87,7 +87,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			// tableau step for formulae with X operator
 			else if (!currentAssertion.getNextFormulae().isEmpty()) {
 				List<Assertion2> successorAssertions = expandNextAssertion(currentAssertion);
-				if (successorAssertions != null && this.successful) {
+				if (successorAssertions != null) {
 					for (Assertion2 successorAssertion : successorAssertions) {	
 						
 						// Check if we have already seen an equal assertion before
@@ -112,9 +112,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
                             if (!buildFullStructure) return;                                                      
                         } 
 					}
-				} else {
-					if (!buildFullStructure) return; 
-				}
+				} 
 			} 
 			// assertion does not contain any formulae to check (unsuccessful)
 			else {
@@ -152,8 +150,10 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			if (calledCSM != null) {
 				// skip model checking of procedure call if called csm does not exist (can be configured by input settings: mc-skip)
 				Set<Node> inputFormulae = nextFormulae;
-				nextFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
-				
+				Set<Node> returnFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
+				if (returnFormulae != null && !returnFormulae.isEmpty()) {
+					nextFormulae = returnFormulae;
+				}
 				if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
 					
 					this.successful = false;				
@@ -277,10 +277,16 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 
 		String signature = null;
 		
-		if (statement.getClass().equals(AssignInvoke.class) || statement.getClass().equals(InvokeStmt.class)) {
+		if (statement.getClass().equals(InvokeStmt.class)) {
 			
 			String methodCall = statement.toString();
 			signature = methodCall.substring(methodCall.indexOf("<"), methodCall.lastIndexOf(">") + 1);
+		} else if (statement.getClass().equals(AssignInvoke.class)) {
+			
+			String methodCall = statement.toString();
+			signature = methodCall.substring(methodCall.indexOf("=") + 1, methodCall.lastIndexOf(";"));
+			String whiteSpace = "^\\s+";
+			signature = signature.replaceAll(whiteSpace, "");
 		}
 
 		return signature;

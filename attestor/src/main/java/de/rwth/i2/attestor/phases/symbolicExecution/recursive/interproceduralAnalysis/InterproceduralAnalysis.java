@@ -108,7 +108,7 @@ public class InterproceduralAnalysis {
 	 * @param call the procedure call for which the contract has changed
 	 * (i.e. for which more postconditions have been discovered)
 	 */ 
-	private void notifyDependencies(ProcedureCall call) {
+	void notifyDependencies(ProcedureCall call) {
 
 		Set<PartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);

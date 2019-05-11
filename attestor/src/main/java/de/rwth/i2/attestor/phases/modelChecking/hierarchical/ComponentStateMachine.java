@@ -15,8 +15,8 @@ import org.apache.logging.log4j.Logger;
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.AbstractMethodExecutor;
 import de.rwth.i2.attestor.procedures.ContractMatch;
@@ -92,7 +92,11 @@ public class ComponentStateMachine {
 	
 	public SemanticsCommand getSemanticsCommand(ProgramState programState) {
 		
-		return method.getBody().getStatement(programState.getProgramCounter());
+		if (method != null && method.getBody() != null) {
+			return method.getBody().getStatement(programState.getProgramCounter());
+		} else {
+			throw new IllegalStateException("Method not initialized for component state machine.");
+		}
 	}
 	
 	/**
@@ -180,7 +184,7 @@ public class ComponentStateMachine {
 	
 	public HeapConfiguration getHeapInScope(ProgramState state, SemanticsCommand statement) {
 		
-		HeapConfiguration heapInScope = null;
+		HeapConfiguration heapInScope = state.getHeap();
 		if (statement != null) {
 
 			AbstractMethodExecutor executor = (AbstractMethodExecutor) method.getMethodExecutor();		
@@ -190,13 +194,17 @@ public class ComponentStateMachine {
 			heapInScope = scopedHeap.getHeapInScope();
 			ContractMatch contractMatch = executor.getContractCollection().matchContract(heapInScope);
 		    if(contractMatch.hasMatch()) heapInScope = contractMatch.getPrecondition();
-		} else {
-			heapInScope = state.getHeap();
 		}      	    
 	    
 	    return heapInScope;
 	}
 		
+	
+	
+	public Method getMethod() {
+		
+		return this.method;
+	}
 	
 	
 	/**
@@ -230,39 +238,10 @@ public class ComponentStateMachine {
 		return ModelCheckingResult.UNKNOWN;
 	}
 	
-	public boolean modelCheckingSuccessful(HeapConfiguration heap, Set<Node> formulae) {
-		
-		return (getModelCheckingResult(heap, formulae) == ModelCheckingResult.SATISFIED);
-	}
-	
-	public boolean modelCheckingSuccessful(HeapConfiguration heap, LTLFormula formula) {
-		
-		return (getModelCheckingResult(heap, formula) == ModelCheckingResult.SATISFIED);
-	}
-	
-	public boolean modelCheckingSuccessful(ProcedureCall call, LTLFormula formula) {
-		
-		return (getModelCheckingResult(call.getInput().getHeap(), formula) == ModelCheckingResult.SATISFIED);
-	}
-	
 	public boolean modelCheckingSuccessful(ProgramState state, SemanticsCommand statement, Set<Node> formulae) {
 		
 		HeapConfiguration heap = getHeapInScope(state, statement);
 		return (getModelCheckingResult(heap, formulae) == ModelCheckingResult.SATISFIED);
-	}
-	
-	/**
-	 * Gets the failure trace resulting from model checking with the input heap and the formulae.
-	 * @param heap input heap for model checking
-	 * @param formulae LTLformulae to be checked
-	 * @return failure trace resulting from model checking
-	 */
-	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProgramState state, SemanticsCommand statement, LTLFormula formula) {
-		
-		Set<Node> formulae = new HashSet<>();
-		formulae.add(formula.getASTRoot().getPLtlform());
-		
-		return getHierarchicalFailureTrace(state, statement, formulae);
 	}
 	
 	/**
@@ -277,14 +256,6 @@ public class ComponentStateMachine {
 		return getHierarchicalFailureTrace(heap, formulae);
 	}
 	
-	public HierarchicalFailureTrace getHierarchicalFailureTrace(HeapConfiguration heap, LTLFormula formula) {
-		
-		Set<Node> formulae = new HashSet<>();
-		formulae.add(formula.getASTRoot().getPLtlform());
-		
-		return getHierarchicalFailureTrace(heap, formulae);
-	}
-	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace(HeapConfiguration heap, Set<Node> formulae) {
 		
 		ModelCheckingContract mc = matchModelCheckingContract(heap, formulae);
@@ -294,6 +265,11 @@ public class ComponentStateMachine {
 		}
 		
 		return null;
+	}
+	
+	public Map<ProgramState, ComponentStateMachine> getBoxes() {
+		
+		return boxes;
 	}
 	
 	@Override

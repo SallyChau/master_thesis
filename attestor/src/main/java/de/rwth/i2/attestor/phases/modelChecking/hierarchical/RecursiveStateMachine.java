@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.ModelCheckingContract;
+import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -28,8 +28,7 @@ public class RecursiveStateMachine {
 	private Map<ProcedureCall, List<ModelCheckingContract>> modelCheckingResults = new LinkedHashMap<>();
 	
 	public RecursiveStateMachine(Map<StateSpace, ProcedureCall> stateSpaceToAnalyzedCall, 
-								 Map<ProgramState, ProcedureCall> callingStatesToCall,
-								 List<String> methodsToSkip) {
+			Map<ProgramState, ProcedureCall> callingStatesToCall, List<String> methodsToSkip) {
 
 		// build Component State Machines
 		Collection<ProcedureCall> procedureCalls = stateSpaceToAnalyzedCall.values();
@@ -151,6 +150,10 @@ public class RecursiveStateMachine {
 		}
 		
 		return null;
+	}
+	
+	public int getSize() {
+		return components.size();
 	}
 	
 	@Override

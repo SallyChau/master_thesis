@@ -35,7 +35,7 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
     }
     
     public InternalProcedureCall( Method method, HeapConfiguration precondition, 
-			  StateSpaceGeneratorFactory factory, ProcedureRegistry registry, ScopedHeapHierarchy scopedHierarchy) {
+			  StateSpaceGeneratorFactory factory, ProcedureRegistry registry, ScopedHeapHierarchy scopeHierarchy) {
 
 		super( factory );//as SceneObject
 		this.registry = registry; 
@@ -43,7 +43,11 @@ public class InternalProcedureCall extends SceneObject implements ProcedureCall 
 		this.method = method;
 		this.preconditionState = scene().createProgramState(precondition);
 		this.factory = factory;
-		this.scopeHierarchy = scopedHierarchy;
+		if (scopeHierarchy != null) {
+			this.scopeHierarchy = scopeHierarchy;
+		} else {
+			this.scopeHierarchy = new ScopedHeapHierarchy();
+		}
 	}
     
     

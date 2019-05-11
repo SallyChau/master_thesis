@@ -6,7 +6,6 @@ import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.ModelCheckingInterproceduralAnalysis;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureRegistry;

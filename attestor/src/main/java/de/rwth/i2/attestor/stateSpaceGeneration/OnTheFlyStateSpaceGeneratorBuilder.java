@@ -9,8 +9,8 @@ import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
 
 /**

@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
