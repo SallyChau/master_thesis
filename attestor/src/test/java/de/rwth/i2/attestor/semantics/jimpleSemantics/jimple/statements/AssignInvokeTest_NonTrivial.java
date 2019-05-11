@@ -1,5 +1,18 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -17,15 +30,6 @@ import de.rwth.i2.attestor.semantics.util.Constants;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.types.Type;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class AssignInvokeTest_NonTrivial {
 
@@ -69,7 +73,7 @@ public class AssignInvokeTest_NonTrivial {
     @Test
     public void testComputeSuccessors() {
 
-            Collection<ProgramState> resStates = stmt.computeSuccessors(inputState);
+            Collection<ProgramState> resStates = stmt.computeSuccessors(inputState, null);
             assertEquals(1, resStates.size());
             DefaultProgramState resState = (DefaultProgramState) resStates.iterator().next();
             assertNotSame(resState, inputState);

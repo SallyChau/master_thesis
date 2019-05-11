@@ -1,5 +1,16 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.LinkedHashSet;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -12,13 +23,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.SettableValue
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.Type;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collection;
-import java.util.LinkedHashSet;
-
-import static org.junit.Assert.*;
 
 public class AssignStmtTest {
 
@@ -55,7 +59,7 @@ public class AssignStmtTest {
 
             ProgramState input = sceneObject.scene().createProgramState(testGraph);
 
-            Collection<ProgramState> res = stmt.computeSuccessors(input);
+            Collection<ProgramState> res = stmt.computeSuccessors(input, null);
 
             assertNotNull("test graph became null", testGraph);
             assertEquals("testGraph has changed", test, testGraph.toString());

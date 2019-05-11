@@ -2,6 +2,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.mockupImpls;
 
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.StateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.InternalProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
@@ -19,7 +20,7 @@ public class ProcedureRegistryStub implements ProcedureRegistry {
 	}
 
 	@Override
-	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap) {
+	public ProcedureCall getProcedureCall(Method method, HeapConfiguration initialHeap, ScopedHeapHierarchy scopeHierarchy) {
 		StateSpaceGeneratorFactory fakeFactory = new FakeStateSpaceGeneratorFactory(scenenObject.scene());
 		return new InternalProcedureCall(method, initialHeap, fakeFactory , this );
 	}

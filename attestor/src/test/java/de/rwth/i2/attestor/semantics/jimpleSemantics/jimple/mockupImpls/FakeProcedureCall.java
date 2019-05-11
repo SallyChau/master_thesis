@@ -2,6 +2,7 @@ package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.mockupImpls;
 
 import static org.junit.Assert.fail;
 
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.DepthFirstStateExplorationStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.utilStrategies.NoStateCounter;
@@ -58,5 +59,10 @@ public class FakeProcedureCall implements ProcedureCall {
 	@Override
 	public ProgramState getInput() {
 		return initialState;
+	}
+
+	@Override
+	public ScopedHeapHierarchy getScopeHierarchy() {
+		return null;
 	}
 }

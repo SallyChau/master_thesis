@@ -1,5 +1,16 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.LinkedHashSet;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -13,13 +24,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Value;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.boolExpr.EqualExpr;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.Type;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collection;
-import java.util.LinkedHashSet;
-
-import static org.junit.Assert.*;
 
 public class IfStmtTest {
 
@@ -61,7 +65,7 @@ public class IfStmtTest {
 
             ProgramState input = testState.clone();
 
-            Collection<ProgramState> res = stmt.computeSuccessors(input);
+            Collection<ProgramState> res = stmt.computeSuccessors(input, null);
 
             assertEquals("test Graph changed", hash, testGraph.hashCode());
             assertEquals("result should have size 1", 1, res.size());
@@ -97,7 +101,7 @@ public class IfStmtTest {
         Statement stmt = new IfStmt(sceneObject, condition, truePC, falsePC, new LinkedHashSet<>());
 
             ProgramState input = testState.clone();
-            Collection<ProgramState> res = stmt.computeSuccessors(input);
+            Collection<ProgramState> res = stmt.computeSuccessors(input, null);
 
             assertEquals("test Graph changed", hash, testGraph.hashCode());
             assertEquals("result should have size 1", 1, res.size());
@@ -134,7 +138,7 @@ public class IfStmtTest {
 
             ProgramState input = testState.clone();
 
-            Collection<ProgramState> res = stmt.computeSuccessors(input);
+            Collection<ProgramState> res = stmt.computeSuccessors(input, null);
 
             assertEquals("test Graph changed", hash, testGraph.hashCode());
             assertEquals("result should have size 1", 1, res.size());

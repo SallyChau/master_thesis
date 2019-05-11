@@ -69,7 +69,7 @@ public class AbstractInterproceduralMethodExecutorTest {
 		when( contractCollection.matchContract(heapInScope)).thenReturn( match );
 		
 	//when
-		testSubject.getPostconditions(callingState, scopedHeap );
+		testSubject.getPostconditions(callingState, scopedHeap, null );
 	//then
 		//ensure the dependency is registered
 		verify( procedureRegistry ).registerDependency( eq(callingState), any() );
@@ -88,7 +88,7 @@ public class AbstractInterproceduralMethodExecutorTest {
 		ContractMatch noMatch = NoContractMatch.NO_CONTRACT_MATCH;
 		when( contractCollection.matchContract(heapInScope)).thenReturn( noMatch );
 	//when
-		testSubject.getPostconditions(callingState, scopedHeap );
+		testSubject.getPostconditions(callingState, scopedHeap, null );
 	//then
 		//ensure the dependency is registered
 		verify( procedureRegistry ).registerDependency( eq(callingState), any() );

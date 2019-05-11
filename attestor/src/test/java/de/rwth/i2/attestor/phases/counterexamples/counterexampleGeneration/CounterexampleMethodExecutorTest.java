@@ -1,16 +1,20 @@
 package de.rwth.i2.attestor.phases.counterexamples.counterexampleGeneration;
 
-import de.rwth.i2.attestor.MockupSceneObject;
-import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
-import de.rwth.i2.attestor.main.scene.SceneObject;
-import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
-import org.junit.Before;
-import org.junit.Test;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static junit.framework.TestCase.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import de.rwth.i2.attestor.MockupSceneObject;
+import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
+import de.rwth.i2.attestor.main.scene.SceneObject;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public class CounterexampleMethodExecutorTest {
 
@@ -49,7 +53,7 @@ public class CounterexampleMethodExecutorTest {
         );
 
         ProgramState input = sceneObject.scene().createProgramState(mockupHeaps.getHeap());
-        Collection<ProgramState> resultStates = executor.getResultStates(input, input);
+        Collection<ProgramState> resultStates = executor.getResultStates(input, input, null);
         ProgramState validFinalState = sceneObject.scene().createProgramState(mockupHeaps.getPostcondition());
 
         Collection<HeapConfiguration> predicate = contractGenerator.getRequiredFinalHeaps();
@@ -83,7 +87,7 @@ public class CounterexampleMethodExecutorTest {
         ProgramState input = sceneObject.scene().createProgramState(mockupHeaps.getHeap());
 
         try {
-            executor.getResultStates(null, input);
+            executor.getResultStates(null, input, null);
             fail("Should not be able to match contract.");
         } catch(IllegalStateException e) {
             // expected

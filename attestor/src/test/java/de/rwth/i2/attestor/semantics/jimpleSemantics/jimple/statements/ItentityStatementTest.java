@@ -1,5 +1,15 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+
+import java.util.Collection;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.graph.heap.internal.ExampleHcImplFactory;
@@ -7,12 +17,6 @@ import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Local;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.Type;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collection;
-
-import static org.junit.Assert.*;
 
 public class ItentityStatementTest {
 
@@ -39,7 +43,7 @@ public class ItentityStatementTest {
     @Test
     public void testComputeSuccessors() {
 
-            Collection<ProgramState> res = stmt.computeSuccessors(inputState);
+            Collection<ProgramState> res = stmt.computeSuccessors(inputState, null);
             assertEquals(1, res.size());
             ProgramState resState = res.iterator().next();
             assertNotSame("ensure clone on state level", resState, inputState);

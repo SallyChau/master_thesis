@@ -1,5 +1,16 @@
 package de.rwth.i2.attestor.markingGeneration.neighbourhood;
 
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.grammar.materialization.util.ViolationPoints;
 import de.rwth.i2.attestor.graph.SelectorLabel;
@@ -7,16 +18,6 @@ import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.Type;
 import gnu.trove.list.array.TIntArrayList;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class NeighbourhoodMarkingCommandTest {
 
@@ -115,7 +116,7 @@ public class NeighbourhoodMarkingCommandTest {
                 .build();
         expected.add(secondExpected);
 
-        Collection<ProgramState> resultStates = command.computeSuccessors(inputState);
+        Collection<ProgramState> resultStates = command.computeSuccessors(inputState, null);
 
         assertEquals(expected, resultStates);
     }
@@ -149,7 +150,7 @@ public class NeighbourhoodMarkingCommandTest {
                 .build();
         expected.add(firstExpected);
 
-        Collection<ProgramState> resultStates = command.computeSuccessors(inputState);
+        Collection<ProgramState> resultStates = command.computeSuccessors(inputState, null);
 
         assertEquals(expected, resultStates);
 

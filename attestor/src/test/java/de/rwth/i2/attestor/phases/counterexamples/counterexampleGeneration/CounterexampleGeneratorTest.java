@@ -1,5 +1,14 @@
 package de.rwth.i2.attestor.phases.counterexamples.counterexampleGeneration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Collection;
+import java.util.Collections;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.exampleFactories.ExampleFactoryEmpty;
 import de.rwth.i2.attestor.exampleFactories.ExampleFactorySLL;
@@ -15,14 +24,6 @@ import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.values.Local;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.types.Type;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Collection;
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class CounterexampleGeneratorTest {
 
@@ -48,7 +49,7 @@ public class CounterexampleGeneratorTest {
 
         ProgramState finalState = program
                 .getStatement(0)
-                .computeSuccessors(initialState.clone()).iterator().next();
+                .computeSuccessors(initialState.clone(), null).iterator().next();
 
         MockupTrace trace = new MockupTrace();
         trace.addState(initialState)
@@ -109,7 +110,7 @@ public class CounterexampleGeneratorTest {
         assertNotNull(materialized);
 
         ProgramState finalState = stmt.computeSuccessors(
-                    initialState.shallowCopyWithUpdateHeap(materialized.clone())
+                    initialState.shallowCopyWithUpdateHeap(materialized.clone()), null
             ).iterator().next();
             finalState = finalState.shallowCopyWithUpdateHeap(
                     factorySLL.getCanonicalization().canonicalize(finalState.getHeap())

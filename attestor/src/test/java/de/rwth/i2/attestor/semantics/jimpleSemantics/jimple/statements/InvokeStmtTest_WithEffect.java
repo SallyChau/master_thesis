@@ -1,5 +1,17 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import de.rwth.i2.attestor.MockupSceneObject;
 import de.rwth.i2.attestor.graph.SelectorLabel;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
@@ -17,13 +29,6 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.types.Type;
 import de.rwth.i2.attestor.util.SingleElementUtil;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class InvokeStmtTest_WithEffect {
 
@@ -78,7 +83,7 @@ public class InvokeStmtTest_WithEffect {
     @Test
     public void testComputeSuccessors() {
 
-            Collection<ProgramState> resStates = stmt.computeSuccessors(testInput);
+            Collection<ProgramState> resStates = stmt.computeSuccessors(testInput, null);
             assertEquals(1, resStates.size());
             assertEquals(expectedHeap, resStates.iterator().next().getHeap());
     }
