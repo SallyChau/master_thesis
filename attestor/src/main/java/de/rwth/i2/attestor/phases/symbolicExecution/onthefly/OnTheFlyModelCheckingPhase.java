@@ -259,12 +259,12 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
 	public void logSummary() {
 		
 		logSum("+-------------------------+------------------+");
-		logSum("+---- On-the-fly Model Checking Results ---+");
+		logSum("+---- On-the-fly Model Checking Results -----+");
 		logSum("+-------------------------+------------------+");
         logHighlight("| Generated states        | Number of states |");
         logSum("+-------------------------+------------------+");
         logSum(String.format("| w/ procedure calls      | %16d |",
-                scene().getNumberOfGeneratedStates()));
+                scene().getNumberOfOnTheFlyGeneratedStates()));
         if (mainStateSpace != null) {
 		    logSum(String.format("| w/o procedure calls     | %16d |",
 		            mainStateSpace.getStates().size()));

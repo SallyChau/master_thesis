@@ -182,7 +182,7 @@ public class ModelCheckingInterproceduralAnalysis {
 		}
 	}
 
-	private void notifyDependencies(ProcedureCall call) {
+	protected void notifyDependencies(ProcedureCall call) {
 
 		Set<OnTheFlyPartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);
@@ -197,14 +197,14 @@ public class ModelCheckingInterproceduralAnalysis {
 		}
 	}
 	
-	private void abortDependingProofStructures(ProcedureCall call) {
+	protected void abortDependingProofStructures(ProcedureCall call) {
 		
 		Set<OnTheFlyPartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		for (PartialStateSpace partialStateSpace : dependencies) {
 
 			ProcedureCall dependenedCall = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
 
-			System.out.println("ModelCheckingInterproceduralAnalysis: aborting proofstructure for " + dependenedCall.getMethod().getSignature());
+//			System.out.println("ModelCheckingInterproceduralAnalysis: aborting proofstructure for " + dependenedCall.getMethod().getSignature());
 			OnTheFlyProofStructure proofStructure = callToProofStructure.get(dependenedCall);
 			proofStructure.abort();			
 		}
