@@ -80,13 +80,13 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
                 // abort proof structure generation, as we already know that it is not successful!
                 if (!buildFullStructure) {
                 	System.out.println("Proofstructure: abort since assertion does not contain formulae to check");
-                	return null;                
+                	return Collections.emptySet();                
                 }
 			}
 		}
         
         System.out.println("Proofstructure: queue is completely done.");
-		return null;		// TODO how to handle successful proofstructures?
+		return Collections.emptySet();		// TODO how to handle successful proofstructures?
 	}
 	
 	/**

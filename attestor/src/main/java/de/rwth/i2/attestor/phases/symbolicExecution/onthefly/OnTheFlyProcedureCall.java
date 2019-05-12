@@ -1,6 +1,5 @@
 package de.rwth.i2.attestor.phases.symbolicExecution.onthefly;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -9,9 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.rwth.i2.attestor.LTLFormula;
-import de.rwth.i2.attestor.generated.lexer.LexerException;
 import de.rwth.i2.attestor.generated.node.Node;
-import de.rwth.i2.attestor.generated.parser.ParserException;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.main.scene.SceneObject;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingContract;
@@ -110,7 +107,7 @@ public class OnTheFlyProcedureCall extends SceneObject implements ProcedureCall 
             LTLFormula ltlFormula = null;
 			try {
 				ltlFormula = new LTLFormula("true");
-			} catch (ParserException | LexerException | IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
             ltlFormula.toPNF();

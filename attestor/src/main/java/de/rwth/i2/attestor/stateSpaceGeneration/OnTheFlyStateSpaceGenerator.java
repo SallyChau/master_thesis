@@ -103,7 +103,7 @@ public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {
     		System.out.println("StateSpaceGenerator: Received next formulae to check: " + formulae);
     		
     		// compute next assertions in order to continue the proof structure
-    		if (formulae != null) {
+    		if (!formulae.isEmpty()) {
     			
     			ProgramState programState = proofStructure.getLastCheckedState();    			
     			System.out.println("StateSpaceGenerator: Current state: " + programState.getStateSpaceId());
@@ -191,12 +191,11 @@ public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {
 			System.out.println("StateSpaceGenerator: Generating state " + state.getStateSpaceId());
 			
 	    	state.setContainingStateSpace(this.stateSpace);
-			
-			if(!checkAbortCriteria(state)) {
-				totalStatesCounter.addStates(stateSpace.size());
-				return;
-			} 
 		}
+			
+		if(!checkAbortCriteria(state)) {
+			return;
+		} 
 			
 		SemanticsCommand stateSemanticsCommand = semanticsOf(state);
 	    boolean isMaterialized = materializationPhase(stateSemanticsCommand, state) ;

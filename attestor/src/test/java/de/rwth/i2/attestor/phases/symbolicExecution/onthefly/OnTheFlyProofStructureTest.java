@@ -63,7 +63,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
 
         // Expected output
-        assertEquals(null, nextFormulaeToCheck);
+        assertTrue(nextFormulaeToCheck.isEmpty());
         assertEquals(2, proofStruct.getLeaves().size());
         boolean successful = true;
         for (Assertion2 assertion : proofStruct.getLeaves()) {
@@ -107,7 +107,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
 
         // Expected output
-        assertEquals(null, nextFormulaeToCheck);
+        assertTrue(nextFormulaeToCheck.isEmpty());
         assertEquals(1, proofStruct.getLeaves().size());
         for (Assertion2 assertion : proofStruct.getLeaves()) {
             // Make sure the one leaf is successful
@@ -147,7 +147,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
         
         assertTrue(proofStruct.isSuccessful());
@@ -183,11 +183,11 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
         
         // proof structure is done
-        assertEquals(null, nextFormulaeToCheck);
+        assertTrue(nextFormulaeToCheck.isEmpty());
         
         assertEquals(1, proofStruct.getLeaves().size());
         for (Assertion2 assertion : proofStruct.getLeaves()) {
@@ -229,11 +229,11 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
         
         // proof structure is done
-        assertEquals(null, nextFormulaeToCheck);
+        assertTrue(nextFormulaeToCheck.isEmpty());
 
         // Expected output
         assertEquals(proofStruct.getLeaves().size(), 3);
@@ -317,7 +317,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
 
         // Make sure that verification fails
@@ -355,7 +355,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
 
         // Make sure that verification succeeds
@@ -393,7 +393,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }
 
         // Make sure that verification fails
@@ -432,7 +432,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(state1, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(state1, nextFormulaeToCheck);
         }        
 
         // Make sure that verification fails
@@ -463,7 +463,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
         }               
         
         // Expected output
@@ -500,7 +500,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
         }
 
         assertEquals(proofStruct.getLeaves().size(), 2);
@@ -537,7 +537,7 @@ public class OnTheFlyProofStructureTest {
         Set<Node> nextFormulaeToCheck = new HashSet<>();
         while(proofStruct.isContinuable()) {        
 	        nextFormulaeToCheck = proofStruct.buildAndGetNextFormulaeToCheck();
-	        if (nextFormulaeToCheck != null) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
+	        if (!nextFormulaeToCheck.isEmpty()) proofStruct.addAssertion(initialState, nextFormulaeToCheck);
         }                
         assertFalse(proofStruct.isSuccessful());
     }
