@@ -1,5 +1,9 @@
 package de.rwth.i2.attestor.main.scene;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import de.rwth.i2.attestor.graph.BasicNonterminal;
 import de.rwth.i2.attestor.graph.BasicSelectorLabel;
 import de.rwth.i2.attestor.graph.Nonterminal;
@@ -16,10 +20,6 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.types.GeneralType;
 import de.rwth.i2.attestor.types.Type;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 public class DefaultScene implements Scene {
 
 
@@ -33,6 +33,7 @@ public class DefaultScene implements Scene {
 
     private final Map<String, Method> methods = new HashMap<>();
     private long totalNumberOfStates = 0;
+    private long totalNumberOfStatesOnTheFly = 0;
 
     @Override
     public Type getType(String name) {
@@ -145,6 +146,18 @@ public class DefaultScene implements Scene {
     public void addNumberOfGeneratedStates(int states) {
 
         totalNumberOfStates += states;
+    }
+
+    @Override
+    public long getNumberOfOnTheFlyGeneratedStates() {
+
+        return totalNumberOfStatesOnTheFly;
+    }
+    
+    @Override
+    public void addNumberOfOnTheFlyGeneratedStates(int states) {
+
+    	totalNumberOfStatesOnTheFly += states;
     }
 
     @Override

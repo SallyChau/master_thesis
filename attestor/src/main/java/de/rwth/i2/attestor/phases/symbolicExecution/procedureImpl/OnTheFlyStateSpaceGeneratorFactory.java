@@ -110,7 +110,7 @@ public class OnTheFlyStateSpaceGeneratorFactory extends SceneObject {
                         strategies.getStateRefinementStrategy()
                 )
                 .setStateCounter(
-                        scene()::addNumberOfGeneratedStates
+                        scene()::addNumberOfOnTheFlyGeneratedStates
                 )
                 .setStateExplorationStrategy(new DepthFirstStateExplorationStrategy())
                 .setStateSpaceSupplier(() -> new InternalStateSpace(scene().options().getMaxStateSpace()))
