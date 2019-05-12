@@ -240,11 +240,15 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
             if (scene().options().isIndexedMode()) {
                 logger.warn("Counterexample generation for indexed grammars is not supported yet.");
             } else {
-                FailureTrace failureTrace = proofStructure.getFailureTrace(mainStateSpace);
-                interproceduralAnalysis.addFailureTrace(failureTrace);
-                System.out.println(failureTrace.toString());
-//            	HierarchicalFailureTrace failureTrace = interproceduralAnalysis.getHierarchicalFailureTrace(); // for recursive MC
-                traces.put(formula, failureTrace);               
+            	HierarchicalFailureTrace failureTrace = interproceduralAnalysis.getHierarchicalFailureTrace();
+            	FailureTrace mainStateSpaceFailureTrace = proofStructure.getFailureTrace(mainStateSpace);
+            	if (failureTrace.getStateTrace().isEmpty() || 
+            			!failureTrace.getStateTrace().get(0).equals(mainStateSpaceFailureTrace)) {
+            	
+            		interproceduralAnalysis.addFailureTrace(mainStateSpaceFailureTrace);
+            		failureTrace = interproceduralAnalysis.getHierarchicalFailureTrace();
+            	}            	
+            	traces.put(formula, failureTrace); 
             	
             	System.err.println("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
             }

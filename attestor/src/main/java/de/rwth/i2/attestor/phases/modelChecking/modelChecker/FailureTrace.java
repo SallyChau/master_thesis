@@ -110,4 +110,23 @@ public class FailureTrace implements ModelCheckingTrace {
         stateSpace.setFinal(stateTrace.getLast());
         return stateSpace;
     }
+    
+    @Override
+    public boolean equals(Object trace) {
+    	
+    	if (this == trace) return true;
+		if (trace == null) return false;
+		if (!(trace instanceof FailureTrace)) return false;
+		
+		// check content
+		FailureTrace traceTest = (FailureTrace) trace;
+		LinkedList<ProgramState> states = traceTest.stateTrace;
+		for (int i = 0; i < states.size(); i++) {
+			if (!this.stateTrace.get(i).equals(states.get(i))) {
+				return false;
+			}
+		}
+		
+		return true;
+    }
 }
