@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "tba"
+
+# Analyzed Method
+--classpath "examples/DLList/configuration/code"
+--class "DLList"
+--method "build"
+
+# Grammar
+--predefined-grammar "DLList"
+--rename DLListNode=DLList next=next prev=prev
+
+# Initial states
+#--initial ".json"
+
+# Model Checking
+--model-checking "GF { L(RefDLList) }"
+#--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical

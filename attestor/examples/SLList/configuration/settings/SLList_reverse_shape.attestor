@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "tba"
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "reverse"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long.json"
+
+# Model Checking
+--model-checking "(GF {terminated} -> GF { L(RefSLList) })"
+#--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical

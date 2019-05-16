@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "tail reachable from head via next selectors upon termination"
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "traverse"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long_tail.json"
+
+# Model Checking
+--model-checking "F (X {terminated} -> {isReachable(head,tail,[next])})"
+--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical

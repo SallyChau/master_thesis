@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "tba"
+
+# Analyzed Method
+--classpath "examples/Tree/configuration/code"
+--class "Tree"
+--method "build"
+
+# Grammar
+--predefined-grammar "BT"
+--rename BTNode=Tree left=left right=right
+
+# Initial states
+#--initial ".json"
+
+# Model Checking
+--model-checking "GF { L(RefBT) }"
+#--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical

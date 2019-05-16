@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "all elements visited by 'current' upon termination"
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "traverse"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long.json"
+
+# Model Checking
+--model-checking "(GF {terminated} -> F {visited(current)})"
+--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical
