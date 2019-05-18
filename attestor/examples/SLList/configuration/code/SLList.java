@@ -18,6 +18,16 @@ public class SLList {
 		return list;
 	}
     
+    public static SLList buildRecursive(int argLength, SLList list) {
+
+        if(argLength < 42) { // nondeterminism
+        	SLList nextElement = new SLList(list);
+            return buildRecursive(argLength, nextElement);
+        }
+        
+        return list;
+    }
+    
     public static void traverse(SLList head){
 
 		SLList current = head;
@@ -27,10 +37,56 @@ public class SLList {
 		}
 	}
     
-    public static SLList reverse(SLList list) {
+    public static void traverseFaulty(SLList head){
+
+		SLList current = head;
+		
+		while (current.next != null) {
+			current = current.next;
+			swap(head);
+		}
+	}
+    
+    public static void traverseFaulty2(SLList head){
+
+		SLList current = head;
+		SLList second = build();
+		
+		while (current.next != null) {
+			current = current.next;
+			foo(head);
+		}
+	}
+    
+    public static void foo(SLList head) {
+    	SLList second = build();
+    }
+    
+    public static void swap(SLList head){
+    	
+    	SLList dummy = head.next;
+    	head.next = null;
+    	head.next = dummy;
+	}
+    
+    public static SLList traverseRecursive(SLList head) {
+    	
+    	SLList current = head;
+
+        if(current == null) {
+            return null;
+        } else if (current.next == null) {
+            return current;
+        } else {
+            return traverseRecursive(current.next);
+        }
+    }
+
+    // list needs to be named "head" because of variable reference in LTL formula
+    public static SLList reverse(SLList head) {
     	
     	SLList reversedList = null;
-		SLList current = list;
+		SLList current = head;
 		
 		while (current != null) {
 			SLList next = current.next;
@@ -42,40 +98,99 @@ public class SLList {
     	return reversedList;
     }
     
-    // Concatenates first list with second list. First list will be modified.
-    public static SLList concat(SLList first, SLList second) {
-    	
-    	SLList result = first;
+    public static SLList reverseRecursive(SLList head) {
 
-    	// find last element in first list
-    	while (result.next != null) {
-    		result = result.next;
+    	SLList first;
+    	SLList rest;
+
+		if(head == null) {
+			return head;
 		}
-    	
-    	result.next = second;
-    	result = first;
-    	
-    	return result;
-    }
+
+		first = head;
+		rest = first.next;
+
+		if(rest == null) {
+			return first;
+		}
+
+		rest = reverseRecursive(rest);
+
+		first.next.next = first;
+		first.next = null;
+
+		head = rest;
+		return head;
+	}
     
     // returns the position of the object
-    public static int find(SLList list, SLList object) {
-    	
-    	int counter = 0;
+    public static SLList find(SLList list) {
     	
     	SLList current = list;
+    	int length = 5;
+    	int i = 0;
 		while (current.next != null) {
-			if (current.equals(object)) {
-				return counter;
+			if (i == length) { // nondeterminism
+				return current;
 			}
+			i++;
 			current = current.next;
-			counter = counter + 1;
 		}
     	
-    	return -1;
+    	return current;
     }
     
-    public static SLList insert(SLList list, SLList object, int pos) {
+    public static SLList findMiddle(SLList head){
+
+    	SLList slow = head;
+    	SLList fast = head;
+		while(fast != null){
+
+			fast = fast.next;
+			if(fast != null) {
+				fast = fast.next;
+			}
+
+			slow = slow.next;
+		}
+
+		return slow;
+	}
+
+	public static SLList findMiddleFaulty(SLList head){
+
+		SLList slow = head;
+		SLList fast = head;
+		while(fast != null){
+
+			fast = fast.next;
+			slow = slow.next;
+			if(fast != null) {
+				slow = fast.next;
+			}
+
+		}
+
+		return slow;
+	}
+    
+    // Concatenates first list with second list. First list will be modified.
+	public static void buildAndConcat() {
+		
+		SLList first = build();
+		SLList second = build();
+		
+		SLList result = first;
+	
+		// find last element in first list
+		while (result.next != null) {
+			result = result.next;
+		}
+		
+		result.next = second;
+	}
+
+	public static SLList insert(SLList list, SLList object, int pos) {
     	
     	SLList current = list;
     	for (int i = 0; i < pos; i++) {

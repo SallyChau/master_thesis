@@ -16,10 +16,9 @@
 
 # Model Checking
 --model-checking "F (X {terminated} -> {isReachable(head,tail,[next])})"
---mc-mode "hierarchical"
+#--mc-mode "hierarchical"
 #--mc-skip "<init>"
 
 # Options
 --admissible-abstraction
 --debug
---canonical

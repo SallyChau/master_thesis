@@ -12,14 +12,14 @@
 --rename ListNode=SLList next=next
 
 # Initial states
---initial "examples/SLList/configuration/initial/sll.json"
+--initial "examples/SLList/configuration/initial/sll_long.json"
 
 # Model Checking
 --model-checking "(GF {terminated} -> GF { L(RefSLList) })"
-#--mc-mode "hierarchical"
+--mc-mode "hierarchical"
 #--mc-skip "<init>"
 
 # Options
 --admissible-abstraction
+--no-garbage-collector
 --debug
---canonical

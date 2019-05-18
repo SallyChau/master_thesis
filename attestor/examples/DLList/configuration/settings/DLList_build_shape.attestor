@@ -20,6 +20,4 @@
 #--mc-skip "<init>"
 
 # Options
---admissible-abstraction
 --debug
---canonical
