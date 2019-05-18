@@ -57,7 +57,7 @@ public class InvokeStmt extends Statement implements InvokeCleanup {
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState, scopeHierarchy);
+                .getResultStates(programState, preparedState, new ScopedHeapHierarchy(scopeHierarchy));
 
         methodResult.forEach(invokePrepare::cleanHeap);
         methodResult.forEach(ProgramState::clone);

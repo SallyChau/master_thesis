@@ -79,7 +79,7 @@ public class AssignInvoke extends Statement implements InvokeCleanup {
 
         Collection<ProgramState> methodResult = method
                 .getMethodExecutor()
-                .getResultStates(programState, preparedState, scopeHierarchy);
+                .getResultStates(programState, preparedState, new ScopedHeapHierarchy(scopeHierarchy));
         return getCleanedResultStates(methodResult);
     }
     

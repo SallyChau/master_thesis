@@ -6,6 +6,7 @@ import java.util.List;
 
 import de.rwth.i2.attestor.grammar.materialization.strategies.MaterializationStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.ScopedHeapHierarchy;
+import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
 
 /**
  * This class provides methodExecution to safely initialize a StateSpaceGenerator.
@@ -119,7 +120,16 @@ public class StateSpaceGeneratorBuilder {
                 state.setProgramCounter(0);
                 generator.stateSpace.addInitialState(state);
             }
-            generator.stateLabelingStrategy.computeAtomicPropositions(state);
+            if (state.isFromTopLevelStateSpace()) {
+            	generator.stateLabelingStrategy.computeAtomicPropositions(state);
+            } 
+            else {
+            	if (generator.stateLabelingStrategy instanceof AutomatonStateLabelingStrategy) {
+            
+		        	AutomatonStateLabelingStrategy stateLabelingStrategy = (AutomatonStateLabelingStrategy) generator.stateLabelingStrategy;
+		        	stateLabelingStrategy.computeAtomicPropositionsFromGlobalHeap(state, generator.scopeHierarchy);   
+            	}
+            }
             generator.stateExplorationStrategy.addUnexploredState(state, false);
         }
         

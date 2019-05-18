@@ -31,12 +31,17 @@ public abstract class AbstractMethodExecutor implements MethodExecutor {
     }
 
     @Override
-    public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, ScopedHeapHierarchy scopedHierarchy) {
+    public Collection<ProgramState> getResultStates(ProgramState callingState, ProgramState input, ScopedHeapHierarchy scopeHierarchy) {
 
         HeapConfiguration inputHeap = input.getHeap();
         ScopedHeap scopedHeap = scopeExtractor.extractScope(inputHeap);
         
-        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap, scopedHierarchy);
+        // add new scoped heap to the scope hierarchy
+	    if (scopeHierarchy != null) {
+	    	scopeHierarchy.addScopedHeap(scopedHeap);
+	    }
+        
+        Collection<HeapConfiguration> postconditions = getPostconditions(callingState, scopedHeap, scopeHierarchy);
         return createResultStates(input, postconditions);
     }
     

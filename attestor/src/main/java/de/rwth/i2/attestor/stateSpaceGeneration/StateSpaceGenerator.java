@@ -117,7 +117,8 @@ public class StateSpaceGenerator {
                 .setStateCounter(stateSpaceGenerator.getTotalStatesCounter())
                 .setFinalStateStrategy(stateSpaceGenerator.getFinalStateStrategy())
                 .setAlwaysCanonicalize(stateSpaceGenerator.isAlwaysCanonicalize())
-                .setPostProcessingStrategy(stateSpaceGenerator.getPostProcessingStrategy());
+                .setPostProcessingStrategy(stateSpaceGenerator.getPostProcessingStrategy())
+        		.setScopeHierarchy(stateSpaceGenerator.getScopeHierarchy());
     }
 
 	public boolean isAlwaysCanonicalize() {
@@ -200,6 +201,11 @@ public class StateSpaceGenerator {
     public FinalStateStrategy getFinalStateStrategy() {
     	
         return finalStateStrategy;
+    }
+    
+    public ScopedHeapHierarchy getScopeHierarchy() {
+    	
+    	return scopeHierarchy;
     }
 
     /**
