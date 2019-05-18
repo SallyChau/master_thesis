@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "SLL shape"
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "buildRecursive"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+#--initial ".json"
+
+# Model Checking
+--model-checking "GF { L(RefSLList) }"
+--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug

@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "faulty implementation: fast is always reachable by slow (expected to fail)"
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "findMiddleFaulty"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long.json"
+
+# Model Checking
+--model-checking "G ({fast != slow} -> {isReachable(slow,fast,[next])})"
+--mc-mode "hierarchical"
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--canonical
+--debug
