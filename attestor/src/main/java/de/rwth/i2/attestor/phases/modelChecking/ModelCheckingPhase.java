@@ -158,11 +158,13 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
         if (formulaResults.isEmpty()) {
             return;
         }
+        
+        String mode = mcSettings.getModelCheckingMode();
 
         if (allSatisfied) {
-            logHighlight("Model checking results: All provided LTL formulae are satisfied.");
+            logHighlight(mode + " model checking results: All provided LTL formulae are satisfied.");
         } else {
-            logHighlight("Model checking results: Some provided LTL formulae could not be verified.");
+            logHighlight(mode + " model checking results: Some provided LTL formulae could not be verified.");
         }
 
         for (Map.Entry<LTLFormula, ModelCheckingResult> result : formulaResults.entrySet()) {

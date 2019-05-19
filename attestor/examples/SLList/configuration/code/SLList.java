@@ -249,9 +249,52 @@ public class SLList {
         }
         
         return first;
-   }
+    }
+    
+    public static void zipDummy() {
+    	
+    	SLList left = new SLList(null);
+    	SLList right = new SLList(null);
+//    	SLList left = build();
+//    	SLList right = build();
+    	// using nondeterminism causes infinite computation time --> require thresholds
+    	SLList zipped = zip(left, right);
+    }
+    
+    public static SLList zip(SLList left, SLList right) {
+    	
+    	if (left == null)  {
+            return right;
+        }
+    	
+    	SLList first = left;
+    	
+    	return zipRight(first, first.next, right);
+    }
+    
+	public static SLList zipLeft(SLList current, SLList left, SLList right) {
+	    	
+		if(left == null) {
+            current.next = right;
+            return current;
+        } else {
+            current.next = left;
+            return zipRight(left, left.next, right);
+        }
+    }
+	
+	public static SLList zipRight(SLList current, SLList left, SLList right) {
+		
+		if(right == null) {
+            current.next = left;
+            return current;
+        } else {
+            current.next = right;
+            return zipLeft(right, left, right.next);
+        }
+	}
 
-	public static void print(SLList list) {
+    public static void print(SLList list) {
     	
     	int counter = 0;
     	SLList current = list;

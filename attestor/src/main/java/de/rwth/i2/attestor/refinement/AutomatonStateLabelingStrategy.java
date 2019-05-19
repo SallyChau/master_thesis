@@ -93,9 +93,7 @@ public class AutomatonStateLabelingStrategy implements StateLabelingStrategy {
         }
         for (StatelessHeapAutomaton automaton : statelessHeapAutomata) {
             for (String ap : automaton.transition(heapConf)) {
-                programState.addAP(ap);
-                System.err.println("AutomationStateLabelingStrategy: Added AP " + ap + "to state " + programState);
-            }
+                programState.addAP(ap);            }
         }
     }
     
@@ -108,12 +106,15 @@ public class AutomatonStateLabelingStrategy implements StateLabelingStrategy {
 	private HeapConfiguration scopeHeapToTopLevelStateSpace(ProgramState programState, ScopedHeapHierarchy scopeHierarchy) {
 		
 		HeapConfiguration heapConf = programState.getHeap().clone();
+
 		List<ScopedHeap> scopes = scopeHierarchy.getScopedHeaps();
 			
 		for (int i = 0; i < scopes.size(); i++) {
 			if (!heapConf.externalNodes().isEmpty()) {
-				System.out.println("AutomationStateLabelingStrategy: Merging scopedHeap #" + i);
 				ScopedHeap scopedHeap = scopes.get(i);
+				
+				// if variables of heapConf are contained in heapsOutsideScope, rename variables in heapOutsideScope
+				renameExistingVariables(heapConf, scopedHeap.getHeapOutsideScope(), i);
 	
 		    	HeapConfiguration precondition = scopedHeap.getHeapInScope(); // initial heap
 		    	
@@ -157,5 +158,36 @@ public class AutomatonStateLabelingStrategy implements StateLabelingStrategy {
 		cleanedState.removeIntermediate("@return");
 		
 		return cleanedState;
+    }
+    
+    /**
+     * Adds an index to variables of heapToMutate that also occur in heap.
+     * @param heap
+     * @param heapToMutate
+     * @param index
+     */
+    private void renameExistingVariables(HeapConfiguration heap, HeapConfiguration heapToMutate, int index) {
+    	
+    	TIntArrayList variableEdges = heap.variableEdges();
+		for (int j = 0; j < variableEdges.size(); j++) {
+			int varEdge = variableEdges.get(j);
+			String variable = heap.nameOf(varEdge);
+
+			if (heapToMutate.variableWith(variable) != HeapConfiguration.INVALID_ELEMENT) {
+				// variable exists in outer scope
+				TIntArrayList heapOutsideScopeVariableEdges = heapToMutate.variableEdges();
+				TIntIterator varIter = heapOutsideScopeVariableEdges.iterator();
+				while (varIter.hasNext()) {
+					int heapOutsideScopeVarEdge = varIter.next();
+					if (heapToMutate.nameOf(heapOutsideScopeVarEdge).equals(variable)) {
+						heapToMutate.builder()
+									.addVariableEdge(variable + index, heapToMutate.variableTargetOf(variable))
+									.removeVariableEdge(heapOutsideScopeVarEdge)
+									.build();
+					}
+				}
+				
+			}
+		}
     }
 }

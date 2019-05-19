@@ -16,10 +16,10 @@
 
 # Model Checking
 --model-checking "G ({terminated} -> { L(RefSLList) })"
-#--mc-mode "hierarchical"
+--mc-mode "hierarchical"
 #--mc-skip "<init>"
 
 # Options
 --admissible-abstraction
---no-garbage-collector
+#--no-garbage-collector
 --debug

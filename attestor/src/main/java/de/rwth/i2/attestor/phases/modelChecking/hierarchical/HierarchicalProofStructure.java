@@ -1,6 +1,7 @@
 package de.rwth.i2.attestor.phases.modelChecking.hierarchical;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -18,6 +19,7 @@ import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.AbstractProofStructure;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.Assertion2;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
+import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.AssignInvoke;
 import de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements.InvokeStmt;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
@@ -32,16 +34,18 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	
 	private static final Logger logger = LogManager.getLogger("hierarchicalProofStructure.java");
 	
-	private ComponentStateMachine csm;
 	private StateSpace stateSpace;
 	private Map<ProgramState, Set<Assertion2>> stateToAssertions = new LinkedHashMap<>();		
 	private Set<Node> outputFormulae = new HashSet<>();
+	private Method method;
+	private Map<ProgramState, ComponentStateMachine> boxes = new HashMap<>();
 
 	private HierarchicalFailureTrace hierarchicalFailureTrace = new HierarchicalFailureTrace();
-	
-	public HierarchicalProofStructure(ComponentStateMachine csm) {
 		
-		this.csm = csm;
+	public HierarchicalProofStructure(Method method, Map<ProgramState, ComponentStateMachine> boxes) {
+		
+		this.method = method;
+		this.boxes = boxes;
 	}
 	
 	public void build(StateSpace stateSpace, LTLFormula formula) {
@@ -143,10 +147,9 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		};
 		
 		// Check for method call
-		SemanticsCommand statement = csm.getSemanticsCommand(state);
-		
+		SemanticsCommand statement = getSemanticsCommand(state);
 		if (getCalledMethodSignature(statement) != null) {
-			ComponentStateMachine calledCSM = csm.getBox(state);	
+			ComponentStateMachine calledCSM = boxes.get(state);	
 			if (calledCSM != null) {
 				// skip model checking of procedure call if called csm does not exist (can be configured by input settings: mc-skip)
 				Set<Node> inputFormulae = nextFormulae;
@@ -154,8 +157,9 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 				if (returnFormulae != null && !returnFormulae.isEmpty()) {
 					nextFormulae = returnFormulae;
 				}
+				System.out.println("ProofStructure: checking called csm");
+				System.out.println("ProofStructure: called csm successful: " + calledCSM.modelCheckingSuccessful(state, statement, inputFormulae));
 				if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
-					
 					this.successful = false;				
 					setOriginOfFailure(assertion);
 					hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
@@ -182,25 +186,34 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			}
 			successorAssertions.add(successorAssertion);
 		}
-
 		return successorAssertions;
 	}
 	
+	private SemanticsCommand getSemanticsCommand(ProgramState state) {
+		if (method != null && method.getBody() != null) {
+			return method.getBody().getStatement(state.getProgramCounter());
+		} else {
+			throw new IllegalStateException("Method not initialized for component state machine.");
+		}
+	}
+
 	/**
 	 * Gets successor states from state space.
 	 * @param state
 	 * @return a list of successor states of the current state
 	 */
 	private List<ProgramState> getSuccessorStates(ProgramState state) {	
-		
+
 		List<ProgramState> successorStates = new LinkedList<>();
 		TIntSet successors = new TIntHashSet(100);		
 
 		int stateId = state.getStateSpaceId();	    			
-			
+
 		// Collect the "real" successor states (i.e. skipping materialisation steps)
 		TIntArrayList materializationSuccessorIds = stateSpace.getMaterializationSuccessorsIdsOf(stateId);
+
 		if (!materializationSuccessorIds.isEmpty()) {
+
 			TIntIterator matStateIterator = materializationSuccessorIds.iterator();
 			while (matStateIterator.hasNext()) {
 				// Every materialisation state is followed by a control flow state
