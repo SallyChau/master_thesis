@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.phases.modelChecking.hierarchical;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -32,7 +31,6 @@ public class ComponentStateMachine {
 	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");
 	
 	private Method method;
-	private HierarchicalProofStructure proofStructure;	
 	private Map<ProgramState, StateSpace> stateSpaces = new LinkedHashMap<>();
 	private Map<ProgramState, ComponentStateMachine> boxes = new LinkedHashMap<>();	
 	private List<ModelCheckingContract> modelCheckingContracts = new LinkedList<>();
@@ -40,7 +38,6 @@ public class ComponentStateMachine {
 	public ComponentStateMachine(Method method) {
 
 		this.method = method;
-		this.proofStructure = new HierarchicalProofStructure(this);
 	}
 	
 	public void addBox(ProgramState callingState, ComponentStateMachine calledCSM) {
@@ -128,15 +125,21 @@ public class ComponentStateMachine {
 		
 		StateSpace stateSpace = getStateSpace(inputState, statement);
 		HeapConfiguration heapInScope = getHeapInScope(inputState, statement);
-		Set<Node> returnFormulae = getOutputFormulae(heapInScope, formulae);
-		if (returnFormulae.isEmpty()) {		
+		ModelCheckingContract mc = matchModelCheckingContract(heapInScope, formulae);
+		Set<Node> returnFormulae;
+		if (mc != null) {		
+			returnFormulae = mc.getResultFormulae();
+		} else {
+			// model check
+			System.out.println("Starting new model checking routine for method " + method.getSignature());
+
+			HierarchicalProofStructure proofStructure = new HierarchicalProofStructure(method, boxes);
 			proofStructure.build(stateSpace, formulae);		 
 			returnFormulae = proofStructure.getOutputFormulae();
 			addModelCheckingContract(heapInScope, formulae, returnFormulae, proofStructure.isSuccessful(), proofStructure.getHierarchicalFailureTrace());
 			
 			logger.debug("Proofstructure was successful for " + method.getSignature() + "? " + proofStructure.isSuccessful());
-		} 
-		
+		}
 		return returnFormulae;		
 	}
 	
@@ -169,17 +172,6 @@ public class ComponentStateMachine {
 		
 		ModelCheckingResult mcResult = successful ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;		
 		modelCheckingContracts.add(new ModelCheckingContract(heapInScope, formulae, returnFormulae, mcResult, failureTrace));
-	}
-	
-	private Set<Node> getOutputFormulae(HeapConfiguration heap, Set<Node> formulae) {
-		
-		ModelCheckingContract mc = matchModelCheckingContract(heap, formulae);
-		
-		if (mc != null) {
-			return mc.getResultFormulae();
-		} 
-		
-		return Collections.emptySet();
 	}
 	
 	public HeapConfiguration getHeapInScope(ProgramState state, SemanticsCommand statement) {
