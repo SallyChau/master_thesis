@@ -180,13 +180,13 @@ public class AutomatonStateLabelingStrategy implements StateLabelingStrategy {
 				while (varIter.hasNext()) {
 					int heapOutsideScopeVarEdge = varIter.next();
 					if (heapToMutate.nameOf(heapOutsideScopeVarEdge).equals(variable)) {
+						int target = heapToMutate.variableTargetOf(variable);
 						heapToMutate.builder()
-									.addVariableEdge(variable + index, heapToMutate.variableTargetOf(variable))
-									.removeVariableEdge(heapOutsideScopeVarEdge)
-									.build();
+							.removeVariableEdge(heapOutsideScopeVarEdge)
+							.addVariableEdge(variable + index, target)
+							.build();
 					}
 				}
-				
 			}
 		}
     }
