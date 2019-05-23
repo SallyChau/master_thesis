@@ -54,15 +54,10 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             return;
         }
         
-        String mode = mcSettings.getModelCheckingMode();
-        
-        switch (mode) {
-        	case "hierarchical":
-        		modelCheckHierarchically(formulae);
-        		break;
-        	case "default":
-        	default:
-        		modelCheck(formulae);
+        if (mcSettings.isHierarchicalModelCheckingEnabled()) {
+    		modelCheckHierarchically(formulae);
+        } else {
+    		modelCheck(formulae);
         }        
     }
     
@@ -159,12 +154,12 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
             return;
         }
         
-        String mode = mcSettings.getModelCheckingMode();
+        String mode = mcSettings.isHierarchicalModelCheckingEnabled() ? "Hierarchical model checking results:" : "Model checking results:";
 
         if (allSatisfied) {
-            logHighlight(mode + " model checking results: All provided LTL formulae are satisfied.");
+            logHighlight(mode + " All provided LTL formulae are satisfied.");
         } else {
-            logHighlight(mode + " model checking results: Some provided LTL formulae could not be verified.");
+            logHighlight(mode + " Some provided LTL formulae could not be verified.");
         }
 
         for (Map.Entry<LTLFormula, ModelCheckingResult> result : formulaResults.entrySet()) {

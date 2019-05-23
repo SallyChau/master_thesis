@@ -22,12 +22,9 @@ public class ModelCheckingSettings {
     // Indicates whether model checking is conducted.
     private boolean modelCheckingEnabled = false;
     /**
-     * Describes mode of model checking: 
-     * - default (only checks main state space), 
-     * - hierarchical (also checks procedure state spaces using RSM), 
-     * - onthefly (checks procedure state spaces on the fly) 
+     * If true, unreachable parts of heap are regularly eliminated.
      */
-    private String modelCheckingMode = "default";
+    private boolean hierarchicalModelCheckingEnabled = false;
     
     private List<String> methodsToSkip = new LinkedList<>();
 
@@ -73,22 +70,14 @@ public class ModelCheckingSettings {
         return requiredAtomicPropositions;
     }
 
-    public void setModelCheckingMode(String mode) {
+    public void setHierarchicalModelCheckingEnabled(boolean enabled) {
     	
-    	switch(mode) {
-    	case "default":
-    	case "hierarchical":
-    	case "onthefly":
-    		modelCheckingMode = mode;
-    		break;
-    	default:
-            throw new IllegalArgumentException("Unknown model checking mode: " + mode);
-    	}
+    	this.hierarchicalModelCheckingEnabled = enabled;
     }
     
-    public String getModelCheckingMode() {
+    public boolean isHierarchicalModelCheckingEnabled() {
     	
-    	return modelCheckingMode;
+    	return this.hierarchicalModelCheckingEnabled;
     }
     
     public void addMethodToSkip(String method) {

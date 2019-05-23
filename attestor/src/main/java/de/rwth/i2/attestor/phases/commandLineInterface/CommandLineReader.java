@@ -422,12 +422,9 @@ public class CommandLineReader {
         
         commandLineOptions.addOption(
                 Option.builder()
-                        .longOpt("mc-mode")
-                        .hasArg()
-                        .argName("mode")
-                        .desc("Determines the model checking mode for the analysis. " +
-                                "By default, model checking only checks the main state space. " +
-                                "Options are default, hierarchical, or onthefly.")
+                        .longOpt("hierarchical-model-checking")
+                        .desc("Enables hierarchical model checking for the analysis. " +
+                                "By default, model checking only checks the main state space.")
                         .build()
         );
         

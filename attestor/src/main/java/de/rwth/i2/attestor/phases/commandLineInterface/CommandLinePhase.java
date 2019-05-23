@@ -146,8 +146,8 @@ public class CommandLinePhase extends AbstractPhase
             case "model-checking":
                 modelChecking(option);
                 break;
-            case "mc-mode":
-            	modelCheckingMode(option);
+            case "hierarchical-model-checking":
+            	hierarchicalModelChecking();
             	break;
             case "mc-skip":
             	modelCheckingSkip(option);
@@ -350,15 +350,10 @@ public class CommandLinePhase extends AbstractPhase
         }
     }
     
-    private void modelCheckingMode(Option option) {
+    private void hierarchicalModelChecking() {
 
-        String mode = option.getValue();
-        try {
-            modelCheckingSettings.setModelCheckingMode(mode);
-            logger.info("model-checking mode: " + mode);
-        } catch (Exception e) {
-            logger.error("The input " + mode + " is not a valid model checking mode. Skipping it.");
-        }
+        logger.info("enabled hierarchical model-checking");
+        modelCheckingSettings.setHierarchicalModelCheckingEnabled(true);
     }
     
     private void modelCheckingSkip(Option option) {
