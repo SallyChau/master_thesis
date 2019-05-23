@@ -1,6 +1,6 @@
 # Master thesis - Benchmark
 # Specification:
---description "tba"
+--description "DLList.build: Verify that the heap is a DLList."
 
 # Analyzed Method
 --classpath "examples/DLList/configuration/code"
@@ -12,12 +12,12 @@
 --rename DLListNode=DLList next=next prev=prev
 
 # Initial states
-#--initial ".json"
 
 # Model Checking
 --model-checking "GF { L(RefDLList) }"
-#--mc-mode "hierarchical"
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options
---debug
+--admissible-abstraction
+--canonical

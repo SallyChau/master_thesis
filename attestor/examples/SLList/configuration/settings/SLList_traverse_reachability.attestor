@@ -1,6 +1,6 @@
 # Master thesis - Benchmark
 # Specification:
---description "tail reachable from head via next selectors upon termination"
+--description "SLList.traverse: Verify that the variable 'tail' is reachable from the variable 'head' via 'next' selectors upon termination."
 
 # Analyzed Method
 --classpath "examples/SLList/configuration/code"
@@ -16,7 +16,7 @@
 
 # Model Checking
 --model-checking "F (X {terminated} -> {isReachable(head,tail,[next])})"
-#--mc-mode "hierarchical"
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

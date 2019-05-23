@@ -253,10 +253,10 @@ public class SLList {
     
     public static void zipDummy() {
     	
-    	SLList left = new SLList(null);
-    	SLList right = new SLList(null);
-//    	SLList left = build();
-//    	SLList right = build();
+//    	SLList left = new SLList(null);
+//    	SLList right = new SLList(null);
+    	SLList left = build();
+    	SLList right = build();
     	// using nondeterminism causes infinite computation time --> require thresholds
     	SLList zipped = zip(left, right);
     }

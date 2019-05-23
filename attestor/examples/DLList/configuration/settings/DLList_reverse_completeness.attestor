@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "DLList.reverse: Verify that all elements are visited by the variable 'current' upon termination."
+
+# Analyzed Method
+--classpath "examples/DLList/configuration/code"
+--class "DLList"
+--method "reverse"
+
+# Grammar
+--predefined-grammar "DLList"
+--rename DLListNode=DLList next=next prev=prev
+
+# Initial states
+--initial "examples/DLList/configuration/initial/dll.json"
+
+# Model Checking
+--model-checking "(GF {terminated} -> F {visited(current)})"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug

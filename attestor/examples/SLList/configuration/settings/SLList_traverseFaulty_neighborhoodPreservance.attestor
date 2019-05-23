@@ -1,12 +1,11 @@
 # Master thesis - Benchmark
 # Specification:
---description "list is never mutated"
+--description "SLList.traverseFaulty: Verify that the list is never mutated. -- expected to fail"
 
 # Analyzed Method
 --classpath "examples/SLList/configuration/code"
 --class "SLList"
 --method "traverseFaulty"
-#--method "swap"
 
 # Grammar
 --predefined-grammar "SLList"
@@ -17,7 +16,7 @@
 
 # Model Checking
 --model-checking "G {identicNeighbours}"
-#--mc-mode "hierarchical"
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

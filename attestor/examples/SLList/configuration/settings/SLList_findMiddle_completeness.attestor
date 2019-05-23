@@ -1,6 +1,6 @@
 # Master thesis - Benchmark
 # Specification:
---description "every element is accessed by variable slow whenever null is returned."
+--description "SLList.findMiddle: Verify that every element is accessed by variable 'slow' whenever null is returned."
 
 # Analyzed Method
 --classpath "examples/SLList/configuration/code"
@@ -16,7 +16,7 @@
 
 # Model Checking
 --model-checking "(GF {return == null} -> F {visited(slow)})"
---mc-mode "hierarchical"
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

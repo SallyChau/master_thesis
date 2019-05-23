@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "Tree.build: Verify memory safety."
+
+# Analyzed Method
+--classpath "examples/Tree/configuration/code"
+--class "Tree"
+--method "build"
+
+# Grammar
+--predefined-grammar "BT"
+--rename BTNode=Tree left=left right=right
+
+# Initial states
+
+# Model Checking
+--model-checking "G true"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug
+--canonical

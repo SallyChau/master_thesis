@@ -37,26 +37,45 @@ public class Tree {
 		return root;
 	}
 	
-	// TODO not working
-	public static Tree addRecursive(Tree tree, Tree object, int i) {
-	    if (object == null) {
-	        return tree;
-	    }
-	 
-	    if (i < 2) { // nondeterminism
-	        tree.left = addRecursive(tree.left, object, i-1);
-	    } else if (i > 3) {
-	        tree.right = addRecursive(tree.right, object, i-1);
-	    } else {
-	        // value already exists
-	        return tree;
-	    }
-	 
-	    return tree;
-	}
+	public static Tree getLeft(Tree current) {
+        
+		current = current.left;
+        return current;
+    }
+    
+    public static Tree buildTree() {
+    	Tree root = new Tree();
+        
+    	Tree left = new Tree();
+    	Tree right = new Tree();
+        root.left = left;
+        root.right = right;
+        
+        return root;
+    }
+
+    public static Tree getLeftmostChild(Tree tree){
+        while(tree.left != null){
+            tree = tree.left;
+        }
+        return tree;
+    }
+
+    private static Tree traverseRecursive(Tree tree) {
+
+    	Tree current = tree;
+        if(tree == null) {
+            return null;
+        } else {
+        	traverseRecursive(tree.left);
+        	traverseRecursive(tree.right);
+            return tree;
+        }
+    }
 	
 	public static void main(String[] args) {
 		
 		Tree tree = build();
+		tree = traverseRecursive(tree);
 	}
 }

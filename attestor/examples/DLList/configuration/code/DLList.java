@@ -34,25 +34,22 @@ public class DLList {
             current = current.next;
         }
     }
+    
+    public static void reverse(DLList head){
 
-    public static DLList reverse(DLList head) {
+		DLList current = head;
 
-        DLList current = head; 
-        DLList tmp = null;
-  
-        // swap next and prev for all nodes
-        while (current != null) { 
-            tmp = current.prev; 
-            current.prev = current.next; 
-            current.next = tmp; 
-            current = current.prev; 
-        } 
-        
-        if (tmp != null) { 
-            head = tmp.prev; 
-        } 
-        
-        return head;
+		while(current != null){
+
+			DLList tmp = current.next;
+
+			current.next = current.prev;
+			current.prev = tmp;
+
+			current = current.prev;
+		}
+
+		head = current;
 	}
     
     public static DLList concat(DLList head, DLList tail) {

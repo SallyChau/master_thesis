@@ -1,11 +1,11 @@
 # Master thesis - Benchmark
 # Specification:
---description "SLList shape upon termination"
+--description "SLList.reverse: Verify memory safety."
 
 # Analyzed Method
 --classpath "examples/SLList/configuration/code"
 --class "SLList"
---method "traverseRecursive"
+--method "reverse"
 
 # Grammar
 --predefined-grammar "SLList"
@@ -15,10 +15,11 @@
 --initial "examples/SLList/configuration/initial/sll_long.json"
 
 # Model Checking
---model-checking "(GF {terminated} -> F {visited(current)})"
-#--mc-mode "hierarchical"
+--model-checking "G true"
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options
 --admissible-abstraction
+--no-garbage-collector
 --debug

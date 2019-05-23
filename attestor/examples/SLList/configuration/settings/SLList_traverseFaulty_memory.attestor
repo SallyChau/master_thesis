@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "SLList.traverseFaulty: Verify memory safety."
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "traverseFaulty"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long.json"
+
+# Model Checking
+--model-checking "G true"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug

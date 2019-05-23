@@ -1,25 +1,25 @@
 # Master thesis - Benchmark
 # Specification:
---description "tba"
+--description "Tree.traverseRecursive: Verify memory safety."
 
 # Analyzed Method
 --classpath "examples/Tree/configuration/code"
 --class "Tree"
---method "build"
+--method "traverseRecursive"
 
 # Grammar
 --predefined-grammar "BT"
 --rename BTNode=Tree left=left right=right
 
 # Initial states
-#--initial ".json"
+--initial "examples/Tree/configuration/initial/BT.json"
 
 # Model Checking
---model-checking "GF { L(RefBT) }"
-#--mc-mode "hierarchical"
+--model-checking "G true"
+--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options
 --admissible-abstraction
+--no-garbage-collector
 --debug
---canonical
