@@ -50,7 +50,7 @@ public class GotoStmt extends Statement {
     @Override
 	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
-    	return Collections.emptySet();
+    	return formulae;
     }
     
     @Override

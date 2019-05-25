@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.semantics.jimpleSemantics.jimple.statements;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
@@ -67,7 +66,7 @@ public class BranchingSkip extends Statement {
     @Override
 	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopedHeap) {
 
-    	return Collections.emptySet();
+    	return formulae;
     }
     
     @Override

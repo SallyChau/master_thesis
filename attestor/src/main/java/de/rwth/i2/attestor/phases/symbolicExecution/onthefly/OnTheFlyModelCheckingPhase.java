@@ -160,7 +160,7 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
 
         PreconditionMatchingStrategy preconditionMatchingStrategy = new InternalPreconditionMatchingStrategy();
 
-        for(Method method : scene ().getRegisteredMethods()) {
+        for(Method method : scene().getRegisteredMethods()) {
             MethodExecutor executor;
             ContractCollection contractCollection = new InternalContractCollection(preconditionMatchingStrategy);
             if(method.isRecursive()) {

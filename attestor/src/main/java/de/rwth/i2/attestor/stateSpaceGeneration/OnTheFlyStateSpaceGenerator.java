@@ -80,7 +80,8 @@ public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {
         return resultFormulae;
     }
     
-    public ScopedHeapHierarchy getScopeHierarchy() {
+    @Override
+	public ScopedHeapHierarchy getScopeHierarchy() {
     	
     	return scopeHierarchy;
     }
@@ -235,7 +236,7 @@ public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {
 			Set<Node> resultFormulaeFromCall = statement.getResultFormulae(state, formulae, scopeHierarchy);
 			System.out.println("StateSpaceGenerator: Result formulae: statement: " + statement);
 			System.out.println("StateSpaceGenerator: Result formulae from procedure call? " + resultFormulaeFromCall);
-			if (resultFormulaeFromCall != null && !resultFormulaeFromCall.isEmpty()) {
+			if (resultFormulaeFromCall != null) {
 	
 				System.out.println("StateSpaceGenerator: current next formulae updated: " + resultFormulaeFromCall);  
 				return resultFormulaeFromCall;
@@ -247,11 +248,21 @@ public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {
 	}
 
 	private void addSuccessorAssertionsToProofStructure(ProgramState state, Collection<ProgramState> successors, Set<Node> formulae) {
-		
-		if (proofStructure.isSuccessful()) {
-			for (ProgramState successorState : successors) { 
-				if (!(isFinalState(successorState) && state.equals(successorState) && !successorState.isFromTopLevelStateSpace())) {
+
+		System.out.println("ProofStructure: Trying to add assertion with formulae " + formulae);
+		if (proofStructure.isSuccessful() && !formulae.isEmpty()) {
+			for (ProgramState successorState : successors) { 				
+				if (successorState.isFromTopLevelStateSpace()) {
+					System.out.println("ProofStructure: Trying to add assertion from top level with formulae  " + formulae);
 					proofStructure.addAssertion(successorState, formulae);
+				} else {
+					System.out.println("ProofStructure: Trying to add assertion ELSE " + formulae);
+					// procedure calls
+					// don't add assertions another time for final states of procedure state spaces
+					if (!(isFinalState(successorState) && state.equals(successorState))) {
+						System.out.println("ProofStructure: Trying to add assertion from procedure with formulae " + formulae);
+						proofStructure.addAssertion(successorState, formulae);
+					}
 				}
 			}
 		}		

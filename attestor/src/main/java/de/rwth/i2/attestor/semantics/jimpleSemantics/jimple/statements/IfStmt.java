@@ -113,7 +113,7 @@ public class IfStmt extends Statement {
     @Override
 	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
-    	return Collections.emptySet();
+    	return formulae;
     }
     
     @Override

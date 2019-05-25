@@ -1,7 +1,6 @@
 package de.rwth.i2.attestor.semantics;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class TerminalStatement implements SemanticsCommand {
     @Override
 	public Set<Node> getResultFormulae(ProgramState programState, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
 
-    	return Collections.emptySet();
+    	return formulae;
     }
     
     @Override
