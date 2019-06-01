@@ -60,8 +60,23 @@ public class Tree {
         }
         return tree;
     }
+    
+    public static Tree getLeftmostChildModifyList(Tree tree){
+        while(tree.left != null){
+            tree = tree.left;
+            swap(tree);
+        }
+        return tree;
+    }
+    
+    public static void swap(Tree tree){
+		
+    	Tree dummy = tree.left;
+		tree.left = null;
+		tree.left = dummy;
+	}
 
-    private static Tree traverseRecursive(Tree tree) {
+    public static Tree traverseRecursive(Tree tree) {
 
     	Tree current = tree;
         if(tree == null) {
@@ -71,6 +86,23 @@ public class Tree {
         	traverseRecursive(tree.right);
             return tree;
         }
+    }
+    
+    public static Tree traverseRecursiveModifyHeap(Tree tree) {
+
+    	Tree current = tree;
+        if(tree == null) {
+            return null;
+        } else {
+        	traverseRecursive(tree.left);
+        	traverseRecursive(tree.right);
+        	modifyHeap();
+            return tree;
+        }
+    }
+    
+    public static void modifyHeap() {
+    	Tree newTree = new Tree();
     }
 	
 	public static void main(String[] args) {

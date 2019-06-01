@@ -52,6 +52,30 @@ public class DLList {
 		head = current;
 	}
     
+    public static void reverseFaulty(DLList head){
+
+		DLList current = head;
+
+		while(current != null){
+
+			DLList tmp = current.next;
+
+//			current.next = current.prev;
+//			current.prev = tmp;
+			current.prev = current.next;
+
+			current = current.prev;
+		}
+		
+		head = current;
+	}
+    
+    public static DLList reverseFaultyCall(DLList head){
+		
+		reverseFaulty(head);
+		return head;
+	}
+    
     public static DLList concat(DLList head, DLList tail) {
     	
     	DLList result = head;
@@ -93,6 +117,13 @@ public class DLList {
 
 		return current;
 	}
+	
+	public static void swap(DLList current){
+		
+		DLList dummy = current.prev;
+		current.prev = null;
+		current.prev = dummy;
+	}
 
 	public static DLList findLast(DLList head) {
 
@@ -104,6 +135,11 @@ public class DLList {
 
 		return current;
 	}
+	
+	public static void findLastCall(DLList head) {
+
+		findLast(head);
+	} 
 	
 	public static DLList insert(DLList list, DLList object, int pos) {
 		

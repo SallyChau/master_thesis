@@ -16,7 +16,7 @@
 
 # Model Checking
 --model-checking "(X {isReachable(head,tail,[next])} & F (X {terminated} -> {isReachable(tail,head,[next])}))"
---hierarchical-model-checking
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

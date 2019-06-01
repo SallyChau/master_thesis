@@ -16,7 +16,7 @@
 
 # Model Checking
 --model-checking "G true"
---hierarchical-model-checking
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

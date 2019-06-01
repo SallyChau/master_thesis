@@ -37,7 +37,7 @@ public class SLList {
 		}
 	}
     
-    public static void traverseFaulty(SLList head){
+    public static void traverseModifyList(SLList head){
 
 		SLList current = head;
 		
@@ -47,31 +47,40 @@ public class SLList {
 		}
 	}
     
-    public static void traverseFaulty2(SLList head){
-
-		SLList current = head;
-		SLList second = build();
-		
-		while (current.next != null) {
-			current = current.next;
-			foo(head);
-		}
-	}
-    
-    public static void foo(SLList head) {
-    	SLList second = build();
-    }
-    
     public static void swap(SLList head){
-    	
-    	SLList dummy = head.next;
-    	head.next = null;
-    	head.next = dummy;
+		
+		SLList dummy = head.next;
+		head.next = null;
+		head.next = dummy;
 	}
+    
+    public static SLList traverseModifyHeap(SLList list){
+
+    	addListToHeap();
+    	return list;
+	}
+    
+    public static void addListToHeap() {
+    	SLList newList = new SLList(null);
+    }
     
     public static SLList traverseRecursive(SLList head) {
     	
     	SLList current = head;
+
+        if(current == null) {
+            return null;
+        } else if (current.next == null) {
+            return current;
+        } else {
+            return traverseRecursive(current.next);
+        }
+    }
+    
+    public static SLList traverseRecursiveModifyHeap(SLList head) {
+    	
+    	SLList current = head;
+    	addListToHeap();
 
         if(current == null) {
             return null;
@@ -172,6 +181,12 @@ public class SLList {
 		}
 
 		return slow;
+	}
+	
+	public static SLList findMiddleFaultyCall(SLList head){
+
+		SLList middle = findMiddleFaulty(head);
+		return middle;
 	}
     
     // Concatenates first list with second list. First list will be modified.

@@ -16,7 +16,7 @@
 
 # Model Checking
 --model-checking "G ({terminated} -> { L(RefSLList) })"
---hierarchical-model-checking
+#--hierarchical-model-checking
 #--mc-skip "<init>"
 
 # Options

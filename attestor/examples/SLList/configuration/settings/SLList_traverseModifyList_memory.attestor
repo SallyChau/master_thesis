@@ -1,21 +1,21 @@
 # Master thesis - Benchmark
 # Specification:
---description "SLList.traverseFaulty: Verify that the list is never mutated. -- expected to fail"
+--description "SLList.traverseModifyList: Verify memory safety."
 
 # Analyzed Method
 --classpath "examples/SLList/configuration/code"
 --class "SLList"
---method "traverseFaulty"
+--method "traverseModifyList"
 
 # Grammar
 --predefined-grammar "SLList"
 --rename ListNode=SLList next=next
 
 # Initial states
---initial "examples/SLList/configuration/initial/sll.json"
+--initial "examples/SLList/configuration/initial/sll_long.json"
 
 # Model Checking
---model-checking "G {identicNeighbours}"
+--model-checking "G true"
 #--hierarchical-model-checking
 #--mc-skip "<init>"
 
