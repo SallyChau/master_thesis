@@ -5,7 +5,7 @@
 \usepackage{amsmath, amssymb, amsfonts, amsthm, dsfont}
 \usepackage{relsize}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta, calc, positioning}
+\usetikzlibrary{arrows, arrows.meta, calc, positioning}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{fancyhdr}
@@ -29,6 +29,9 @@
 
 
 \parindent0em
+
+% background gray!5
+% darker gray: gray!15
 
 \begin{document}
 	
@@ -107,7 +110,7 @@
 	
 	\section{System Model}
 	
-	An important aspect in model checking is the model of the system under consideration. A model describes the behavior of the system. The more accurate the model represents the system, the more expressive the model checking results will be. In this section, we will first introduce the general concept of \textit{transition systems} that are commonly used to represent hardware and software systems. In order to describe \textit{hierarchical} system structures relevant to model pointer-manipulating programs, we will introduce the concept of \textit{recursive state machines} that capture the hierarchical (or recursive) nature of method calls in programs. 
+	An important aspect in model checking is the model of the system under consideration. A model describes the behavior of the system. The more accurate the model represents the system, the more expressive the model checking results will be. In this section, we will first introduce the general concept of \textit{transition systems} that are commonly used to represent hardware and software systems. In order to describe \textit{hierarchical} system structures relevant to model pointer-manipulating programs, we will introduce the concept of \textit{recursive state machines} that capture the hierarchical (or recursive) nature of method calls in programs. \\
 	
 	Since our goal is to model check pointer-manipulating programs, the states of the transition system modeling the input program consist of heap configurations. In order to represent possibly unbounded heap structures, we depict how the heap can represented by \textit{graph grammars} in the second part of this section.
 	
@@ -185,7 +188,7 @@
 		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system.  The \textup{trace} of the finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots L(s_n).\] The \textup{trace} of the infinite path $\pi=s_0 s_1 \dots$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots.\]
 	\end{definition}
 
-	Let $Traces(s)$ denote the set of traces of paths starting in state $s$ and let $Traces(T)$ denote the set of traces of the initial states of a transition system $T$.
+	Let $Traces(s)$ denote the set of traces of paths starting in state $s$ and let $Traces(T)$ denote the set of traces of the initial states of a transition system $T$.\\
 
 	The trace $trace(\pi)$ of a path $\pi$ can be regarded as a word over the alphabet $2^{AP}$. Thus, the trace of an infinite path can be interpreted as an infinite word over $2^{AP}$. When analyzing a transition system $T$, requirements are defined for the traces of $T$. These requirements can be expressed by \textit{linear-time properties}. A linear-time property is a set of (infinite) words over a set $AP$ of atomic propositions, and thus defines a language to be satisfied by the traces of $T$.
 	
@@ -240,12 +243,12 @@
 			\node (u3) at (-2,-1) [normal, label=-90:$u_3$] {};
 			\node (u4) at (3.75, 0) [normal, label=0:$u_4$] {};
 			%boxes
-			\node (b1) at (0,1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_1:A_2$};
+			\node (b1) at (0,1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!15,rounded corners=1.5pt] {$b_1:A_2$};
 			\node (b11) at (-1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (b12) at (-1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (b13) at (1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (b14) at (1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b2) at (1,-1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_2:A_3$};
+			\node (b2) at (1,-1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!15,rounded corners=1.5pt] {$b_2:A_3$};
 			\node (b21) at (-0.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (b22) at (2.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			% arrows
@@ -263,12 +266,12 @@
 			\node (v3) at (3.75, -4.5) [normal, label=0:$v_3$] {};
 			\node (v4) at (3.75,-6.5) [normal, label=0:$v_4$] {};
 			%boxes
-			\node (c1) at (0,-4.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_1:A_2$};
+			\node (c1) at (0,-4.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!15,rounded corners=1.5pt] {$c_1:A_2$};
 			\node (c11) at (-1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (c12) at (-1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (c13) at (1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (c14) at (1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c2) at (0,-6.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_2:A_3$};
+			\node (c2) at (0,-6.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!15,rounded corners=1.5pt] {$c_2:A_3$};
 			\node (c21) at (-1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			\node (c22) at (1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
 			% arrows
@@ -285,7 +288,7 @@
 			\node (w1) at (-3.75,-11) [draw, thick, fill=white, circle, label=180:$w_1$] {};
 			\node (w2) at (3.75,-11) [draw, thick, fill=white, circle, label=0:$w_2$] {};
 			%boxes
-			\node (d) at (0,-11) [draw, thick, fill=gray!20,minimum width=2.5cm,minimum height=1.5cm,rounded corners=1.5pt] {$d:A_1$};
+			\node (d) at (0,-11) [draw, thick, fill=gray!15,minimum width=2.5cm,minimum height=1.5cm,rounded corners=1.5pt] {$d:A_1$};
 			\node (d1) at (-1.25,-10.75) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
 			\node (d2) at (-1.25,-11.25) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
 			\node (d3) at (1.25,-11) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
@@ -310,7 +313,7 @@
 	%A state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ can also be viewed as a string. 
 	% example here
 	
-	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $A$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.
+	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $A$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.\\
 	
 	% example
 	
@@ -326,7 +329,7 @@
 		\end{enumerate}
 	\end{definition}
 	
-	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $A$. Case 1 describes the scenario where the source and the destination states are both within the same component $A_j$, while case 2 depicts that a new component is entered via a box $b'$ of $A_j$. Thus, the current node of the destination state $s'$ is the entry-node $e$. Case 3 and 4 are both exiting component $A_j$ via the exit-node $u$. While case 3 returns to component $A_m$, from where we entered $A_j$ before, case 4 directly enters a new component via box $b'$ of component $A_m$.
+	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $A$. Case 1 describes the scenario where the source and the destination states are both within the same component $A_j$, while case 2 depicts that a new component is entered via a box $b'$ of $A_j$. Thus, the current node of the destination state $s'$ is the entry-node $e$. Case 3 and 4 are both exiting component $A_j$ via the exit-node $u$. While case 3 returns to component $A_m$, from where we entered $A_j$ before, case 4 directly enters a new component via box $b'$ of component $A_m$.\\
 	
 	% depict cases graphically here
 	
@@ -381,24 +384,27 @@
 		\end{center}
 	\end{figure}
 	
-	Heap configurations change over the course of the program execution so that the size of the heap can become unboundedly large, e.g. when new objects are added to the heap. Since the above mentioned graph representation would result in an unbounded size of the graph, we exploit the concept of \textit{hypergraphs}. Hypergraphs are similar to the common graph except that they allow for the graph to contain \textit{abstracted} subgraphs. These subgraphs are connected to the concrete part of the heap by \textit{hyperedges}. Hyperedges differ from commonly known edges in the property that they connect arbitrarily many vertices, instead of only two vertices. The number of vertices a hyperedge connects is captured in its \textit{rank}.
+	Heap configurations change over the course of the program execution so that the size of the heap can become unboundedly large, e.g. when new objects are added to the heap. Since the above mentioned graph representation would result in an unbounded size of the graph, we exploit the concept of \textit{hypergraphs}. Hypergraphs are similar to the common graph except that they allow for the graph to contain \textit{abstracted} subgraphs. These subgraphs are connected to the concrete part of the heap by \textit{hyperedges}. Hyperedges differ from commonly known edges in the property that they connect arbitrarily many vertices, instead of only two vertices. The number of vertices a hyperedge connects is captured in its \textit{rank}.\\
+	
+	In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe \textit{concrete} heaps that do not contain an abstract part such as the heap depicted in Figure~\ref{fig:dll}.
+
 	
 	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]\label{def:hypergraph}
-		Given a finite ranked alphabet $\Sigma$ with associated ranking function $rk : \Sigma \rightarrow \mathds{N}$. A (labelled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, att, lab, ext)\]
+		Given a finite ranked alphabet $\Sigma = \Sigma_N \uplus \Sigma_T$ with associated ranking function $rk : \Sigma \rightarrow \mathds{N}$. A (labeled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, att, lab, ext)\]
 		where 
 		\begin{itemize}
 			\item $V$ is a finite set of vertices,
 			\item $E$ is a finite set of hyperedges,
 			\item the attachment function $att : E \rightarrow V^*$ maps each hyperedge to a sequence of incident vertices, 
-			\item the hyperedge-labelling function $lab : E \rightarrow \Sigma$ maps to each edge its label, and 
+			\item the hyperedge-labeling function $lab : E \rightarrow \Sigma$ maps to each edge its label, and 
 			\item $ext \in V^*$ is the (possibly empty) sequence of pairwise distinct external vertices. 
 		\end{itemize}
-		For every $e \in E$, we let $rk(e) = |att(e)|$ and we require $rk(e) = rk(lab(e))$.
+		For every $e \in E$, we let $rk(e) = |att(e)|$ and we require $rk(e) = rk(lab(e))$. The set of all hypergraphs over $\Sigma$ is denoted by $HG_{\Sigma}$.
 	\end{definition}
 	
-	An example for a hypergraph is depicted in Figure\ref{fig:dll_hyper}.
+	An example for a hypergraph with an abstracted subgraph is depicted in Figure~\ref{fig:dll_hyper}. Here, the abstracted subgraph is represented by the hyperedge labeled $DLL$. This indicates that the hyperedge replaces a doubly-linked list of arbitrary length.
 	
-		\begin{figure}[!h]
+	\begin{figure}[!h]
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
 			\begin{tikzpicture}
@@ -430,17 +436,214 @@
 			\path[] (r) edge[] node[fill=white, below] {2} (a4);
 			
 			\end{tikzpicture}}
-			\caption{A doubly-linked list represented as a hypergraph. Adopted from \cite{heinen2015verifying}.}\label{fig:dll_hyper}
+			\caption{A doubly-linked list with abstracted subgraph represented as a hypergraph. Adopted from \cite{heinen2015verifying}.}\label{fig:dll_hyper}
 		\end{center}
 	\end{figure}
 	
-	%Hyperedge Replacement Grammars	
+	In order to obtain all possible heap configurations represented by an abstract subgraph, we require the concept of \textit{graph grammars} or more specifically \textit{hyperedge replacement grammars}. Graph grammars are similar to string grammars and define a set of \textit{rules} for graph manipulation. They prescribe how nonterminals can be replaced by hypergraphs. Continuously applying grammar rules to a hypergraph gradually replaces nonterminals by hypergraphs so that concrete heap configurations can be reached eventually.
 	
+	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]\label{def:hrg}
+		A \textup{hyperedge replacement grammar} $G$ over the ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal that forms the left-hand
+		side and $R \in HG_{\Sigma}$ is the rule graph, a hypergraph with $|ext_R|=rk(X)$, the right-hand side pf the rule.
+	\end{definition}
+
+	The language of a hyperedge replacement grammar contains all concrete hypergraphs that are obtained by repeatedly applying the production rules to a given hypergraph.\\
+	
+	An example for a hyperedge replacement grammar, that describes the language of all doubly-linked lists with at least two elements, is given in Figure~\ref{fig:dll_grammar}. The first production rule recursively adds an element to the existing list introducing a new nonterminal $DLL$ in order to allow for adding more elements during another production. The second rule terminates the production by replacing the nonterminal $DLL$ by a concrete graph. 
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{0.9\textwidth}{!}{
+				\begin{tikzpicture}
+				%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick, minimum width=1cm},
+				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!5}]
+				
+				\node (L) at (0,0) [] {$DLL$};
+				\node (arrow) at (2,0) [] {$\rightarrow$};
+				
+				\node (a1) at (12,0) [normal] {1};
+				\node (a2) at (14,0) [normal] {2};
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				
+				\draw[] (11,0.75) -- (11,-0.75);
+				
+				\node (b1) at (4,0) [normal] {1};
+				\node (b2) at (6,0) [normal] {};
+				\node (DLL) at (8, 0) [draw, fill=gray!5, minimum height=1cm] {$DLL$};
+				\node (b3) at (10,0) [normal] {2};
+				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+				\draw[->,shorten >=0.5pt] (b2) edge[bend left] node[below] {\texttt{prev}} (b1);
+				\draw[] (b2) -- node[below] {1} (DLL);
+				\draw[] (DLL) -- node[below] {2} (b3);				
+				\end{tikzpicture}}
+			\caption{A hyperedge replacement grammar for doubly-linked lists. Adopted from \cite{heinen2015verifying}.}\label{fig:dll_grammar}
+		\end{center}
+	\end{figure}
+
+	Let us consider the hypergraph from Figure~\ref{fig:dll}. We have two options to apply the grammar from Figure~\ref{fig:dll_grammar} to the hypergraph under consideration. Applying the first rule yields the (abstract) hypergraph depicted in Figure~\ref{fig:dll_hyper_r1}, while applying the second rule yields a concrete hypergraph as shown in Figure~\ref{fig:dll_hyper_r2}.
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{0.9\textwidth}{!}{
+				\begin{tikzpicture}
+				%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick, minimum width=1cm},
+				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!5}]
+				
+				%start
+				\node (a1) at (1,3) [normal] {};
+				\node (a2) at (3,3) [normal] {};
+				\node (a3) at (5,3) [normal] {};
+				\node (a4) at (9,3) [normal] {};
+				\node (a5) at (11,3) [normal] {};
+				\node (r1) at (-1, 3) [rectstyle] {\texttt{head}};
+				\node (r2) at (13, 3) [rectstyle] {\texttt{tail}};
+				\node (r) at (7, 3) [draw, fill=gray!5, minimum height=1cm] {$DLL$};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
+				\path[] (r) edge[] node[fill=white, below] {1} (a3);
+				\path[] (r) edge[] node[fill=white, below] {2} (a4);
+				
+				% rule
+				\node (background) at (6,6) [fill=gray!15, minimum height=2.5cm, minimum width=8cm] {};
+				\node (b1) at (3,6) [normal] {1};
+				\node (b2) at (5,6) [normal] {};
+				\node (DLL) at (7,6) [draw, fill=gray!5, minimum height=1cm] {$DLL$};
+				\node (b3) at (9,6) [normal] {2};
+				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+				\draw[->,shorten >=0.5pt] (b2) edge[bend left] node[below] {\texttt{prev}} (b1);
+				\draw[] (b2) -- node[below] {1} (DLL);
+				\draw[] (DLL) -- node[below] {2} (b3);
+				
+				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
+				\draw[->, dashed, shorten >=0.5pt, out=-75, in=90] (b3) to (a4);
+				
+				\draw[double distance=2, ->] (7,2) -- (7,1);
+				
+				% result
+				\node (a1) at (0,0) [normal] {};
+				\node (a2) at (2,0) [normal] {};
+				\node (a3) at (4,0) [normal] {};
+				\node (a4) at (6,0) [normal] {};
+				\node (a5) at (10,0) [normal] {};
+				\node (a6) at (12,0) [normal] {};
+				\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
+				\node (r2) at (14, 0) [rectstyle] {\texttt{tail}};
+				\node (r) at (8, 0) [draw, fill=gray!5, minimum height=1cm] {$DLL$};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[above] {\texttt{next}} (a6);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[below] {\texttt{prev}} (a3);
+				\draw[->,shorten >=0.5pt] (a6) edge[bend left] node[below] {\texttt{prev}} (a5);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a6);
+				\path[] (r) edge[] node[fill=white, below] {1} (a4);
+				\path[] (r) edge[] node[fill=white, below] {2} (a5);
+				
+				\end{tikzpicture}}
+			\caption{By applying the first production rule from Figure~\ref{fig:dll_grammar} a list element is added to the (abstract) hypergraph.}\label{fig:dll_hyper_r1}
+		\end{center}
+	\end{figure}
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{0.9\textwidth}{!}{
+				\begin{tikzpicture}
+				%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick, minimum width=1cm},
+				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!5}]
+				
+				%start
+				\node (a1) at (0,3) [normal] {};
+				\node (a2) at (2,3) [normal] {};
+				\node (a3) at (4,3) [normal] {};
+				\node (a4) at (8,3) [normal] {};
+				\node (a5) at (10,3) [normal] {};
+				\node (r1) at (-2, 3) [rectstyle] {\texttt{head}};
+				\node (r2) at (12, 3) [rectstyle] {\texttt{tail}};
+				\node (r) at (6, 3) [draw, fill=gray!5, minimum height=1cm] {$DLL$};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
+				\path[] (r) edge[] node[fill=white, below] {1} (a3);
+				\path[] (r) edge[] node[fill=white, below] {2} (a4);
+				
+				% rule
+				\node (background) at (6,6) [fill=gray!15, minimum height=2.5cm, minimum width=4cm] {};
+				\node (b1) at (5,6) [normal] {1};
+				\node (b2) at (7,6) [normal] {2};
+				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+				\draw[->,shorten >=0.5pt] (b2) edge[bend left] node[below] {\texttt{prev}} (b1);
+				
+				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
+				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b2) to (a4);
+				
+				\draw[double distance=2, ->] (6,2) -- (6,1);
+				
+				%result
+				\node (a1) at (1,0) [normal] {};
+				\node (a2) at (3,0) [normal] {};
+				\node (a3) at (5,0) [normal] {};
+				\node (a4) at (7,0) [normal] {};
+				\node (a5) at (9,0) [normal] {};
+				\node (r1) at (-1, 0) [rectstyle] {\texttt{head}};
+				\node (r2) at (11, 0) [rectstyle] {\texttt{tail}};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[below] {\texttt{prev}} (a3);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
+				
+				\end{tikzpicture}}
+			\caption{By applying the second production rule from Figure~\ref{fig:dll_grammar} a concrete hypergraph is obtained.}\label{fig:dll_hyper_r2}
+		\end{center}
+	\end{figure}	
+
+	The example showed the forward application of production rules on a hypergraph. This procedure is also called \textit{concretisation} as an abstract subgraph of the hypergraph is replaced by a subgraph that offers more information on the subgraph represented by the nonterminal. A concretisation step can yield several hypergraphs, since a grammar might offer several applicable production rules. Thus, abstraction of subgraphs yield an over-approximation of the current set of concrete hypergraphs, since information is lost during abstraction. It is not always possible to uniquely identify the initial hypergraph of which the abstracted graph has been derived of. Therefore, concretisation needs to consider all possible hypergraphs.
+	
+	In contrast to conretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction hence allows us to represent possibly unboundedly large graphs in a finite manner.
+	
+	% TODO example of umbiguous concretisation
+	
+	With the concept of hypergraphs and hyperedge replacement grammars we specified the relevant framework for model checking pointer-manipulating programs. We model the program execution by recursive state machines capturing the hierarchical nature of method calls, while hypergraphs offer a finite representation of heap configurations that constitute the states of the model under consideration. The second ingredient to model checking is the formal definition of the properties the programs are to be validated for. Here, we focus on \textit{linear temporal logic} described in the following section.
 	
 	\section{Linear Temporal Logic}
-	
-	
-	% reference book "Principles of Model Checking"
 	 
 	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic used to describe properties of paths in a transition system. LTL formulae are composed of three components: the boolean operators \textit{negation} ($\neg$) and \textit{conjunction} ($\wedge$), the temporal operators \textit{next} ($\bigcirc$) and \textit{until} ($\textbf{\textup{U}}$), and a set of atomic propositions $AP$. Atomic propositions are state labels of a transition system, which express properties that hold for a single state, e.g., "$i=1$". Formally, the set of LTL formulae is defined as follows:
 	
@@ -451,8 +654,6 @@
 		\end{equation*}
 	\end{definition}
 
-	% describe every formula type and when they are fulfilled by a path -> model relation
-	% include graphics for each formula
 	Further temporal operators that are commonly used, but are not included in the definition of LTL formulae, are the temporal modalities \textit{eventually}  ($\lozenge$), \textit{globally} ($\square$), and \textit{release} ($\textbf{\textup{R}}$). They can be derived using the operators given in Definition~\ref{def:ltl_syntax} as follows: 
 	
 	\begin{align*}		
@@ -604,6 +805,8 @@
 	\end{figure}
 
 	Formally, the semantics of LTL is given by the model relation $\models$ that is based on the satisfaction relation over paths and states of a transition system.
+	
+	%TODO refer to satisfaction relation of paths and states
 
 	\begin{definition}[Semantics of LTL \cite{baier2008principles}]\label{def:ltl_semantics}
 		Given an LTL formula $\varphi$, a concrete transition system $S$, and a path $\pi \in Path_S$, the model relation $\models$ for LTL formulae is defined by
