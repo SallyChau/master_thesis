@@ -15,24 +15,76 @@
 \usepackage[all]{hypcap}
 \usepackage{subcaption} 
 \usepackage{setspace}
-\usepackage{mdframed}
+\usepackage[framemethod=TikZ]{mdframed}
 \usepackage{xcolor}
 \usepackage{framed}
 
 \captionsetup[figure]{labelfont=it, font=footnotesize}
 \captionsetup[subfigure]{labelfont=it,font=footnotesize}
 
-\theoremstyle{plain}
-\newtheorem{theorem}{Theorem}[chapter]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
+%\theoremstyle{plain}
+%\newtheorem{theorem}{Theorem}[chapter]
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{corollary}[theorem]{Corollary}
 
-\theoremstyle{definition}
-\newtheorem{def_sally}[theorem]{Definition}
-\colorlet{shadecolor}{gray!10}
-\newenvironment{definition}
-{\begin{shaded}\begin{def_sally}}
-		{\end{def_sally}\end{shaded}}
+%\theoremstyle{definition}
+%\newtheorem{def_sally}[theorem]{Definition}
+%\colorlet{shadecolor}{gray!10}
+%\newenvironment{definition}
+%{\begin{shaded}\begin{def_sally}}
+%		{\end{def_sally}\end{shaded}}
+	
+	
+	
+%Definition
+\newcounter{defcounter}[section] \setcounter{defcounter}{0}
+\renewcommand{\thedefcounter}{\arabic{section}.\arabic{defcounter}}
+\newenvironment{definition}[2][]{%
+	\refstepcounter{defcounter}%
+	\ifstrempty{#1}%
+	{\mdfsetup{%
+			frametitle={%
+				\tikz[baseline=(current bounding box.east),outer sep=0pt]
+				\node[anchor=east,rectangle,fill=white]
+				{\strut Definition~\thedefcounter};}}
+	}%
+	{\mdfsetup{%
+			frametitle={%
+				\tikz[baseline=(current bounding box.east),outer sep=0pt]
+				\node[anchor=east,rectangle,fill=white]
+				{\strut Definition~\thedefcounter:~#1};}}%
+	}%
+	\mdfsetup{innertopmargin=10pt,%
+		linewidth=1pt,topline=true,, %
+		frametitleaboveskip=\dimexpr-\ht\strutbox\relax
+	}
+	\begin{mdframed}[]\relax%
+		\label{#2}}{\end{mdframed}}	
+	
+%Theorem	
+\newcounter{thmcounter}[section] \setcounter{thmcounter}{0}
+\renewcommand{\thethmcounter}{\arabic{section}.\arabic{thmcounter}}
+\newenvironment{theorem}[2][]{%
+	\refstepcounter{thmcounter}%
+	\ifstrempty{#1}%
+	{\mdfsetup{%
+			frametitle={%
+				\tikz[baseline=(current bounding box.east),outer sep=0pt]
+				\node[anchor=east,rectangle,fill=white]
+				{\strut Theorem~\thethmcounter};}}
+	}%
+	{\mdfsetup{%
+			frametitle={%
+				\tikz[baseline=(current bounding box.east),outer sep=0pt]
+				\node[anchor=east,rectangle,fill=white]
+				{\strut Theorem~\thethmcounter:~#1};}}%
+	}%
+	\mdfsetup{innertopmargin=10pt,%
+		linewidth=1pt,topline=true,, %
+		frametitleaboveskip=\dimexpr-\ht\strutbox\relax
+	}
+	\begin{mdframed}[]\relax%
+		\label{#2}}{\end{mdframed}}		
 
 \newcommand*\ruleline[1]{\par\noindent\raisebox{.8ex}{\makebox[\linewidth]{\hrulefill\hspace{1ex}\raisebox{-.8ex}{#1}\hspace{1ex}\hrulefill}}}
 
@@ -103,8 +155,154 @@
 	
 	\chapter{Introduction}
 	
-	\section{Attestor}
-	% TODO include current model checking approach (only checking main state space)
+	\section{\textsc{Attestor}}
+	
+	\textsc{Attestor} is a verification tool that generates an abstract state space of the input program and employs LTL model checking to verify specified properties. The state space generation is based on a finite representation of the program heap during execution by a (hyper)graph. Finiteness is achieved by employing abstraction based on graph grammars that specify the data structured maintained by the program and how subgraphs can be summarized in a so called hyperedges. Occurring methods in the input program are summarized by procedure contracts that specify the heap configurations prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap configuration. In a next step, property verification is performed by model checking the resulting state space against the LTL specifications. \textsc{Attestor} then either outputs that the program fulfills or (possibly) violates the property. In the latter case, a counterexample is provided.\\
+	
+	The structure of \textsc{Attestor} can be mainly divided into five parts, namely input, back-end, front-end, API and output, which is depicted in Figure~\ref{fig:attestor}. In order to specify a verification task, \textsc{Attestor} offers four possible input parameters of which the input program is mandatory. The user can further specify LTL specifications to be verified during model checking, a graph grammar for the data structures present in the input program, and further options such as initial heap configurations or properties to modify abstraction or garbage collection. The core of the \textsc{Attestor} tool is the back-end which describes the verification process. The \textsc{Attestor} front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+			\begin{tikzpicture}
+			%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick},
+			rectstyle/.style={draw, minimum width=8cm, minimum height=10cm, rounded corners=1.5pt, fill=gray!10},
+			phase/.style={draw, minimum width=7.5cm, minimum height=1cm, rounded corners=1.5pt, fill=white},
+			input/.style={draw, minimum width=4cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
+			
+			\node (back) at (0,0.25) [rectstyle] {};
+			\node (backlabel) at (-2,5.5) {\textsc{Attestor} \textbf{Back-End}};
+			
+			\node (a1) at (0,4) [phase] {Parsing Inputs};
+			\node (a2) at (0,2.5) [phase] {Marking Generation};
+			\node (a3) at (0,1) [phase] {Grammar \& Abstraction Preprocessing};
+			\node (a4) at (0,-0.5) [phase] {State Space Generation};
+			\node (a5) at (0,-2) [phase] {Model Checking};
+			\node (a6) at (0,-3.5) [phase] {Counterexample Generation};
+			
+			\node (i1) at (-7,4) [input] {Program};
+			\node (i2) at (-7,2) [input] {LTL Specification};
+			\node (i3) at (-7,0) [input] {Graph Grammar};
+			\node (i4) at (-7,-2) [input] {Options};
+			
+			\node (o1) at (7,4) [input] {Abstract State Space};
+			\node (o2) at (7,2) [input] {Procedure Contracts};
+			
+			\node (v1) at (7,-0.5) [input, fill=green!20] {Yes};
+			\node (v2) at (7,-2) [input, fill=red!20] {No};
+			\node (v3) at (7,-3.5) [input, fill=gray!20] {Don't Know};
+			
+			\draw[->,shorten >=0.5pt] (i1) to (-4,4);
+			\draw[->,shorten >=0.5pt] (i2) to (-4,2);
+			\draw[->,shorten >=0.5pt] (i3) to (-4,0);
+			\draw[->,shorten >=0.5pt] (i4) to (-4,-2);
+			
+			\draw[->,shorten >=0.5pt] (4,4) to (o1);
+			\draw[->,shorten >=0.5pt] (4,2) to (o2);
+			
+			\draw[->,shorten >=0.5pt] (0,5) to (a1);
+			\draw[->,shorten >=0.5pt] (a1) to (a2);
+			\draw[->,shorten >=0.5pt] (a2) to (a3);
+			\draw[->,shorten >=0.5pt] (a3) to (a4);
+			\draw[->,shorten >=0.5pt] (a4) to (a5);
+			\draw[->,shorten >=0.5pt] (a5) to (a6);
+			
+			\path[] (4,-0.25) edge (4.5,-0.25);
+			\path[] (4.5,-0.25) edge (4.5,-3.75);
+			\path[] (4.5,-3.75) edge (4,-3.75);
+			\draw[->,shorten >=0.5pt] (4.5,-0.5) to (v1);
+			\draw[->,shorten >=0.5pt] (4.5,-2) to (v2);
+			\draw[->,shorten >=0.5pt] (4.5,-3.5) to (v3);
+			
+			\draw[line width=3pt] (-9, -5.5) to (9,-5.5);
+			\node (api) at (7.5,-5.25) {\textsc{Attestor} \textbf{API}};
+			
+			
+			\node (front) at (0,-7) [draw, minimum width=18cm, minimum height=2cm, rounded corners=1.5pt, fill=gray!10] {\textsc{Attestor} \textbf{Front-End}};
+			
+			\end{tikzpicture}}
+			\caption{\textsc{Attestor} architecture. \cite{arndt2018let}}\label{fig:attestor}
+		\end{center}
+	\end{figure}
+	
+	The \textsc{Attestor} back-end constitutes the core process of the tool which is divided into six phases. The first three phases comprise the preprocessing of the verification task, followed by the state space generation phase and the model checking phase.
+	
+	\paragraph{Phase 1: Parsing Inputs}
+	In the first phase, the supplied input options passed to \textsc{Attestor} are read including the input program, graph grammars, initial heap configurations as well as procedure contracts that contain predefined pre- and post-conditions that describe the behavior of a procedure execution.
+	
+	\paragraph{Phase 2: Marking Generation} 
+	After parsing the input, markings are added to the initial heap if required by the specified LTL properties \cite{heinen2015verifyingPhd}. The markings track object identities during program execution along sequences of states so that properties such as neighborhood preservation can be checked.\\
+	
+	\paragraph{Phase 3: Grammar and Abstraction Preprocessing}
+	In this phase, state space generation is prepared by refining the input grammar such that properties can be decided more efficiently, e.g., by only considering hypergraphs that satisfy a specified property. Furthermore, abstraction preprocessing computes the transformers required for state space generation itself, e.g., garbage collection. 
+	
+	\paragraph{Phase 4: State Space Generation}	
+	After the stages of preprocessing, the state space is generated by executing the statements of the input program on the initial heap such that new states are added. The procedure is illustrated in Figure~\ref{fig:stateSpaceGeneration}. The abstract execution loop is executed until either there are no more states left to process or a fixpoint has been reached. The loop starts with picking a state, which has not been processed yet, at random. The abstract semantics of the next statement are applied to the state. Therefore, the heap configuration potentially needs to be locally concretised so that the statement is executed on a concrete heap configuration. Concretisation is achieved by applying the grammar rules in a forward manner. Thereafter, the heap is cleared, e.g., dead variables are removed and the garbage collector performs its actions. In order to obtain a compact heap representation, an abstraction of the heap is followed where grammar rules are applied in a backward manner. Therefore, embeddings of the heap configuration in the right hand side of grammar rules have to be found. Finally, the resulting state is labeled with atomic propositions that are satisfied by the heap configuration. The labeling is implemented by heap automata \cite{arndt2018let}. Before adding the resulting state to the state space, it is checked whether a  more abstract state already covers the current state. If not, the state is added to the state space and the algorithm continues with the next state. Else, \textsc{Attestor} checks whether a fixpoint has been reached and terminates the procedure in this case. Otherwise, state space generation continues. The generated state space represents the transformation of the initial heap configuration during program execution for the main method of the input program.
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick},
+			rectstyle/.style={draw, minimum width=8cm, minimum height=9cm, rounded corners=1.5pt, fill=gray!10},
+			phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
+			
+			\node (init) at (0,7.5) [phase] {add initial states};
+			\node (pick) at (0,6) [phase] {pick state in state space};
+			
+			\node (back) at (0,0) [rectstyle] {};
+			\node (exec) at (-2.1, 4.75) [] {\textbf{abstract execution}};
+			
+			\node (abstract) at (-2.6,-3) [draw, minimum width=10.75cm, minimum height=10.5cm, rounded corners=1.5pt, fill=orange, fill opacity=0.2] {};
+			\node at (0, 1.9) {\textit{for each resulting state}};
+			
+			\node (p1) at (0,3.5) [phase] {concretise};
+			\node (p2) at (0,1) [phase] {execute statement};
+			\node (p3) at (0,-0.5) [phase] {rectify};
+			\node (p4) at (0,-2) [phase] {abstract};
+			\node (p5) at (0,-3.5) [phase] {label};
+			
+			\node (d1) at (0, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+			\node (d1text) at (d1) [align=center] {subsumed\\ by existing\\ state};
+			
+			\node (d2) at (6, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+			\node (d2text) at (d2) [align=center] {fixpoint\\ reached};
+			
+			\node (add) at (-6,-6.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {add to state space};
+			
+			\draw[->,shorten >=0.5pt] (0,8.5) to (init);
+			\draw[->,shorten >=0.5pt] (init) to (pick);
+			\draw[->,shorten >=0.5pt] (pick) to (p1);
+			\draw[->,shorten >=0.5pt] (p1) to (0,2.25);
+			\draw[->,shorten >=0.5pt] (p2) to (p3);
+			\draw[->,shorten >=0.5pt] (p3) to (p4);
+			\draw[->,shorten >=0.5pt] (p4) to (p5);			
+			\draw[->,shorten >=0.5pt] (p5) to (0,-4.9);
+			
+			\draw[->,shorten >=0.5pt] (-1.5,-6.5) -- node[above] {\texttt{no}} (add);
+			\draw[->,shorten >=0.5pt] (1.5,-6.5) -- node[above] {\texttt{yes}} (4.5,-6.5);
+			
+			\path (add) edge (-6,6);
+			\draw[->,shorten >=0.5pt] (-6,6) to (pick);
+			
+			\path (6,-4.9) edge node[right] {\texttt{no}} (6,6);
+			\draw[->,shorten >=0.5pt] (6,6) to (pick);
+			
+			\draw[->,shorten >=0.5pt] (7.5,-6.5) -- node[above] {\texttt{yes}} (8.5,-6.5);
+			
+			\end{tikzpicture}}
+			\caption{Phase 4: State space generation in \textsc{Attestor} \cite{arndt2018let}.}\label{fig:stateSpaceGeneration}
+		\end{center}
+	\end{figure}
+	
+	\paragraph{Phase 5: Model Checking}
+	State space generation is followed by the model checking phase if LTL formulae have been specified. \textsc{Attestor} currently implements the tableaux method described in Section \ref{sec:tableaux} which checks the main state space for LTL formulae. In case a formulae is violated, a failure trace is returned that constitutes a counterexample generated in the next phase. If all properties are satisfied, \textsc{Attestor} outputs accordingly. A drawback of the current model checking procedure is that procedural programs contain (recursive) methods and method calls with proper state spaces that are not (directly) checked in the current implementation. Rather, procedure calls are woven into the main state space by considering their influence on the heap configuration only after the execution. However, properties should also be checked for the procedure state spaces themselves as they might introduce violations not visible in the main state space. We approach this gap by considering hierarchical model checking in Chapters ~\ref{chp:hmc} and ~\ref{chp:otf} that also verifies procedure state spaces for the specified LTL properties.
+	
+	\paragraph{Phase 6: Counterexample Generation}
+	In case an LTL formula is found to be violated, the model checking phase returns a failure trace. Together with the violated formula a counterexample is generated in this phase in order to provide an instance for debugging purposes.
 
 	\section{Related Work}
 	
@@ -122,7 +320,7 @@
 	
 	Transition systems are a model that represent the behavior of a system. A transition system can be regarded as a directed graph, where the nodes of the graph represent the \textit{states} of the system and the edges indicate the \textit{transition} of one state into another. A state encodes information about the system at a certain moment which are formulated as a set of \textit{atomic propositions}. A transition within a transition system thus reflects that the state of the system changes, e.g. the values of parameters have changed, new variables have been introduced or a process has terminated. These transitions can be annotated by \textit{action names} that capture the possible source of change, e.g. the communication with another system or process, like user interaction or input. 
 	
-	\begin{definition}[Transition System \cite{baier2008principles}]\label{def:transition system}
+	\begin{definition}[Transition System \cite{baier2008principles}]{def:transition system}
 		A \textit{transition system} $T$ is a tuple $(S, Act, \rightarrow, I, AP, L)$ where
 		\begin{itemize}
 			\item $S$ is a set of states,
@@ -142,14 +340,14 @@
 	
 	%TODO example for a transition system
 	
-	\begin{definition}[Terminal State \cite{baier2008principles}]\label{def:terminal_state}
+	\begin{definition}[Terminal State \cite{baier2008principles}]{def:terminal_state}
 		A state $s \in S$ in a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is called \textit{terminal} if and only if 
 		\[\bigcup_{\alpha \in Act} \{s'\in S | s \xrightarrow{\alpha} s'\} = \emptyset.\]
 	\end{definition}
 	
 	The resulting sequence of executed transitions starting in an initial state $s_0 \in I$ and either ending in a terminal state $s \in S$ or infinitely prolonging, is called an \textit{execution} of the transition system $T$.
 	
-	\begin{definition}[Execution]\label{def:execution}
+	\begin{definition}[Execution]{def:execution}
 		Let $T=(S, Act, \rightarrow, I, AP, L)$. A \textit{finite execution} 
 		of $T$ is an alternating sequence \[s_0 \alpha_1 s_1 \alpha_2 \dots \alpha_n s_n\] of states and actions such that 
 		\begin{itemize}
@@ -165,7 +363,7 @@
 		\end{itemize} 
 	\end{definition}
 	
-	\begin{definition}[Reachable States \cite{baier2008principles}]\label{def:reachable_state}
+	\begin{definition}[Reachable States \cite{baier2008principles}]{def:reachable_state}
 		A state $s \in S$ in a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is called \textit{reachable} in $T$ if there exists an execution of the form \[s_0 \alpha_1 s_1 \alpha_2 \dots \alpha_n s_n = s.\]
 		$Reach(T)$ denotes the set of all reachable states in $T$.
 	\end{definition}
@@ -174,7 +372,7 @@
 
 	For our purpose of model checking pointer-manipulating programs, we focus on the states and the attached atomic propositions of the transition system under consideration, hence, we omit the actions. Multiple transitions between two states with different actions are thus summarized into a single transition. Therefore, the notion of an execution shifts to the notion of \textit{paths} that denote sequences of states that are visited throughout a run.	 
 	 
-	\begin{definition}[Paths \cite{baier2008principles}]\label{def:paths}
+	\begin{definition}[Paths \cite{baier2008principles}]{def:paths}
 		A \textit{finite path} $\pi$ of a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is a finite sequence \[s_0 s_1 \dots s_n\] such that 
 		\begin{itemize}
 			\item $s_0 \in I$ is an initial state, 
@@ -191,7 +389,7 @@
 
 	For a path $\pi$, $\pi[i]$ denotes the $i$th state of $\pi$, while $\pi[..i]$ and $\pi[i..]$ denote the $i$th prefix and the $i$th suffix of $\pi$, respectively. Paths display the order of states that are traversed throughout an execution of a transition system. However, the related sets of atomic propositions of the traversed states, which are relevant for model checking, are not observable in the path itself. Therefore, we consider the notion of \textit{traces} which are sequences of sets of atomic propositions that are satisfied along a path $\pi$.
 	
-	\begin{definition}[Trace \cite{baier2008principles}]\label{def:trace}
+	\begin{definition}[Trace \cite{baier2008principles}]{def:trace}
 		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system without terminal states.  The \textit{trace} of the finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots L(s_n).\] The \textit{trace} of the infinite path $\pi=s_0 s_1 \dots$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots.\]
 		
 		$Traces(s)$ denotes the set of traces of paths starting in state $s$ and $Traces(T)$ denotes the set of traces of the initial states of a transition system $T$.\\
@@ -201,13 +399,13 @@
 
 	The trace $trace(\pi)$ of a path $\pi$ can be regarded as a word over the alphabet $2^{AP}$. Thus, the trace of a finite or an infinite path can be interpreted as a finite or an infinite word over $2^{AP}$, respectively. When analyzing a transition system $T$, requirements are defined for the traces of $T$. These requirements can be expressed by \textit{linear-time properties}. A linear-time property is a set of (infinite) words over a set $AP$ of atomic propositions, and thus defines a language to be satisfied by the traces of $T$.
 	
-	\begin{definition}[Linear-Time Property \cite{baier2008principles}]\label{def:lt_property}
+	\begin{definition}[Linear-Time Property \cite{baier2008principles}]{def:lt_property}
 		A \textit{linear-time property} over the set of atomic propositions $AP$ is a subset of $(2^{AP})^{\omega}$.
 	\end{definition}
 
 	The relation between a transition system $T$ and a linear-time property $P$ is captured by the satisfaction relation $\models$.
 	
-	\begin{definition}[Satisfaction Relation for Linear-Time Properties \cite{baier2008principles}]\label{def:satis_lt_property}
+	\begin{definition}[Satisfaction Relation for Linear-Time Properties \cite{baier2008principles}]{def:satis_lt_property}
 		Let $P$ be a linear-time property over $AP$ and $T=(S, Act, \rightarrow, I, AP, L)$ a transition system. Then, $T$ \textit{satisfies} $P$, denoted $T \models P$, iff $Traces(T) \subseteq P$. A state $s \in S$ satisfies $P$, denoted $s \models P$, iff $Traces(s) \subseteq P$.
 	\end{definition}
 
@@ -221,7 +419,7 @@
 	
 	Often computer programs do not only consist of a linear sequence of commands, but also generate (recursive) calls to methods. Therefore, the execution of these programs contains call- and return-statements to different sections of the input program. In order to capture this hierarchical (or recursive) structure of the system, we introduce the notion of \textit{recursive state machines}, as defined in \cite{alur2001analysis}, that encapsulate each method in an own \textit{component}. Each component consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component in the recursive state machine. A box can be understood as an interface with entry and exit nodes that models the transition into another method environment, e.g. entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. 
 	
-	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]\label{def:rsm}
+	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]{def:rsm}
 		A \textit{recursive state machine} (RSM) $A$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} (CSM) $A_i = (N_i \cup B_i, Y_i, En_i, Ex_i, \delta_i)$, $1 \leq i \leq k$, consists of
 		\begin{itemize}
 			\item a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
@@ -318,7 +516,7 @@
 	% semantics of RSM
 	In order to define the execution of an RSM $A=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
 	
-	\begin{definition}[(Global) State \cite{alur2001analysis}]\label{def:rsm_semantics}
+	\begin{definition}[(Global) State \cite{alur2001analysis}]{def:rsm_semantics}
 		A \textit{(global) state} of an RSM $A=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1, ..., b_r$ are boxes and $u$ is a node. The set $Q$ of global states of $A$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${Y_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${Y_j}_r(b_r) = j$.
 	\end{definition}
 	
@@ -331,7 +529,7 @@
 	
 	In order to transition between global states of an RSM $A$, we require the notion of a \textit{global transition relation} $\delta$ which enables us to not only transition between states within a CSM $A_j$ as defined by its transition relation $\delta_j$, but also between pairs of CSMs.
 	
-	\begin{definition}[(Global) Transition Relation \cite{alur2001analysis}]\label{def:rsm_transitionRelation}
+	\begin{definition}[(Global) Transition Relation \cite{alur2001analysis}]{def:rsm_transitionRelation}
 		Let $s=(b_1, ..., b_r, u) \in Q$ be a state with $u\in N_j$ and $b_r \in B_m$ for an RSM $A=(A_1, ..., A_k)$. A \textit{(global) transition relation} $\delta$ for $A$ defines $(s, \sigma, s') \in \delta$ if and only if one of the following holds:
 		\begin{enumerate}
 			\item $(u, \sigma, u') \in \delta_j$ for a node $u'$ of $A_j$ and $s'=(b_1, ..., b_r, u')$.
@@ -351,7 +549,7 @@
 	
 	After defining the terms of global states and the global transition relation for an RSM $A$, we can summarize these components together with the finite alphabet $\Sigma$ within the concept of a \textit{labeled transition system} $T_A$, which encodes the execution of $A$.
 	
-	\begin{definition}[Labeled Transition System \cite{alur2001analysis}]\label{def:rsm_transitionSystem}
+	\begin{definition}[Labeled Transition System \cite{alur2001analysis}]{def:rsm_transitionSystem}
 		For an RSM $A=(A_1, ..., A_k)$, the \textit{labeled transition system} (LTS) $T_A=(Q, \Sigma, \delta)$ consists of
 		\begin{itemize}
 			\item a set of global states $Q$, 
@@ -444,7 +642,7 @@
 	In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe \textit{concrete} heaps that do not contain an abstract part such as the heap depicted in Figure~\ref{fig:dll}.
 
 	
-	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]\label{def:hypergraph}
+	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]{def:hypergraph}
 		Given a finite ranked alphabet $\Sigma = \Sigma_N \uplus \Sigma_T$ with associated ranking function $rk : \Sigma \rightarrow \mathds{N}$. A (labeled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, att, lab, ext)\]
 		where 
 		\begin{itemize}
@@ -497,7 +695,7 @@
 	
 	In order to obtain all possible heap configurations represented by an abstract subgraph, we require the concept of \textit{graph grammars} or more specifically \textit{hyperedge replacement grammars}. Graph grammars are similar to string grammars and define a set of \textit{rules} for graph manipulation. They prescribe how nonterminals can be replaced by hypergraphs. Continuously applying grammar rules to a hypergraph gradually replaces nonterminals by hypergraphs so that concrete heap configurations can be reached eventually.
 	
-	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]\label{def:hrg}
+	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]{def:hrg}
 		A \textit{hyperedge replacement grammar} $G$ over the ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal that forms the left-hand
 		side and $R \in HG_{\Sigma}$ is the rule graph, a hypergraph with $|ext_R|=rk(X)$, the right-hand side pf the rule.
 	\end{definition}
@@ -694,6 +892,8 @@
 	
 	In contrast to concretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction hence allows us to represent possibly unboundedly large graphs in a finite manner.\\
 	
+	% TODO require check for embeddings of right hand sides
+	
 	Concluding with the concept of hypergraphs and hyperedge replacement grammars we specified the relevant framework for model checking pointer-manipulating programs. We model the program execution by recursive state machines capturing the hierarchical nature of method calls, while hypergraphs offer a finite representation of heap configurations that constitute the states of the model under consideration. The second ingredient to model checking is the formal definition of the properties the model is to be validated for. Here, we focus on \textit{linear temporal logic} described in the following section.
 	
 	\section{Linear Temporal Logic}
@@ -701,7 +901,7 @@
 	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic used to describe properties of paths in a transition system. In LTL, time is understood as a discrete time-unit where a point in time is followed by a single time-unit. In contrast to LTL, CTL (Computation Tree Logic) considers tree-like paths which can split into alternative courses. Here, we focus on LTL formulae.
 	LTL formulae are composed of three components: the boolean operators \textit{negation} ($\neg$) and \textit{conjunction} ($\wedge$), the temporal operators \textit{next} ($\bigcirc$) and \textit{until} ($\textbf{\textit{U}}$), and a set of atomic propositions $AP$. Atomic propositions are state labels of a transition system, which express properties that hold for a single state, e.g., "$i=1$". Formally, the set of LTL formulae is defined as follows:
 	
-	\begin{definition}[Syntax of LTL \cite{baier2008principles}]\label{def:ltl_syntax}
+	\begin{definition}[Syntax of LTL \cite{baier2008principles}]{def:ltl_syntax}
 		Given a set $AP$ of atomic propositions with $a \in AP$, \textit{LTL formulae} are recursively defined by
 		\begin{equation*}		
 			\varphi := \texttt{\textup{true}} \mid a \mid \neg \varphi \mid \varphi_1 \wedge \varphi_2 \mid \bigcirc \varphi \mid \varphi_1 \textbf{\textup{U}} \varphi_2.
@@ -860,7 +1060,7 @@
 
 	Formally, the semantics of LTL is given by the model relation $\models$ that is based on the satisfaction relation over paths and states of a transition system.
 	
-	\begin{definition}[Semantics of LTL over Paths and States \cite{baier2008principles}]\label{def:ltl_paths_semantics}
+	\begin{definition}[Semantics of LTL over Paths and States \cite{baier2008principles}]{def:ltl_paths_semantics}
 		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system without terminal states, and let $\varphi$ be an LTL-formula over $AP$.\\
 		For an infinite path $\pi$ of $T$, the satisfaction relation is defined by \[\pi \models \varphi \text{ iff } trace(\pi) \models \varphi.\]
 		For a state $s \in S$, the satisfaction relation $\models$ is defined by \[s \models \varphi \text{ iff } (\forall \pi \in Paths(T). \pi \models \varphi).\]
@@ -871,7 +1071,7 @@
 	
 	Based on the satisfaction relation of LTL formulae over paths and states, we can specify the semantics of LTL for a transition system $T$.
 
-	\begin{definition}[Semantics of LTL \cite{baier2008principles}]\label{def:ltl_semantics}
+	\begin{definition}[Semantics of LTL \cite{baier2008principles}]{def:ltl_semantics}
 		Given an LTL formula $\varphi$, a concrete transition system $T$, and a path $\pi \in Paths(T)$, the model relation $\models$ for LTL formulae is defined by
 		\begin{align*}
 			\pi &\models \texttt{\textup{true}}   \\
@@ -896,7 +1096,7 @@
 
 	Two LTL formulae are semantically equivalent if they evaluate to the same results under all interpretations.	For every LTL formula, there exists an equivalent formula in \textit{positive normal form} (PNF), where negations are only allowed on the level of literals \cite{baier2008principles}.
 	
-	\begin{definition}[Positive Normal Form \cite{baier2008principles}]\label{def:ltl_pnf}
+	\begin{definition}[Positive Normal Form \cite{baier2008principles}]{def:ltl_pnf}
 		Given a set $AP$ of atomic propositions with $a \in AP$, LTL formulae in \textit{positive normal form} (PNF) are defined by
 		\begin{equation*}		
 		\varphi := \texttt{\textup{true}} \mid \texttt{\textup{false}} \mid a \mid \neg a \mid \varphi_1 \wedge \varphi_2 \mid \varphi_1 \vee \varphi_2 \mid \bigcirc \varphi \mid \varphi_1 \textbf{\textup{U}} \varphi_2 \mid \varphi_1 \textbf{\textup{R}} \varphi_2.
@@ -915,23 +1115,28 @@
 	
 	\section{LTL Model Checking Algorithms}
 	
+	In this section, we introduce two approaches to model checking LTL properties for pointer-manipulating programs. The first algorithm ....
+	The second algorithm is an on-the-fly approach based on the construction of a tableaux ....
+	
 	\subsection{Automata-Based Model Checking} 
 	% TODO reference paper "Analysis of Recursive States Machines"
 		
 
 
-	\subsection{Tableaux Construction}
+	\subsection{Tableaux Construction}\label{sec:tableaux}
 	% TODO mention expension law (in principles of model checking)
-	\chapter{Hierarchical Model Checking with Recursive State Machines}	
+	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
 
 	\section{Algorithm}
 	\section{Implementation}
+	%TODO add UML diagram / architecture
 	\section{Evaluation}
 	
 	
-	\chapter{On-The-Fly Hierarchical Model Checking}
+	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
 	\section{Algorithm}
 	\section{Implementation}
+	%TODO add UML diagram / architecture
 	\section{Evaluation}
 	
 	\chapter{Benchmarks}	
