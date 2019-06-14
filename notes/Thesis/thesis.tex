@@ -18,6 +18,11 @@
 \usepackage[framemethod=TikZ]{mdframed}
 \usepackage{xcolor}
 \usepackage{framed}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{blindtext}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 \captionsetup[figure]{labelfont=it, font=footnotesize}
 \captionsetup[subfigure]{labelfont=it,font=footnotesize}
@@ -62,22 +67,22 @@
 		\label{#2}}{\end{mdframed}}	
 	
 %Theorem	
-\newcounter{thmcounter}[section] \setcounter{thmcounter}{0}
-\renewcommand{\thethmcounter}{\arabic{section}.\arabic{thmcounter}}
+%\newcounter{thmcounter}[section] \setcounter{thmcounter}{0}
+%\renewcommand{\thethmcounter}{\arabic{section}.\arabic{thmcounter}}
 \newenvironment{theorem}[2][]{%
-	\refstepcounter{thmcounter}%
+	\refstepcounter{defcounter}%
 	\ifstrempty{#1}%
 	{\mdfsetup{%
 			frametitle={%
 				\tikz[baseline=(current bounding box.east),outer sep=0pt]
 				\node[anchor=east,rectangle,fill=white]
-				{\strut Theorem~\thethmcounter};}}
+				{\strut Theorem~\thedefcounter};}}
 	}%
 	{\mdfsetup{%
 			frametitle={%
 				\tikz[baseline=(current bounding box.east),outer sep=0pt]
 				\node[anchor=east,rectangle,fill=white]
-				{\strut Theorem~\thethmcounter:~#1};}}%
+				{\strut Theorem~\thedefcounter:~#1};}}%
 	}%
 	\mdfsetup{innertopmargin=10pt,%
 		linewidth=1pt,topline=true,, %
@@ -132,7 +137,7 @@
 	\vspace{20 mm}
 	
 	\noindent\line(1,0){250}\\
-	Bonn, den 28. September 2015, Sally Chau
+	Aachen, den 19. Juli 2019, Sally Chau
 	
 	\clearpage\mbox{}\clearpage
 	
@@ -154,6 +159,11 @@
 	
 	
 	\chapter{Introduction}
+	- introduce current status of model checking in attestor: after state space generation, only checking top level state space\\
+	- goal: model check procedure state spaces \\
+	- present possible algorithms: automata-based and on-the-fly tableau\\
+	- always keep goal of hierarchical model checking in mind
+	
 	
 	\section{\textsc{Attestor}}
 	
@@ -396,22 +406,8 @@
 	\end{definition}
 
 	The condition that the transition system $T$ does not have any terminal states is not a restriction since for every transition system it is possible to construct an equivalent one without terminal states. This is achieved by adding a new state $s_{stop}$ with a self-loop to the transition system to which all terminal states have a transition. Thus, the resulting system does not contain any terminal states. In the following we assume that a transition system does not have any terminal states.\\
-
-	The trace $trace(\pi)$ of a path $\pi$ can be regarded as a word over the alphabet $2^{AP}$. Thus, the trace of a finite or an infinite path can be interpreted as a finite or an infinite word over $2^{AP}$, respectively. When analyzing a transition system $T$, requirements are defined for the traces of $T$. These requirements can be expressed by \textit{linear-time properties}. A linear-time property is a set of (infinite) words over a set $AP$ of atomic propositions, and thus defines a language to be satisfied by the traces of $T$.
 	
-	\begin{definition}[Linear-Time Property \cite{baier2008principles}]{def:lt_property}
-		A \textit{linear-time property} over the set of atomic propositions $AP$ is a subset of $(2^{AP})^{\omega}$.
-	\end{definition}
-
-	The relation between a transition system $T$ and a linear-time property $P$ is captured by the satisfaction relation $\models$.
-	
-	\begin{definition}[Satisfaction Relation for Linear-Time Properties \cite{baier2008principles}]{def:satis_lt_property}
-		Let $P$ be a linear-time property over $AP$ and $T=(S, Act, \rightarrow, I, AP, L)$ a transition system. Then, $T$ \textit{satisfies} $P$, denoted $T \models P$, iff $Traces(T) \subseteq P$. A state $s \in S$ satisfies $P$, denoted $s \models P$, iff $Traces(s) \subseteq P$.
-	\end{definition}
-
-	From Definition~\ref{def:satis_lt_property}, it follows that a transition system $T$ satisfies a linear-time property $P$ if all its traces satisfy $P$. Thus, for $T \models P$, every trace of $T$ has to be a word in the language induced by $P \subseteq (2^{AP})^{\omega}$.\\
-	
-	Transition systems are a valid model for computer programs as they represent the control flow of the program and thus reflect the program execution. However, our current model does not consider the hierarchical or even recursive nature of programs containing (recursive) method calls. A transition system would hence depict all states of the program execution in a flat setting where method environments are not differentiated. In order to represent the hierarchical structure of method calls, we employ the concept of \textit{recursive state machines} described in the next section. 
+	Transition systems are a valid model for computer programs as they represent the control flow of the program and thus reflect the program execution. However, our current model does not consider the hierarchical or even recursive nature of programs containing (recursive) method calls. A transition system would hence depict all states of the program execution in a flat setting where method environments are not differentiated. In order to represent the hierarchical structure of method calls, we employ the concept of \textit{recursive state machines} described in the next section.
 	
 	% TODO example for flat state space
 
@@ -420,7 +416,7 @@
 	Often computer programs do not only consist of a linear sequence of commands, but also generate (recursive) calls to methods. Therefore, the execution of these programs contains call- and return-statements to different sections of the input program. In order to capture this hierarchical (or recursive) structure of the system, we introduce the notion of \textit{recursive state machines}, as defined in \cite{alur2001analysis}, that encapsulate each method in an own \textit{component}. Each component consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component in the recursive state machine. A box can be understood as an interface with entry and exit nodes that models the transition into another method environment, e.g. entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. 
 	
 	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]{def:rsm}
-		A \textit{recursive state machine} (RSM) $A$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} (CSM) $A_i = (N_i \cup B_i, Y_i, En_i, Ex_i, \delta_i)$, $1 \leq i \leq k$, consists of
+		A \textit{recursive state machine} (RSM) $\mathcal{A}$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} (CSM) $A_i = (N_i \cup B_i, Y_i, En_i, Ex_i, \delta_i)$, $1 \leq i \leq k$, consists of
 		\begin{itemize}
 			\item a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
 			\item a \textit{labeling} $Y_i: B_i \mapsto \{1, ..., k\}$ that assigns to every box an index $j \in \{1, ..., k\}$ referring to one of the component state machines $A_1, ..., A_k$,
@@ -514,23 +510,23 @@
 	\end{figure}
 	
 	% semantics of RSM
-	In order to define the execution of an RSM $A=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
+	In order to define the execution of an RSM $\mathcal{A}=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
 	
 	\begin{definition}[(Global) State \cite{alur2001analysis}]{def:rsm_semantics}
-		A \textit{(global) state} of an RSM $A=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1, ..., b_r$ are boxes and $u$ is a node. The set $Q$ of global states of $A$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${Y_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${Y_j}_r(b_r) = j$.
+		A \textit{(global) state} of an RSM $\mathcal{A}=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1, ..., b_r$ are boxes and $u$ is a node. The set $Q$ of global states of $\mathcal{A}$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${Y_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${Y_j}_r(b_r) = j$.
 	\end{definition}
 	
 	% TODO A state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ can also be viewed as a string. 
 	% TODO example here
 	
-	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $A$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.\\
+	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $\mathcal{A}=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $\mathcal{A}$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.\\
 	
 	Consider the sample RSM given in Figure~\ref{fig:rsm}. A global state in the sample RSM is given by \[(b_1, c_1, c_1, c_1, c_2, d, b_2, d, u_3),\] where the sequence of boxes protocols which components are visited before reaching the current state $u_3$. The state is well-formed as for every box $b \in \{b_1, b_2, c_1, c_2, d\}$ the labeling function $Y_i$ coincides with the component referred to by the next box in the sequence, e.g., $Y_1(b_1)=A_2$, which is exactly the component in which the following box $c_1$ is defined.\\
 	
-	In order to transition between global states of an RSM $A$, we require the notion of a \textit{global transition relation} $\delta$ which enables us to not only transition between states within a CSM $A_j$ as defined by its transition relation $\delta_j$, but also between pairs of CSMs.
+	In order to transition between global states of an RSM $\mathcal{A}$, we require the notion of a \textit{global transition relation} $\delta$ which enables us to not only transition between states within a CSM $A_j$ as defined by its transition relation $\delta_j$, but also between pairs of CSMs.
 	
 	\begin{definition}[(Global) Transition Relation \cite{alur2001analysis}]{def:rsm_transitionRelation}
-		Let $s=(b_1, ..., b_r, u) \in Q$ be a state with $u\in N_j$ and $b_r \in B_m$ for an RSM $A=(A_1, ..., A_k)$. A \textit{(global) transition relation} $\delta$ for $A$ defines $(s, \sigma, s') \in \delta$ if and only if one of the following holds:
+		Let $s=(b_1, ..., b_r, u) \in Q$ be a state with $u\in N_j$ and $b_r \in B_m$ for an RSM $\mathcal{A}=(A_1, ..., A_k)$. A \textit{(global) transition relation} $\delta$ for $\mathcal{A}$ defines $(s, \sigma, s') \in \delta$ if and only if one of the following holds:
 		\begin{enumerate}
 			\item $(u, \sigma, u') \in \delta_j$ for a node $u'$ of $A_j$ and $s'=(b_1, ..., b_r, u')$.
 			\item $(u, \sigma, (b',e))\in \delta_j$ for a box $b'$ of $A_j$ and $s'=(b_1, ..., b_r, b', e)$.
@@ -539,7 +535,7 @@
 		\end{enumerate}
 	\end{definition}
 	
-	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $A$. Consider the RSM given in Figure~\ref{fig:rsm}. For each case depicted in Definition~\ref{def:rsm_transitionRelation}, we can find an example in order to illustrate the global transition relation: \\
+	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $\mathcal{A}$. Consider the RSM given in Figure~\ref{fig:rsm}. For each case depicted in Definition~\ref{def:rsm_transitionRelation}, we can find an example in order to illustrate the global transition relation: \\
 	
 	\underline{Case 1} describes the scenario where the source and the destination nodes are both within the same component $A_j$. For instance, the component $A_1$ defines $(u_2, \sigma, u_3) \in \delta_1$, thus, in terms of the global transition relation $\delta$, a valid global transition would be $((b_2,d,u_2), \sigma, (b_2,d, u_3)) \in \delta$.\\ 
 	
@@ -547,16 +543,16 @@
 	
 	\underline{Case 3 and 4} are both exiting component $A_j$ via the exit-node $u$. While case 3 returns to component $A_m$, from where we entered $A_j$ before, case 4 directly enters a new component via box $b'$ of component $A_m$. An example for case 3 is given by the transition $((b_1,c_1,c_2,d,u_4),\sigma, (b_1,c_1,c_2,w_2)) \in \delta$, where we return from component $A_1$ via box $d$ to component $A_3$. If we continue the return action for state $(b_1,c_1,c_2,w_2)$, we get $((b_1,c_1,c_2,w_2), \sigma, (b_1,c_1,c_1,v_2)) \in \delta$ as a sample transition for case 4. The transition describes that we exit component $A_3$ entered via box $c_2$ and directly enter component $A_2$ via box $c_1$ as $((c_2,w_2),\sigma,(c_1, v_2))$ is a valid transition according to $\delta_2$. \\
 	
-	After defining the terms of global states and the global transition relation for an RSM $A$, we can summarize these components together with the finite alphabet $\Sigma$ within the concept of a \textit{labeled transition system} $T_A$, which encodes the execution of $A$.
+	After defining the terms of global states and the global transition relation for an RSM $\mathcal{A}$, we can summarize these components together with the finite alphabet $\Sigma$ within the concept of a \textit{labeled transition system} $T_{\mathcal{A}}$, which encodes the execution of $\mathcal{A}$.
 	
 	\begin{definition}[Labeled Transition System \cite{alur2001analysis}]{def:rsm_transitionSystem}
-		For an RSM $A=(A_1, ..., A_k)$, the \textit{labeled transition system} (LTS) $T_A=(Q, \Sigma, \delta)$ consists of
+		For an RSM $\mathcal{A}=(A_1, ..., A_k)$, the \textit{labeled transition system} (LTS) $T_\mathcal{A}=(Q, \Sigma, \delta)$ consists of
 		\begin{itemize}
 			\item a set of global states $Q$, 
 			\item a finite alphabet $\Sigma$, and
 			\item a global transition relation $\delta$.
 		\end{itemize}		
-		The LTS of an RSM $A$ is also called the \textit{unfolding} of $A$.
+		The LTS of an RSM $\mathcal{A}$ is also called the \textit{unfolding} of $\mathcal{A}$.
 	\end{definition}
 
 	The LTS of an RSM is basically the flattening of the hierarchical structure induced by the components and boxes of an RSM. Therefore, an LTS corresponds to our initial definition of a transition system without components and boxes (cf. Definition~\ref{def:transition system}).
@@ -898,7 +894,23 @@
 	
 	\section{Linear Temporal Logic}
 	 
-	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic used to describe properties of paths in a transition system. In LTL, time is understood as a discrete time-unit where a point in time is followed by a single time-unit. In contrast to LTL, CTL (Computation Tree Logic) considers tree-like paths which can split into alternative courses. Here, we focus on LTL formulae.
+	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic suited to describe \textit{linear-time properties}. 
+	Linear-time properties specify requirements on paths (or rather their traces) and can be understood as a set of (infinite) words over a set $AP$ of atomic propositions.
+	
+	\begin{definition}[Linear-Time Property \cite{baier2008principles}]{def:lt_property}
+		A \textit{linear-time property} over the set of atomic propositions $AP$ is a subset of $(2^{AP})^{\omega}$.
+	\end{definition}
+
+	Thus, a linear-time property can be interpreted as a language of infinite words defined over the alphabet $2^{AP}$.\\
+	
+	The satisfaction relation $\models$ for linear-time properties defines that a transition system $T$ satisfies a linear-time property if and only if all traces of $T$ are included in the set $P$ meaning that every trace of $T$ is a word in the language induced by $P \subseteq (2^{AP})^{\omega}$.
+	
+	\begin{definition}[Satisfaction Relation for Linear-Time Properties \cite{baier2008principles}]{def:satis_lt_property}
+		Let $P$ be a linear-time property over $AP$ and $T=(S, Act, \rightarrow, I, AP, L)$ a transition system. Then, $T$ \textit{satisfies} $P$, denoted $T \models P$, iff $Traces(T) \subseteq P$. A state $s \in S$ satisfies $P$, denoted $s \models P$, iff $Traces(s) \subseteq P$.
+	\end{definition}
+	
+	Linear-time properties can be specified by LTL formulae that encode temporal specifications for paths. In LTL, time is understood as a discrete time-unit where a point in time is followed by a single time-unit. In contrast to LTL, CTL (Computation Tree Logic) considers tree-like paths which can split into alternative courses. Here, we focus on LTL formulae.\\
+	
 	LTL formulae are composed of three components: the boolean operators \textit{negation} ($\neg$) and \textit{conjunction} ($\wedge$), the temporal operators \textit{next} ($\bigcirc$) and \textit{until} ($\textbf{\textit{U}}$), and a set of atomic propositions $AP$. Atomic propositions are state labels of a transition system, which express properties that hold for a single state, e.g., "$i=1$". Formally, the set of LTL formulae is defined as follows:
 	
 	\begin{definition}[Syntax of LTL \cite{baier2008principles}]{def:ltl_syntax}
@@ -916,7 +928,7 @@
 		\varphi_1 \textbf{\textup{R}} \varphi_2 &:= \neg(\neg\varphi_1 \textbf{\textup{U}} \neg \varphi_2).
 	\end{align*}
 	
-	In order to get an intuitive understanding of the semantics of temporal operators, and therefore LTL formulae, we visualize the semantics of temporal operators in Figure~\ref{fig:temporal_ops}.\\
+	Before formally defining the satisfaction relation for LTL formulae and a transition system $T$, we first constitute an intuitive understanding of temporal operators by visualizing their semantics in Figure~\ref{fig:temporal_ops}.\\
 	
 	\begin{figure}[h!]
 		\begin{center}		
@@ -1056,9 +1068,23 @@
 		\end{tikzpicture}
 		\caption{Intuitive semantics of temporal operators.}\label{fig:temporal_ops}
 		\end{center}
-	\end{figure}
-
-	Formally, the semantics of LTL is given by the model relation $\models$ that is based on the satisfaction relation over paths and states of a transition system.
+	\end{figure}	
+	
+	The following definition captures the relation between linear-time properties and LTL formulae as the latter can also be interpreted as words over the alphabet $2^{AP}$.
+	
+	\begin{definition}[Semantics of LTL (Interpretation over Words) \cite{baier2008principles}]{def:ltl_words_semantics}
+		Let $\varphi$ be an LTL formula over $AP$. The linear-time property induced by $\varphi$ is \[Words(\varphi) = \{\sigma \in (2^{AP})^{\omega}\text{ }|\text{ }\sigma \models \varphi\}\] where the satisfaction relation $\models \subseteq (2^{AP})^{\omega} \times LTL$ is the smallest relation with the following properties 
+		\begin{align*}
+			\sigma &\models \texttt{true}\\
+			\sigma &\models a &&\text{ iff } a \in A_0, \text{ where } \sigma = A_0A_1A_2\dots\\
+			\sigma &\models \varphi_1 \wedge \varphi_2 &&\text{ iff } \sigma \models \varphi_1 \text{ and } \sigma \models \varphi_2\\
+			\sigma &\models \neg \varphi &&\text{ iff } \sigma \nvDash \varphi\\
+			\sigma &\models \bigcirc \varphi &&\text{ iff } \sigma[1\dots]=A_1A_2A_3 \dots \models \varphi\\
+			\sigma &\models \varphi_1 \text{\textbf{U}} \varphi_2 &&\text{ iff } \exists j \geq 0. \sigma[j \dots ] \models \varphi_2 \text{ and } \sigma[i\dots] \models \varphi_1, \forall 0 \leq i < j.
+		\end{align*}
+	\end{definition}
+	
+	The interpretation of LTL formulae over words can be used to describe the semantics of LTL formulae over paths and states of a transition system $T$.
 	
 	\begin{definition}[Semantics of LTL over Paths and States \cite{baier2008principles}]{def:ltl_paths_semantics}
 		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system without terminal states, and let $\varphi$ be an LTL-formula over $AP$.\\
@@ -1118,13 +1144,105 @@
 	In this section, we introduce two approaches to model checking LTL properties for pointer-manipulating programs. The first algorithm ....
 	The second algorithm is an on-the-fly approach based on the construction of a tableaux ....
 	
-	\subsection{Automata-Based Model Checking} 
+	%TODO describe algos as basis for own algos and how we changed them
+	
+	We assume that the transition system under consideration is finite and has no terminal states.
+	
+	\subsection{Automata-Based LTL Model Checking} 
 	% TODO reference paper "Analysis of Recursive States Machines"
-		
+	% TODO runtime/ complexity of LTL model checking
+	This section presents the basic ideas of the automata-theoretic approach to model checking transition systems for LTL specifications as introduced in \cite{vardi1986automata} by Vardi and Wolper. For an LTL formula $\varphi$ and a transition system $T$ the algorithm either returns "yes" if $T \models \varphi$ or "no" and a failure trace of the path that violates the formula $\varphi$. \\
+	
+	The approach is based on the fact that every LTL formula $\varphi$ can be represented by a \textit{nondeterministic Büchi automaton}.
+	
+	\begin{definition}[Nondeterministic Büchi Automaton \cite{baier2008principles}]{def:nba}
+		A \textit{nondeterministic Büchi automaton} (NBA) $\mathcal{B}$ is a tuple $\mathcal{B}=(Q, \Sigma, \delta, Q_0, F)$ where 
+		\begin{itemize}
+			\item $Q$ is a finite set of states,
+			\item $\Sigma$ is an alphabet,
+			\item $\delta: Q \times \Sigma \rightarrow 2^Q$ is a transition function,
+			\item $Q_0 \subseteq Q$ is a set of initial states, and
+			\item $F \subseteq Q$ is a set of \textit{accept} or final states, called the \textit{acceptance set}. 
+		\end{itemize}
+		A run $\sigma = B_0B_1B_2 \dots \in \Sigma^{\omega}$ of an NBA $\mathcal{B}$ is an infinite sequence $q_0q_1q_2 \dots$ of states in $\mathcal{B}$ such that $q_0 \in Q_0$ and $q_i \xrightarrow{B_i}q_{i+1}$ for $i \geq 0$. A run $q_0q_1q_2 \dots$ is \textit{accepting} if $q_i \in F$ for infinitely many indices $i \in \mathds{N}$. The \textit{accepted} language of $\mathcal{B}$ is 
+		\[\mathcal{L}_{\omega}(\mathcal{B})=\{\sigma \in \Sigma^{\omega} | \text{ there exists an accepting run for } \sigma \text{ in } \mathcal{B}\}.\] 
+		The size $|\mathcal{B}|$ of $\mathcal{B}$ is defined as the number of states and transitions in $\mathcal{B}$.
+	\end{definition}
+	
+	\begin{theorem}[]{thm:nba}
+		For any LTL formula $\varphi$ over $AP$ there exists an NBA $\mathcal{B}_{\varphi}$ with \[Words(\varphi)=\mathcal{L}(\mathcal{B}_{\varphi})\] which can be constructed in time and space $2^{\mathcal{O}(|\varphi|)}$. \cite{baier2008principles}
+	\end{theorem}
 
+	The automata-based approach for model checking an LTL formulae $\varphi$ for a transition system $T$ is based on the idea to find a path $\pi$ in $T$ that satisfies the formula $\neg \varphi$. If such path is found, then it follows that $T \nvDash \varphi$ since a path is found that satisfies the negation of the desired formula $\varphi$. Hence, the answer to the model checking procedure is "no" and $\pi$ is returned as a failure trace. Otherwise, it can be concluded that $T \models \varphi$ as no path is found to satisfy $\neg \varphi$. This conclusion is valid, since
+	
+	\begin{align*}
+		T \models \varphi & \text{ iff } Traces(T) \subseteq Words(\varphi)\\
+		& \text{ iff } Traces(T) \cap ((2^{AP})^{\omega} \ Words(\varphi)) = \emptyset\\
+		& \text{ iff } Traces(T) \cap Words(\neg \varphi) = \emptyset.	
+	\end{align*}
+	
+	Therefore, for NBA $\mathcal{B}_{\neg \varphi}$
+	\[T \models \varphi \text{ iff } Traces(T) \cap \mathcal{L}(\mathcal{B}_{\neg \varphi}) = \emptyset\] as $\mathcal{L}(\mathcal{B}_{\neg \varphi}) = Words(\neg \varphi)$.
+
+	\begin{algorithm}
+		\caption{Automata-Based LTL Model Checking}\label{algo:automataMC}
+		\begin{algorithmic} 
+			\REQUIRE finite transition system $T$, LTL formula $\varphi$
+			\ENSURE "yes", if $T \models \varphi$; "no" and a counterexample, otherwise 
+			\STATE Construct an NBA $\mathcal{B}_{\neg \varphi}$ for $\neg \varphi$.
+			\STATE Construct the product transition system $T'=T \otimes \mathcal{B}_{\neg \varphi}$.
+			\IF{$\exists$ path $\pi$ in $T'$ satisfying the acceptance condition of $\mathcal{B}$}
+			\RETURN "no" and counterexample
+			\ELSE
+			\RETURN "yes"
+			\ENDIF
+		\end{algorithmic}
+	\end{algorithm}
+
+	The automata-based approach is described in Algorithm~\ref{algo:automataMC}. In a first step, an NBA $\mathcal{B}_{\neg \varphi}$ is constructed for the formula $\neg \varphi$. Thereafter, the product transition system $T'=T \otimes \mathcal{B}_{\neg \varphi}$ is constructed from the transition system $T$ and the NBA $\mathcal{B}_{\neg \varphi}$. The problem of determining whether a path $\pi$ exists in $T$ that satisfies the acceptance condition of the product transition system $T'$, can be reduced to checking for  emptiness of the intersection of the sets of $Traces(T)$ and $\mathcal{L}(\mathcal{B}_{\neg \varphi})$. If $Traces(T) \cap \mathcal{L}(\mathcal{B}_{\neg \varphi}) = \emptyset$, then there does not exist any path $\pi$ in $T$ that satisfies $\neg \varphi$ and hence does not violate $\varphi$. However, if the intersection is not empty, then an according path $\pi$ is detected and $\varphi$ is violated.\\
+	
+	The automata-based approach can be transferred to recursive state machines as described in \cite{alur2001analysis}. In this context, the notion of \textit{recursive Büchi automata} is introduced that augment RSMs with Büchi-acceptance conditions.\\	
+	
+	In order to improve the performance of the algorithm, it is possible to execute the automata-based approach in an on-the-fly manner. That is, instead of sequentially computing the automata $\mathcal{B}_{\neg \varphi}$ and the product transition system $T'$, both automata are computed on demand as long as no path $\pi$ is found that satisfies $\neg \varphi$. Hence, the automata do not need to be constructed entirely if a violating path can be detected at an early stage.\\
+	
+	However, LTL model checking is still computationally hard and it can be shown that the LTL model checking problem is PSPACE-complete \cite{baier2008principles}.
+	
+	\begin{theorem}[]{thm:ltl_complexity}
+		The LTL model checking problem is PSPACE-complete.
+	\end{theorem}
+	
+	As the automaton-construction of the NBA $\mathcal{L}(\mathcal{B}_{\neg \varphi})$ as well as the product construction are quite costly in practice, %TODO source?
+	we approach automata-based model checking by combining the structures of recursive state machines and the procedures of the \textit{tableaux construction} for model checking LTL formulae. We depict the tableaux construction in the next section. The resulting algorithm from our combined approach is presented in Chapter~\ref{chp:hmc}.
 
 	\subsection{Tableaux Construction}\label{sec:tableaux}
+	
+	This section presents an alternative approach to model checking a transition system $T$ for an LTL formula $\varphi$. The on-the-fly approach by Grumberg et al. constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to proof if a formula is satisfied. \\
+	
+	A proof structure is a directed graph that depicts how the LTL formula $\varphi$ develops during the course of paths in the transition system $T$. The vertices of the proof structure represent \textit{assertions} of the form $s \vdash \Phi$, where $s$ is a state in $T$ and $\Phi$ is a set of LTL formulae. An assertion $s \vdash \Phi$ holds if at least one formula $\varphi \in \Phi$ is satisfied by the state $s$. The set of all assertions is denoted by $\Lambda$ while a single assertion is denoted by $\lambda$. The edges in the proof structure connect vertices that result from rule applications according to the tableaux, e.g., for two assertions $\lambda_1$ and $\lambda_2$, an edge connects the vertices if the tableaux defines a rule $\frac{\lambda_1}{\lambda_2}$.	
+	
+	\begin{definition}[Proof Structure \cite{bhat1995efficient}]{def:ps}
+		A \textit{proof structure} for $\lambda \in \Lambda$ is a tuple $(V,E)$ with $V \subseteq (\Lambda \; \cup \ \texttt{true})$ and $E \subseteq V \times V$, such that for any $\lambda'$ it holds that $\lambda'$ is reachable from $\lambda$ and that the successors of $\lambda'$ are the ones that result from applying some of the rules, i.e. \[(\lambda_1, \lambda_2) \in E \qquad \text{ iff } \qquad \frac{\lambda_1}{\lambda_2 \quad s \dots}.\]
+	\end{definition}
+	
+	The tableaux rules the proof structure works with are specified in the following. They model the semantics of LTL.
+	
+	\begin{align*}
+	&(R^{\models}) \quad \frac{s \vdash \Phi \cup \{a\}}{\texttt{true}} \; \text{ if } s \models a \\[1.5ex]
+	&(R^{\nvDash}) \quad \frac{s \vdash \Phi \cup \{a\}}{s \vdash \Phi} \; \text{ if } s \nvDash a \\[1.5ex]
+	&(R^{\vee}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \vee \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \cup \{\varphi_2\}}\\[1ex]
+	&(R^{\wedge}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \wedge \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2\}}\\[1.5ex]
+	&(R^{\text{\textbf{U}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{U}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2, \varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2, \bigcirc(\varphi_1 \text{\textbf{U}} \varphi_2)\}}\\[1.5ex]
+	&(R^{\text{\textbf{R}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{R}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2\} \qquad s \vdash \Phi\cup \{\varphi_1, \bigcirc(\varphi_1 \text{\textbf{R}} \varphi_2)\}}\\[1.5ex]
+	&(R^{\bigcirc}) \quad \frac{s \vdash \{\bigcirc \varphi_1, \dots, \bigcirc \varphi_n\}}{s_1 \vdash \{\varphi_1, \dots, \varphi_n\} \qquad \dots \qquad s_m \vdash \{\varphi_1, \dots, \varphi_n\}}\\
+	\end{align*}
+	
 	% TODO mention expension law (in principles of model checking)
+	
+	\begin{theorem}[Correctness of the Tableaux Construction \cite{bhat1995efficient}]{thm:tableaux_correct}
+		Given a concrete transition system $T$ with $s\in S$ and an LTL formula $\varphi$. Let $(V,E)$ be the proof structure for $s \vdash \{\varphi\}$. Then it holds that $s \models \varphi$ iff $(V,E)$ is successful.
+	\end{theorem}
+	
+	
 	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
 
 	\section{Algorithm}
