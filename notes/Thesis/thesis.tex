@@ -21,6 +21,7 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{blindtext}
+\usepackage{listings}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
@@ -165,7 +166,7 @@
 	- always keep goal of hierarchical model checking in mind
 	
 	
-	\section{\textsc{Attestor}}
+	\section{\textsc{Attestor}}\label{sec:attestor}
 	
 	\textsc{Attestor} is a verification tool that generates an abstract state space of the input program and employs LTL model checking to verify specified properties. The state space generation is based on a finite representation of the program heap during execution by a (hyper)graph. Finiteness is achieved by employing abstraction based on graph grammars that specify the data structured maintained by the program and how subgraphs can be summarized in a so called hyperedges. Occurring methods in the input program are summarized by procedure contracts that specify the heap configurations prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap configuration. In a next step, property verification is performed by model checking the resulting state space against the LTL specifications. \textsc{Attestor} then either outputs that the program fulfills or (possibly) violates the property. In the latter case, a counterexample is provided.\\
 	
@@ -348,8 +349,6 @@
 	
 	The transition relation $\rightarrow$ formally describes how the transition system $T$ evolves starting in an initial state $s_0 \in I$. Thus, the transition $s \xrightarrow{\alpha} s'$ defines that state $s$ evolves to state $s'$ after the action $\alpha$ has been performed. If a state has more than one outgoing transition, the next transition is chosen nondeterministically. This procedure can be continued until a state without any outgoing transitions has been reached. Such a state is called a \textit{terminal state}.
 	
-	%TODO example for a transition system
-	
 	\begin{definition}[Terminal State \cite{baier2008principles}]{def:terminal_state}
 		A state $s \in S$ in a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is called \textit{terminal} if and only if 
 		\[\bigcup_{\alpha \in Act} \{s'\in S | s \xrightarrow{\alpha} s'\} = \emptyset.\]
@@ -378,8 +377,6 @@
 		$Reach(T)$ denotes the set of all reachable states in $T$.
 	\end{definition}
 
-	%TODO example for an execution
-
 	For our purpose of model checking pointer-manipulating programs, we focus on the states and the attached atomic propositions of the transition system under consideration, hence, we omit the actions. Multiple transitions between two states with different actions are thus summarized into a single transition. Therefore, the notion of an execution shifts to the notion of \textit{paths} that denote sequences of states that are visited throughout a run.	 
 	 
 	\begin{definition}[Paths \cite{baier2008principles}]{def:paths}
@@ -407,9 +404,7 @@
 
 	The condition that the transition system $T$ does not have any terminal states is not a restriction since for every transition system it is possible to construct an equivalent one without terminal states. This is achieved by adding a new state $s_{stop}$ with a self-loop to the transition system to which all terminal states have a transition. Thus, the resulting system does not contain any terminal states. In the following we assume that a transition system does not have any terminal states.\\
 	
-	Transition systems are a valid model for computer programs as they represent the control flow of the program and thus reflect the program execution. However, our current model does not consider the hierarchical or even recursive nature of programs containing (recursive) method calls. A transition system would hence depict all states of the program execution in a flat setting where method environments are not differentiated. In order to represent the hierarchical structure of method calls, we employ the concept of \textit{recursive state machines} described in the next section.
-	
-	% TODO example for flat state space
+	Transition systems are a valid model for computer programs as they represent the control flow of the program and thus reflect the program execution. However, our current model does not consider the hierarchical or even recursive nature of programs containing (recursive) method calls. A transition system would hence depict all states of the program execution in a flat setting where method environments are not differentiated. In order to represent the hierarchical structure of method calls, we employ the concept of \textit{recursive state machines} described in the next section.	
 
 	\subsection{Recursive State Machines}
 	
@@ -505,7 +500,7 @@
 			\draw[->,shorten >=0.5pt,out=-45,in=-135] (w1) to (w2);
 			
 			\end{tikzpicture}%}
-			\caption{A sample recursive state machine. Adopted from \cite{alur2001analysis}.}\label{fig:rsm}
+			\caption{A sample recursive state machine. Adapted from \cite{alur2001analysis}.}\label{fig:rsm}
 		\end{center}
 	\end{figure}
 	
@@ -555,7 +550,7 @@
 		The LTS of an RSM $\mathcal{A}$ is also called the \textit{unfolding} of $\mathcal{A}$.
 	\end{definition}
 
-	The LTS of an RSM is basically the flattening of the hierarchical structure induced by the components and boxes of an RSM. Therefore, an LTS corresponds to our initial definition of a transition system without components and boxes (cf. Definition~\ref{def:transition system}).
+	The LTS of an RSM is basically the flattening of the hierarchical structure induced by the components and boxes of an RSM. Therefore, an LTS corresponds to our initial definition of a transition system, where the set $Act$ of actions, the set $I$ of initial states, the set $AP$ of atomic propositions, and the labeling function $L$ are implicitly specified by the underlying RSM (cf. Definition~\ref{def:transition system}). 
 	
 	\subsection{Heap Representation}
 	
@@ -592,7 +587,7 @@
 			\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
 			
 			\end{tikzpicture}}
-			\caption{Heap configuration of a doubly-linked list. Adopted from \cite{heinen2015verifying}.}\label{fig:dll}
+			\caption{Heap configuration of a doubly-linked list. Adapted from \cite{heinen2015verifying}.}\label{fig:dll}
 		\end{center}
 	\end{figure}
 
@@ -685,7 +680,7 @@
 			\path[] (r) edge[] node[fill=white, below] {2} (a4);
 			
 			\end{tikzpicture}}
-			\caption{A doubly-linked list with abstracted subgraph represented as a hypergraph. Adopted from \cite{heinen2015verifying}.}\label{fig:dll_hyper}
+			\caption{A doubly-linked list with abstracted subgraph represented as a hypergraph. Adapted from \cite{heinen2015verifying}.}\label{fig:dll_hyper}
 		\end{center}
 	\end{figure}
 	
@@ -728,7 +723,7 @@
 				\draw[] (b2) -- node[below] {1} (DLL);
 				\draw[] (DLL) -- node[below] {2} (b3);				
 				\end{tikzpicture}}
-			\caption{A hyperedge replacement grammar for doubly-linked lists. Adopted from \cite{heinen2015verifying}.}\label{fig:dll_grammar}
+			\caption{A hyperedge replacement grammar for doubly-linked lists. Adapted from \cite{heinen2015verifying}.}\label{fig:dll_grammar}
 		\end{center}
 	\end{figure}
 
@@ -892,7 +887,7 @@
 	
 	Concluding with the concept of hypergraphs and hyperedge replacement grammars we specified the relevant framework for model checking pointer-manipulating programs. We model the program execution by recursive state machines capturing the hierarchical nature of method calls, while hypergraphs offer a finite representation of heap configurations that constitute the states of the model under consideration. The second ingredient to model checking is the formal definition of the properties the model is to be validated for. Here, we focus on \textit{linear temporal logic} described in the following section.
 	
-	\section{Linear Temporal Logic}
+	\section{Linear Temporal Logic}\label{sec:ltl}
 	 
 	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic suited to describe \textit{linear-time properties}. 
 	Linear-time properties specify requirements on paths (or rather their traces) and can be understood as a set of (infinite) words over a set $AP$ of atomic propositions.
@@ -1119,6 +1114,12 @@
 		\pi &\models \varphi_1 \textbf{\textup{R}} \varphi_2  &&\Leftrightarrow \forall i \geq 1.\pi[i...]\models \varphi_2 \textup{ or } \\
 		& &&\exists i \geq 1.(\pi[i...] \models \varphi_1 \wedge (\forall 1\leq k < i. \pi[k...] \models \varphi_2)).
 	\end{align*}
+	
+	The following LTL formulae are examples for specifying properties for model checking pointer-manipulating programs.
+	\[\bigcirc \{\texttt{SLList}\}\]
+	where \texttt{SLList} is assumed to be an atomic proposition describing that the heap is a singly-linked list. Hence, the formula states that the heap of the next state is a singly-linked list. Another example is the formula
+	\[\square \{\texttt{SLList}\}\]
+	which requires the heap of every state to be a singly-linked list. Thus, any state not satisfying the atomic proposition \texttt{SLList} falsifies the formula $\square \{\texttt{SLList}\}$. The formula \[\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}\] includes another atomic proposition, \texttt{terminated}, that describes that a state is a terminating state. Thus, the above formula states that the heap is a singly-linked list upon termination of the program.\\
 
 	Two LTL formulae are semantically equivalent if they evaluate to the same results under all interpretations.	For every LTL formula, there exists an equivalent formula in \textit{positive normal form} (PNF), where negations are only allowed on the level of literals \cite{baier2008principles}.
 	
@@ -1129,29 +1130,338 @@
 		\end{equation*}
 	\end{definition}
 	
-	The existence of an equivalent PNF formula for every LTL formula is due to the following equivalences that allow to push negations inside:
+	The existence of an equivalent PNF formula for every LTL formula is due to the following equivalences that allow to push negations inside \cite{heinen2015verifyingPhd}:
 	
 	\begin{align*}
 		\neg \neg \varphi &= \varphi\\
 		\neg \texttt{false} &= \texttt{true}\\
 		\neg (\varphi_1 \wedge \varphi_2) &= \neg \varphi_1 \vee \neg \varphi_2 \\
 		\neg \bigcirc \varphi &= \bigcirc \neg \varphi \\
-		\neg (\varphi_1 \textbf{\textup{U}} \varphi_2) &= \neg \varphi_1 \textbf{\textup{R}} \varphi_2
+		\neg (\varphi_1 \textbf{\textup{U}} \varphi_2) &= \neg \varphi_1 \textbf{\textup{R}} \neg \varphi_2
 	\end{align*}
 	
-	\section{LTL Model Checking Algorithms}
+	As an example consider the LTL formula \[\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}\] where \texttt{terminated} and \texttt{SLList} are atomic propositions. \texttt{terminated} describes that a state is a terminating state and \texttt{SLList} states that the heap of a state is a singly-linked list. An equivalent formula in PNF is achieved by the following equivalences:
+	\begin{align*}
+		&\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\} \\
+		\equiv \quad &\neg(\square \lozenge \{\texttt{terminated}\}) \vee (\square \lozenge \{\texttt{SLList}\}) \qquad &(\text{definition of } \rightarrow) \\
+		\equiv \quad &\neg(\square (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\})) \\&\vee (\square (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{definition of } \lozenge) \\
+		\equiv \quad &\neg(\neg\lozenge\neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\}))\\ &\vee (\neg\lozenge\neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{definition of } \square) \\
+		\equiv \quad &\neg(\neg(\text{\texttt{true}}  \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\})))\\ &\vee (\neg(\text{\texttt{true}} \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))) \qquad &(\text{definition of } \lozenge) \\
+		\equiv \quad &\neg(\neg\text{\texttt{true}}  \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\}))\\ &\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{duality of } \text{\textbf{U}} \text{ and } \text{\textbf{R}}) \\
+		\equiv \quad &\text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \\&\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{duality of } \text{\textbf{U}} \text{  and} \text{\textbf{R}}) \\
+	\end{align*}	
 	
-	In this section, we introduce two approaches to model checking LTL properties for pointer-manipulating programs. The first algorithm ....
-	The second algorithm is an on-the-fly approach based on the construction of a tableaux ....
+	\chapter{Hierarchical Model Checking}
 	
-	%TODO describe algos as basis for own algos and how we changed them
+	One of the main challenges in model checking programs with method calls is that we do not only need to consider the state space of the main method, but also the state spaces induced by method executions, denoted as \textit{procedure state spaces}. Here, we face two main difficulties:
+	\begin{itemize}
+		\item How can we finitely represent the state space of a program with recursive method calls, at best avoiding repetitions in the state space?
+		\item How can we efficiently model check procedure state spaces, at best avoiding checking a procedure state space multiple times? 
+	\end{itemize}
 	
-	We assume that the transition system under consideration is finite and has no terminal states.
+	In this chapter, we introduce two approaches to model checking LTL properties for pointer-manipulating programs with method calls. The underlying state space of procedural programs is a hierarchical one where each procedure contributes an own state space that is connected to nodes of other state spaces reflecting method invocation. In a flat setting, where hierarchy is not actively considered, this corresponds to an edge connecting the calling state with the "entry" state of the procedure state space. For the flat setting, the first section of this chapter presents an on-the-fly LTL model checking approach that constructs a proof structure based on a set of tableaux rules that reflect the semantics of LTL \cite{bhat1995efficient}. \\
 	
-	\subsection{Automata-Based LTL Model Checking} 
-	% TODO reference paper "Analysis of Recursive States Machines"
-	% TODO runtime/ complexity of LTL model checking
-	This section presents the basic ideas of the automata-theoretic approach to model checking transition systems for LTL specifications as introduced in \cite{vardi1986automata} by Vardi and Wolper. For an LTL formula $\varphi$ and a transition system $T$ the algorithm either returns "yes" if $T \models \varphi$ or "no" and a failure trace of the path that violates the formula $\varphi$. \\
+	As a flat state space does not capture the modularity of methods, we represent the state space as a recursive state machine. In the second section of this chapter, we present an LTL model checking approach for RSMs by Yannakakis et al. which is based on the automata-based approach by Vardi and Wolper as described in \cite{vardi1986automata}.\\
+	
+	Based on the presented algorithms, we introduce our modified approaches to hierarchical model checking in the sequel of this thesis.
+	
+	\section{Tableaux Construction}\label{sec:tableaux}
+	
+	This section presents the on-the-fly approach by Grumberg et al. that constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to show whether a formula $\varphi$ is satisfied by a transition system $T$. \\
+	
+	A proof structure is a directed graph $(V,E)$, where the set of vertices $V$ are composed of a set of \textit{assertions} $\Lambda$ and the set $E$ of edges contains the edge $(\lambda_1, \lambda_2)$ between two assertions $\lambda_1$ and $\lambda_2$ if the underlying tableaux contains the rule $\frac{\lambda_1}{\lambda_2}$.
+	
+	\begin{definition}[Proof Structure \cite{bhat1995efficient}]{def:ps}
+		A \textit{proof structure} for $\lambda \in \Lambda$ is a tuple $(V,E)$ with $V \subseteq (\Lambda \; \cup \ \texttt{true})$ and $E \subseteq V \times V$, such that for any $\lambda'$ it holds that $\lambda'$ is reachable from $\lambda$ and that the successors of $\lambda'$ are the ones that result from applying some of the rules, i.e. \[(\lambda_1, \lambda_2) \in E \qquad \text{ iff } \qquad \frac{\lambda_1}{\lambda_2 \quad s \dots}.\]
+	\end{definition}
+	
+	The underlying tableaux rules for the proof structure are specified in the following. They model the semantics of LTL.
+	
+	\begin{align*}
+	&(R^{\models}) \quad \frac{s \vdash \Phi \cup \{a\}}{\texttt{true}} \; \text{ if } s \models a \\[1.5ex]
+	&(R^{\nvDash}) \quad \frac{s \vdash \Phi \cup \{a\}}{s \vdash \Phi} \; \text{ if } s \nvDash a \\[1.5ex]
+	&(R^{\vee}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \vee \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \cup \{\varphi_2\}}\\[1ex]
+	&(R^{\wedge}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \wedge \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2\}}\\[1.5ex]
+	&(R^{\text{\textbf{U}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{U}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2, \varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2, \bigcirc(\varphi_1 \text{\textbf{U}} \varphi_2)\}}\\[1.5ex]
+	&(R^{\text{\textbf{R}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{R}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2\} \qquad s \vdash \Phi\cup \{\varphi_1, \bigcirc(\varphi_1 \text{\textbf{R}} \varphi_2)\}}\\[1.5ex]
+	&(R^{\bigcirc}) \quad \frac{s \vdash \{\bigcirc \varphi_1, \dots, \bigcirc \varphi_n\}}{s_1 \vdash \{\varphi_1, \dots, \varphi_n\} \qquad \dots \qquad s_m \vdash \{\varphi_1, \dots, \varphi_n\}}\\
+	\end{align*}
+	
+	The rules for the operators \textbf{U} and \textbf{R} follow from the expansion law for LTL formulae \cite{baier2008principles}. Accordingly,
+	\[\varphi_1 \text{\textbf{U}} \varphi_2 \equiv \varphi_2 \vee (\varphi_1 \wedge \bigcirc (\varphi_1 \text{\textbf{U}} \varphi_2))\] and
+	\[\varphi_1 \text{\textbf{R}} \varphi_2 \equiv \varphi_2 \wedge (\varphi_1 \vee \bigcirc (\varphi_1 \text{\textbf{R}} \varphi_2)).\]	
+	
+	The vertices $V$ of a proof structure $(V,E)$ are assertions of the form $s \vdash \Phi$, where $s$ is a state in $T$ and $\Phi$ is a set of LTL formulae. An assertion $s \vdash \Phi$ holds if at least one formula $\varphi \in \Phi$ is satisfied by the state $s$. Thus, an assertion can be interpreted as a verification goal that aims at proving that $s\models \bigvee_{\varphi \in \Phi}\varphi$. In order to do so, the assertion is broken down into subgoals according to the tableaux rules. By proving a sequence of subgoals the validity of the assertion $\lambda$ can be concluded from the validity of the subgoals. Hence, the proof structure of an assertion $\lambda$ contains all subgoals of $\lambda$. \\
+	
+	The rules $(R^{\text{\textbf{U}}})$ and $(R^{\text{\textbf{R}}})$ can introduce cycles into the proof structure if $\varphi_1$ is fulfilled for every state in the underlying transition system for formulae of the form $\varphi_1 \text{\textbf{U}} \varphi_2$ or $\varphi_1 \text{\textbf{R}} \varphi_2$ $\varphi_1$, while no state fulfills $\varphi_2$. Therefore, a cycle in a proof structure represents an \textit{infinite path} in the underlying state space. In an infinite path $\varphi_1 \text{\textbf{U}} \varphi_2$ can never be fulfilled whereas $\varphi_1 \text{\textbf{R}} \varphi_2$ is fulfilled according to the definition of \textbf{R}. Consequently, a cycle in the proof structure originating from successively applying rule $(R^{\text{\textbf{U}}})$ evaluates to a violated assertion, while a cycle arising from applying rule $(R^{\text{\textbf{R}}})$ fulfills the subgoal. The other rules specified in the tableaux cannot introduce cycles as their application reduces the size of the formulae. \\
+	
+	In the following, we describe when a proof structure $(V,E)$ for an assertion $\lambda$ can be concluded to be \textit{successful} \cite{bhat1995efficient}:
+	
+	\begin{itemize}
+		\item If $s \vdash \emptyset \in V$, then $(V,E)$ is unsuccessful as an empty assertion can never be fulfilled.
+		\item $\lambda \in V$ is a leaf of the proof structure if there is no $\lambda' \in V$ with $(\lambda, \lambda') \in E$. A leaf $\lambda$ is called successful if $\lambda = \texttt{true}$.
+		\item An infinite path $\lambda_1 \lambda_2 \dots$ in $(V,E)$ is called successful if and only if there exists a position $i\in \mathds{N}$ with $\varphi_1 \text{\textbf{R}} \varphi_2 \in \lambda_i$ and for all $j \geq i$ it holds that $\varphi \notin \lambda_j$.
+		\item The proof structure $(V,E)$ is called successful if every lead as well as every of its infinite paths is successful.
+	\end{itemize} 
+	
+	Theorem \ref{thm:tableaux_correct} states that the tableaux construction is indeed a suitable procedure to model check a transition system $T$ for an LTL formula $\varphi$ as the success of the proof structure $s \vdash \{\varphi\}$ for a state $s$ in $T$ coincides with the validity of $T \models \varphi$.
+	
+	\begin{theorem}[Correctness of the Tableaux Construction \cite{bhat1995efficient}]{thm:tableaux_correct}
+		Given a concrete transition system $T=(S, Act, \rightarrow, I, AP, L)$ with $s\in S$ and an LTL formula $\varphi$. Let $(V,E)$ be the proof structure for $s \vdash \{\varphi\}$. Then it holds that $s \models \varphi$ iff $(V,E)$ is successful.
+	\end{theorem}
+	
+	%TODO example
+	
+	Consider a method for reversing a singly-linked list given by
+	
+	\begin{lstlisting}[language=Java]
+	public static SLList reverse(SLList head) {
+	
+	SLList reversedList = null;
+	SLList current = head;
+	
+	while (current != null) {
+	SLList next = current.next;
+	current.next = reversedList;
+	reversedList = current;
+	current = next;
+	}
+	
+	return reversedList;
+	}
+	\end{lstlisting}
+	
+	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we want to check whether the formula $\varphi=\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}$ is satisfied. From Section~\ref{sec:ltl} we know that \[\varphi \equiv \text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))\] in PNF.
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, minimum width=7cm, minimum height=2cm, rounded corners=1.5pt, fill=gray!10},
+				var/.style={draw, rounded corners=1.5pt, fill=white}]
+				
+				%state 1
+				\node (back1) at (1,0) [rectstyle] {};
+				\node (text) at (-2.25,0.75) {$s_1$};
+				\node (1) at (0,0) [normal] {};
+				\node (2) at (1,0) [normal] {};
+				\node (3) at (2,0) [normal] {};
+				\node (head) at (-1.5,0) [var] {\texttt{head}};
+				\node (null) at (3.5,0) [var] {\texttt{null}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				
+				%state 2
+				\node (back2) at (10,0) [rectstyle] {};
+				\node (text) at (6.75,0.75) {$s_2$};
+				\node (1) at (9,0) [normal] {};
+				\node (2) at (10,0) [normal] {};
+				\node (3) at (11,0) [normal] {};
+				\node (head) at (7.5,0) [var] {\texttt{head}};
+				\node (null) at (12.5,0) [var] {\texttt{null}};
+				\node (current) at (11,-0.65) [var] {\texttt{current}};
+				\node (revList) at (12.5,0.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (3);
+				\draw (revList) to (3);
+				
+				%state 3
+				\node (back3) at (10,-3) [rectstyle] {};
+				\node (text) at (6.75,-2.25) {$s_3$};
+				\node (1) at (9,-3) [normal] {};
+				\node (2) at (10,-3) [normal] {};
+				\node (3) at (11,-3) [normal] {};
+				\node (head) at (7.5,-3) [var] {\texttt{head}};
+				\node (null) at (12.5,-3) [var] {\texttt{null}};
+				\node (current) at (7.5,-3.65) [var] {\texttt{current}};
+				\node (revList) at (12.5,-3.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (1);
+				\draw (revList) to (3);
+				
+				%state 4
+				\node (back4) at (1,-3) [rectstyle] {};
+				\node (text) at (-2.25,-2.25) {$s_4$};
+				\node (1) at (0,-3) [normal] {};
+				\node (2) at (1,-3) [normal] {};
+				\node (3) at (2,-3) [normal] {};
+				\node (head) at (-1.5,-3) [var] {\texttt{head}};
+				\node (null) at (3.5,-3) [var] {\texttt{null}};			
+				\node (current) at (-1.5,-3.65) [var] {\texttt{current}};
+				\node (revList) at (3.5,-3.65) [var] {\texttt{revList}};
+				\node (next) at (1,-3.65) [var] {\texttt{next}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);			
+				\draw (current) to (1);
+				\draw (revList) to (3);
+				\draw (next) to (2);		
+				
+				%state 5
+				\node (back5) at (1,-6) [rectstyle] {};
+				\node (text) at (-2.25,-5.25) {$s_5$};
+				\node (1) at (0,-6) [normal] {};
+				\node (2) at (1,-6) [normal] {};
+				\node (3) at (2,-6) [normal] {};
+				\node (head) at (-1.5,-6) [var] {\texttt{head}};
+				\node (null) at (3.5,-6) [var] {\texttt{null}};	
+				\node (next) at (1,-5.35) [var] {\texttt{next}};		
+				\node (current) at (-1.5,-6.65) [var] {\texttt{current}};
+				\node (revList) at (3.5,-6.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);			
+				\draw (current) to (1);
+				\draw (revList) to (3);
+				\draw (next) to (2);
+				
+				%state 6
+				\node (back6) at (10,-6) [rectstyle] {};
+				\node (text) at (6.75,-5.25) {$s_6$};
+				\node (1) at (9,-6) [normal] {};
+				\node (2) at (10,-6) [normal] {};
+				\node (3) at (11,-6) [normal] {};
+				\node (head) at (7.5,-6) [var] {\texttt{head}};
+				\node (null) at (12.5,-6) [var] {\texttt{null}};
+				\node (current) at (7.5,-6.65) [var] {\texttt{current}};
+				\node (next) at (10,-5.35) [var] {\texttt{next}};
+				\node (revList) at (8,-5.35) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (1);
+				\draw (revList) to (1);
+				\draw (next) to (2);
+				
+				%state 7
+				\node (back7) at (10,-9) [rectstyle] {};
+				\node (text) at (6.75,-8.25) {$s_7$};
+				\node (1) at (9,-9) [normal] {};
+				\node (2) at (10,-9) [normal] {};
+				\node (3) at (11,-9) [normal] {};
+				\node (head) at (7.5,-9) [var] {\texttt{head}};
+				\node (null) at (12.5,-9) [var] {\texttt{null}};
+				\node (current) at (8,-8.35) [var] {\texttt{current}};
+				\node (next) at (10,-8.35) [var] {\texttt{next}};
+				\node (revList) at (7.5,-9.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (2);
+				\draw (revList) to (1);
+				\draw (next) to (2);
+				
+				%state 8
+				\node (back8) at (1,-9) [rectstyle] {};
+				\node (text) at (-2.25,-8.25) {$s_8$};
+				\node (1) at (0,-9) [normal] {};
+				\node (2) at (1,-9) [normal] {};
+				\node (3) at (2,-9) [normal] {};
+				\node (head) at (-1.5,-9) [var] {\texttt{head}};
+				\node (null) at (3.5,-9) [var] {\texttt{null}};
+				\node (current) at (1,-8.35) [var] {\texttt{current}};
+				\node (next) at (3,-8.35) [var] {\texttt{next}};
+				\node (revList) at (-1.5,-9.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (2);
+				\draw (revList) to (1);
+				\draw (next) to (3);
+				
+				%state 9
+				\node (back9) at (1,-12) [rectstyle] {};
+				\node (text) at (-2.25,-11.25) {$s_9$};
+				\node (1) at (0,-12) [normal] {};
+				\node (2) at (1,-12) [normal] {};
+				\node (3) at (2,-12) [normal] {};
+				\node (head) at (-1.5,-12) [var] {\texttt{head}};
+				\node (null) at (3.5,-12) [var] {\texttt{null}};
+				\node (current) at (1,-11.35) [var] {\texttt{current}};
+				\node (next) at (3,-11.35) [var] {\texttt{next}};
+				\node (revList) at (-1.5,-12.65) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend right] node[below] {\texttt{n}} (1);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (2);
+				\draw (revList) to (1);
+				\draw (next) to (3);
+				
+				%state 10
+				\node (back10) at (10,-12) [rectstyle] {};
+				\node (text) at (6.8,-11.25) {$s_{10}$};
+				\node (1) at (9,-12) [normal] {};
+				\node (2) at (10,-12) [normal] {};
+				\node (3) at (11,-12) [normal] {};
+				\node (head) at (7.5,-12) [var] {\texttt{head}};
+				\node (null) at (12.5,-12) [var] {\texttt{null}};
+				\node (current) at (11,-11.35) [var] {\texttt{current}};
+				\node (next) at (12.75,-11.35) [var] {\texttt{next}};
+				\node (revList) at (9,-11.35) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend right] node[below] {\texttt{n}} (1);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (2);
+				\draw (revList) to (2);
+				\draw (next) to (3);
+				
+				%state 11
+				\node (back11) at (10,-15) [rectstyle] {};
+				\node (text) at (6.8,-14.25) {$s_{11}$};
+				\node (1) at (9,-15) [normal] {};
+				\node (2) at (10,-15) [normal] {};
+				\node (3) at (11,-15) [normal] {};
+				\node (head) at (7.5,-15) [var] {\texttt{head}};
+				\node (null) at (12.5,-15) [var] {\texttt{null}};
+				\node (current) at (12,-15.65) [var] {\texttt{current}};
+				\node (next) at (12,-14.35) [var] {\texttt{next}};
+				\node (revList) at (10,-14.35) [var] {\texttt{revList}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend right] node[below] {\texttt{n}} (1);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				\draw (current) to (3);
+				\draw (revList) to (2);
+				\draw (next) to (3);
+				
+				\draw[->,shorten >=0.5pt] (-3,0) --  (back1);
+				\draw[->,shorten >=0.5pt] (back1) -- node[above,align=center] {\texttt{revList=}\\\texttt{null}} node[below,align=center] {\texttt{current=}\\\texttt{null}} (back2);
+				\draw[->,shorten >=0.5pt] (back2) -- node[right,align=center] {\texttt{current=head}}  (back3);
+				\draw[->,shorten >=0.5pt] (back3) -- node[above,align=center] {\texttt{next=}\\\texttt{current.n}} (back4);
+				\draw[->,shorten >=0.5pt] (back4) -- node[left,align=center] {\texttt{current.n=revList}} (back5);
+				\draw[->,shorten >=0.5pt] (back5) -- node[above,align=center] {\texttt{revList=}\\\texttt{current}} (back6);
+				\draw[->,shorten >=0.5pt] (back6) -- node[right,align=center] {\texttt{current=next}} (back7);
+				\draw[->,shorten >=0.5pt] (back7) -- node[above,align=center] {\texttt{next=}\\\texttt{current.n}} (back8);
+				\draw[->,shorten >=0.5pt] (back8) -- node[left,align=center] {\texttt{current.n=revList}} (back9);
+				\draw[->,shorten >=0.5pt] (back9) -- node[above,align=center] {\texttt{revList=}\\\texttt{current}} (back10);
+				\draw[->,shorten >=0.5pt] (back10) -- node[right,align=center] {\texttt{current=next}} (back11);
+				\draw[->,shorten >=0.5pt,in=180,out=180] (back11) edge[in=180,out=0,loop left] (back11);
+				\end{tikzpicture}}
+			\caption{State space for reversing a singly-linked list. Adapted from \cite{heinen2015verifyingPhd}.}\label{fig:reverseSLL_tableaux}
+		\end{center}
+	\end{figure}
+	%TODO add example for tableaux	
+	
+	\section{Automata-Based Model Checking} 
+	
+	Recursive programs can be modeled as recursive state machines that capture the hierarchical nature of the underlying state space. Based on RSMs, LTL model checking can be performed to check whether an RSM, and thus the represented system, satsfies a temporal property. This section presents the basic ideas of the automata-theoretic approach to model checking transition systems for LTL specifications as introduced in \cite{vardi1986automata} by Vardi and Wolper. The algorithm can be adapted for RSMs. For an LTL formula $\varphi$ and a transition system $T$ the algorithm by Vardi and Wolper either returns "yes" if $T \models \varphi$ or "no" and a failure trace of the path that violates the formula $\varphi$. \\
 	
 	The approach is based on the fact that every LTL formula $\varphi$ can be represented by a \textit{nondeterministic Büchi automaton}.
 	
@@ -1201,7 +1511,7 @@
 
 	The automata-based approach is described in Algorithm~\ref{algo:automataMC}. In a first step, an NBA $\mathcal{B}_{\neg \varphi}$ is constructed for the formula $\neg \varphi$. Thereafter, the product transition system $T'=T \otimes \mathcal{B}_{\neg \varphi}$ is constructed from the transition system $T$ and the NBA $\mathcal{B}_{\neg \varphi}$. The problem of determining whether a path $\pi$ exists in $T$ that satisfies the acceptance condition of the product transition system $T'$, can be reduced to checking for  emptiness of the intersection of the sets of $Traces(T)$ and $\mathcal{L}(\mathcal{B}_{\neg \varphi})$. If $Traces(T) \cap \mathcal{L}(\mathcal{B}_{\neg \varphi}) = \emptyset$, then there does not exist any path $\pi$ in $T$ that satisfies $\neg \varphi$ and hence does not violate $\varphi$. However, if the intersection is not empty, then an according path $\pi$ is detected and $\varphi$ is violated.\\
 	
-	The automata-based approach can be transferred to recursive state machines as described in \cite{alur2001analysis}. In this context, the notion of \textit{recursive Büchi automata} is introduced that augment RSMs with Büchi-acceptance conditions.\\	
+	The automata-based approach can be adapted to recursive state machines as described in \cite{alur2001analysis}. In this context, the notion of \textit{recursive Büchi automata} is introduced that augment RSMs with Büchi-acceptance conditions.\\ %TODO explain more
 	
 	In order to improve the performance of the algorithm, it is possible to execute the automata-based approach in an on-the-fly manner. That is, instead of sequentially computing the automata $\mathcal{B}_{\neg \varphi}$ and the product transition system $T'$, both automata are computed on demand as long as no path $\pi$ is found that satisfies $\neg \varphi$. Hence, the automata do not need to be constructed entirely if a violating path can be detected at an early stage.\\
 	
@@ -1212,36 +1522,105 @@
 	\end{theorem}
 	
 	As the automaton-construction of the NBA $\mathcal{L}(\mathcal{B}_{\neg \varphi})$ as well as the product construction are quite costly in practice, %TODO source?
-	we approach automata-based model checking by combining the structures of recursive state machines and the procedures of the \textit{tableaux construction} for model checking LTL formulae. We depict the tableaux construction in the next section. The resulting algorithm from our combined approach is presented in Chapter~\ref{chp:hmc}.
+	we approach automata-based model checking by combining the structures of recursive state machines and the procedures of the \textit{tableaux construction} for model checking LTL formulae. We depict the tableaux construction in the next section. The resulting algorithm from our combined approach is presented in Chapter~\ref{chp:hmc}.	
+	
+	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
+	
+	The tableaux construction is an on-the-fly approach to model checking transition systems for an LTL formula $\varphi$. In this chapter, we describe how we adapt the tableaux construction by Grumberg et al. to  hierarchical tableaux construction that accounts for model checking of hierarchical structures including procedure state spaces. In a next step, we present the implementation of hierarchical tableaux construction in the \textsc{Attestor} framework and conclusively evaluate our proceedings.
+	
+	\section{Algorithm}
+	
+	Given a transition system $T$ and a set of LTL formulae $\Phi$, the goal of the hierarchical tableaux construction is to verify whether the underlying state space including procedure state spaces induced by method executions satisfies the temporal properties specified by $\Phi$. We assume the state space to be flat and finite. The basis of the algorithm is the tableaux construction by Grumberg et al. that we extend by the following functionalities:
+	\begin{itemize}
+		\item Interweave state space construction and state space model checking,
+		\item Model check procedure state spaces, and
+		\item Create model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand.
+	\end{itemize}	
 
-	\subsection{Tableaux Construction}\label{sec:tableaux}
+%TODO add more details
+
+	The algorithm is based on the procedure \texttt{generateAndCheck} that model checks a set of formulae $\Phi$ for an input program based on the algorithm of the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the proof structure for the initial states is constructed based on the tableaux rules defined in Section~\ref{sec:tableaux}. Successor states are generated on demand if the proof structure needs to be extended to further states due to validating $\bigcirc$-formulae. Statements that invoke method executions trigger the model checking of procedure state spaces, that is the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the currently checked set of formulae $\Phi'$. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once the procedure is completed for a procedure state space, the successor states and model checking results are returned to the above lying level. Model checking results include information on whether any formula is violated as well as the updated set of formulae for which the successor states are checked for. The model checking results are stored in contracts as pairs of input-and-output formulae such that they can be used to avoid repetitive model checking a procedure state space for the same set of input formulae.
 	
-	This section presents an alternative approach to model checking a transition system $T$ for an LTL formula $\varphi$. The on-the-fly approach by Grumberg et al. constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to proof if a formula is satisfied. \\
+	%TODO example for model checking contract
 	
-	A proof structure is a directed graph that depicts how the LTL formula $\varphi$ develops during the course of paths in the transition system $T$. The vertices of the proof structure represent \textit{assertions} of the form $s \vdash \Phi$, where $s$ is a state in $T$ and $\Phi$ is a set of LTL formulae. An assertion $s \vdash \Phi$ holds if at least one formula $\varphi \in \Phi$ is satisfied by the state $s$. The set of all assertions is denoted by $\Lambda$ while a single assertion is denoted by $\lambda$. The edges in the proof structure connect vertices that result from rule applications according to the tableaux, e.g., for two assertions $\lambda_1$ and $\lambda_2$, an edge connects the vertices if the tableaux defines a rule $\frac{\lambda_1}{\lambda_2}$.	
+	Furthermore, if the proof structure for any procedure state space evaluates to \texttt{false}, the proof structure of the above lying state spaces can be aborted as a violating path has been found. Thus, an early termination of the model checking procedure is possible that does not require building the complete state space. Together with the updated set of formulae the resulting successor states induce new assertions that are added to the proof structure. If the model checking procedure has been successful, then the new assertions are added to the proof structure and the procedure is continued, otherwise, a violating path has been found and the proof structure is declared to be unsuccessul such that it can be concluded that the set of formulae $\Phi$ is not satisfied. The concept of the hierarchical tableaux construction is depicted in Figure~\ref{fig:otfHMC}.\\ 
 	
-	\begin{definition}[Proof Structure \cite{bhat1995efficient}]{def:ps}
-		A \textit{proof structure} for $\lambda \in \Lambda$ is a tuple $(V,E)$ with $V \subseteq (\Lambda \; \cup \ \texttt{true})$ and $E \subseteq V \times V$, such that for any $\lambda'$ it holds that $\lambda'$ is reachable from $\lambda$ and that the successors of $\lambda'$ are the ones that result from applying some of the rules, i.e. \[(\lambda_1, \lambda_2) \in E \qquad \text{ iff } \qquad \frac{\lambda_1}{\lambda_2 \quad s \dots}.\]
-	\end{definition}
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, minimum width=8cm, minimum height=9cm, rounded corners=1.5pt, fill=gray!10},
+				phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
+				
+				\node (init) at (0,7.5) [phase] {add initial states};
+				\node (pick) at (0,6) [phase] {pick state in state space};
+				
+				\node (back) at (0,0) [rectstyle] {};
+				\node (exec) at (-2.1, 4.75) [] {\textbf{abstract execution}};
+				
+				\node (abstract) at (-2.6,-3) [draw, minimum width=10.75cm, minimum height=10.5cm, rounded corners=1.5pt, fill=orange, fill opacity=0.2] {};
+				\node at (0, 1.9) {\textit{for each resulting state}};
+				
+				\node (p1) at (0,3.5) [phase] {concretise};
+				\node (p2) at (0,1) [phase] {execute statement};
+				\node (p3) at (0,-0.5) [phase] {rectify};
+				\node (p4) at (0,-2) [phase] {abstract};
+				\node (p5) at (0,-3.5) [phase] {label};
+				
+				\node (d1) at (0, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (d1text) at (d1) [align=center] {subsumed\\ by existing\\ state};
+				
+				\node (d2) at (6, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (d2text) at (d2) [align=center] {fixpoint\\ reached};
+				
+				\node (add) at (-6,-6.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {add to state space};
+				
+				\draw[->,shorten >=0.5pt] (0,8.5) to (init);
+				\draw[->,shorten >=0.5pt] (init) to (pick);
+				\draw[->,shorten >=0.5pt] (pick) to (p1);
+				\draw[->,shorten >=0.5pt] (p1) to (0,2.25);
+				\draw[->,shorten >=0.5pt] (p2) to (p3);
+				\draw[->,shorten >=0.5pt] (p3) to (p4);
+				\draw[->,shorten >=0.5pt] (p4) to (p5);			
+				\draw[->,shorten >=0.5pt] (p5) to (0,-4.9);
+				
+				\draw[->,shorten >=0.5pt] (-1.5,-6.5) -- node[above] {\texttt{no}} (add);
+				\draw[->,shorten >=0.5pt] (1.5,-6.5) -- node[above] {\texttt{yes}} (4.5,-6.5);
+				
+				\path (add) edge (-6,6);
+				\draw[->,shorten >=0.5pt] (-6,6) to (pick);
+				
+				\path (6,-4.9) edge node[right] {\texttt{no}} (6,6);
+				\draw[->,shorten >=0.5pt] (6,6) to (pick);
+				
+				\draw[->,shorten >=0.5pt] (7.5,-6.5) -- node[above] {\texttt{yes}} (8.5,-6.5);
+				
+				\end{tikzpicture}}
+			\caption{On-the-fly hierarchical model checking by a hierarchical tableaux construction.}\label{fig:otfHMC}
+		\end{center}
+	\end{figure}
 	
-	The tableaux rules the proof structure works with are specified in the following. They model the semantics of LTL.
+	%TODO label method
 	
-	\begin{align*}
-	&(R^{\models}) \quad \frac{s \vdash \Phi \cup \{a\}}{\texttt{true}} \; \text{ if } s \models a \\[1.5ex]
-	&(R^{\nvDash}) \quad \frac{s \vdash \Phi \cup \{a\}}{s \vdash \Phi} \; \text{ if } s \nvDash a \\[1.5ex]
-	&(R^{\vee}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \vee \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \cup \{\varphi_2\}}\\[1ex]
-	&(R^{\wedge}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \wedge \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2\}}\\[1.5ex]
-	&(R^{\text{\textbf{U}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{U}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2, \varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2, \bigcirc(\varphi_1 \text{\textbf{U}} \varphi_2)\}}\\[1.5ex]
-	&(R^{\text{\textbf{R}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{R}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2\} \qquad s \vdash \Phi\cup \{\varphi_1, \bigcirc(\varphi_1 \text{\textbf{R}} \varphi_2)\}}\\[1.5ex]
-	&(R^{\bigcirc}) \quad \frac{s \vdash \{\bigcirc \varphi_1, \dots, \bigcirc \varphi_n\}}{s_1 \vdash \{\varphi_1, \dots, \varphi_n\} \qquad \dots \qquad s_m \vdash \{\varphi_1, \dots, \varphi_n\}}\\
-	\end{align*}
 	
-	% TODO mention expension law (in principles of model checking)
 	
-	\begin{theorem}[Correctness of the Tableaux Construction \cite{bhat1995efficient}]{thm:tableaux_correct}
-		Given a concrete transition system $T$ with $s\in S$ and an LTL formula $\varphi$. Let $(V,E)$ be the proof structure for $s \vdash \{\varphi\}$. Then it holds that $s \models \varphi$ iff $(V,E)$ is successful.
-	\end{theorem}
 	
+	
+	%TODO correctness
+	
+	\section{Implementation}
+	%TODO add UML diagram / architecture
+	\section{Evaluation}
+	
+	refer to advantages of the three aspects:
+	
+	\begin{itemize}
+		\item Interweave state space construction and state space model checking,
+		\item Model check procedure state spaces, and
+		\item Create model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand.
+	\end{itemize}
 	
 	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
 
@@ -1250,12 +1629,6 @@
 	%TODO add UML diagram / architecture
 	\section{Evaluation}
 	
-	
-	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
-	\section{Algorithm}
-	\section{Implementation}
-	%TODO add UML diagram / architecture
-	\section{Evaluation}
 	
 	\chapter{Benchmarks}	
 	\section{Experimental Setup}
