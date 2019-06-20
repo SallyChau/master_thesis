@@ -1530,107 +1530,164 @@
 	
 	\section{Algorithm}
 	
-	Given a transition system $T$ and a set of LTL formulae $\Phi$, the goal of the hierarchical tableaux construction is to verify whether the underlying state space including procedure state spaces induced by method executions satisfies the temporal properties specified by $\Phi$. We assume the state space to be flat and finite. The basis of the algorithm is the tableaux construction by Grumberg et al. that we extend by the following functionalities:
+	Given a transition system (or state space) $T$ and a set of LTL formulae $\Phi$, the goal of the hierarchical tableaux construction is to verify whether the state space, including procedure state spaces induced by the method executions, satisfies the temporal properties specified by $\Phi$. We assume the state space to be flat and finite. The basis of the algorithm is the tableaux construction by Grumberg et al. that we extend by the following functionalities:
 	\begin{itemize}
 		\item Interweave state space construction and state space model checking,
 		\item Model check procedure state spaces, and
 		\item Create model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand.
 	\end{itemize}	
 
-%TODO add more details
-
-	The algorithm is based on the procedure \texttt{generateAndCheck} that model checks a set of formulae $\Phi$ for an input program based on the algorithm of the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the proof structure for the initial states is constructed based on the tableaux rules defined in Section~\ref{sec:tableaux}. Successor states are generated on demand if the proof structure needs to be extended to further states due to validating $\bigcirc$-formulae. Statements that invoke method executions trigger the model checking of procedure state spaces, that is the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the currently checked set of formulae $\Phi'$. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once the procedure is completed for a procedure state space, the successor states and model checking results are returned to the above lying level. Model checking results include information on whether any formula is violated as well as the updated set of formulae for which the successor states are checked for. The model checking results are stored in contracts as pairs of input-and-output formulae such that they can be used to avoid repetitive model checking a procedure state space for the same set of input formulae.
+	The algorithm is based on the procedure \texttt{generateAndCheck} (cf. Figure~\ref{fig:otfHMC}) that validates a set $\Phi$ of formulae for an input program based on the algorithm of the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the procedure \texttt{generateAndCheck} starts constructing the proof structure based on the tableaux rules defined in Section~\ref{sec:tableaux}. Successor states are generated on demand if the proof structure needs to be extended to further states due to validating $\bigcirc$-formulae. State generation involves that the statement of the current state is executed. In contrast to the \texttt{Attestor} state space generation, statement execution, and therefore state generation, includes model checking of the generated state. Hence, statements that invoke method executions trigger the model checking of procedure state spaces, that is, the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the current set $\Phi'$ of formulae. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once state space generation and model checking is completed for a method execution, the successor states and model checking results are returned to the above lying level. Model checking results include information on whether any formula is violated as well as the updated set of formulae for which the successor states need to be checked for. The model checking results are stored in contracts of the form
 	
-	%TODO example for model checking contract
+	\[(HC_{in}, \Phi) \mapsto (\Phi', \delta_{0/1}, \pi),\]
 	
-	Furthermore, if the proof structure for any procedure state space evaluates to \texttt{false}, the proof structure of the above lying state spaces can be aborted as a violating path has been found. Thus, an early termination of the model checking procedure is possible that does not require building the complete state space. Together with the updated set of formulae the resulting successor states induce new assertions that are added to the proof structure. If the model checking procedure has been successful, then the new assertions are added to the proof structure and the procedure is continued, otherwise, a violating path has been found and the proof structure is declared to be unsuccessul such that it can be concluded that the set of formulae $\Phi$ is not satisfied. The concept of the hierarchical tableaux construction is depicted in Figure~\ref{fig:otfHMC}.\\ 
+	where $HC_{in}$ denotes the input heap configuration for which the set $\Phi$ of formulae is to be validated. The tuple $(HC_{in}, \Phi)$ is mapped to a tuple of model checking results containing the resulting set $\Phi'$ of formulae to be checked for possible successor states, a boolean value $\delta_{0/1}$ that indicates whether model checking was successful, and a failure trace $\pi$ in case any formulae is found to be violated. Model checking contracts are stored in the context of \textit{procedure contracts} which unambiguously define the executed method. Procedure contracts capture the overall effect of a procedure by defining pairs of pre- and post-conditions. Pre- and post-conditions specify the heap configurations before and after the execution of a procedure, respectively. Details on procedure contracts are described in \cite{jansen2014generating}. Thus, model checking contracts can be used to avoid repetitive model checking of a procedure state space for a set of input formulae.\\
+	
+	Together with the set $\Phi'$ of formulae, the resulting successor states induce new assertions that are added to the proof structure. If the proof structure is (still) successful, then the new assertions are added to the proof structure and the procedure is continued. Otherwise, a violating path has been found and the proof structure is declared to be unsuccessful. Hence, the proof structures of the above lying state spaces can be aborted as a violating path has been found such that it can be concluded that the set of formulae $\Phi$ is not satisfied for the complete program state space. Thus, an early termination of the model checking procedure is possible that does not require building the complete state space. The concept of the hierarchical tableaux construction is depicted in Figure~\ref{fig:otfHMC}. \\
 	
 	\begin{figure}[!h]
 		\begin{center}
-			\resizebox{\textwidth}{!}{
+			\resizebox{\textwidth}{0.75\textheight}{
 				\begin{tikzpicture}
 				[node distance=2cm,thick,
 				normal/.style={circle, draw, fill=white, thick},
-				rectstyle/.style={draw, minimum width=8cm, minimum height=9cm, rounded corners=1.5pt, fill=gray!10},
+				rectstyle/.style={draw, minimum width=6cm, minimum height=10cm, rounded corners=1.5pt, fill=gray!10},
 				phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
 				
-				\node (init) at (0,7.5) [phase] {add initial states};
-				\node (pick) at (0,6) [phase] {pick state in state space};
+				\node (back1) at (1,-7) [draw, minimum width=25cm, minimum height=26cm, rounded corners=1.5pt,fill=blue!10] {};
+				\node (check) at (-9.5, 6.25) {\textbf{generateAndCheck}};
+				\node (back) at (0,-10.5) [rectstyle] {};
+				\node (exec) at (-3.25, -13.5) [rotate=90] {\textbf{abstract execution}};
 				
-				\node (back) at (0,0) [rectstyle] {};
-				\node (exec) at (-2.1, 4.75) [] {\textbf{abstract execution}};
+				\node (init) at (0,9) [phase] {add initial states};
+				\node (init2) at (0,7.5) [phase] {add initial assertions};
 				
-				\node (abstract) at (-2.6,-3) [draw, minimum width=10.75cm, minimum height=10.5cm, rounded corners=1.5pt, fill=orange, fill opacity=0.2] {};
-				\node at (0, 1.9) {\textit{for each resulting state}};
+				\node (ps1) at (0, 4) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps1text) at (ps1) [align=center] {proof str.\\ successful\\ \& !empty};
 				
-				\node (p1) at (0,3.5) [phase] {concretise};
-				\node (p2) at (0,1) [phase] {execute statement};
-				\node (p3) at (0,-0.5) [phase] {rectify};
-				\node (p4) at (0,-2) [phase] {abstract};
-				\node (p5) at (0,-3.5) [phase] {label};
+				\node (build) at (0,0.5) [phase] {build proof structure};
 				
-				\node (d1) at (0, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps2) at (0, -3) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps2text) at (ps2) [align=center] {$\bigcirc$-formulae\\ empty};
+				
+				\node (p1) at (0,-6.5) [phase] {concretise};
+				\node (p2) at (0,-8) [phase] {execute statement};
+				\node (p22) at (0,-9.5) [phase,fill=yellow] {model check};
+				
+				\node (ps3) at (6, -9.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps3text) at (ps3) [align=center] {statement\\invokes\\ method};
+				
+				\node (ps4) at (11, -9.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps4text) at (ps4) [align=center] {$\exists$\\model checking\\ contract};				
+				
+				\node (p3) at (0,-11.5) [phase] {rectify};
+				\node (p4) at (0,-13) [phase] {abstract};
+				\node (p5) at (0,-14.5) [phase] {label};
+				
+				\node (d1) at (0, -17.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
 				\node (d1text) at (d1) [align=center] {subsumed\\ by existing\\ state};
 				
-				\node (d2) at (6, -6.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
-				\node (d2text) at (d2) [align=center] {fixpoint\\ reached};
+				\node (add) at (-6,-17.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {add to state space};
 				
-				\node (add) at (-6,-6.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {add to state space};
+				\node (ps5) at (-6, -8) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (ps5text) at (ps5) [align=center] {model\\checking\\successful};
 				
-				\draw[->,shorten >=0.5pt] (0,8.5) to (init);
-				\draw[->,shorten >=0.5pt] (init) to (pick);
-				\draw[->,shorten >=0.5pt] (pick) to (p1);
-				\draw[->,shorten >=0.5pt] (p1) to (0,2.25);
-				\draw[->,shorten >=0.5pt] (p2) to (p3);
+				\node (addassert) at (-4,-4.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {add assertion};
+				
+				\node (abort) at (-8,-4.5) [draw, minimum width=3cm, minimum height=1cm, rounded corners=1.5pt, fill=white] {abort proof str.};
+				
+				\draw[->,shorten >=0.5pt] (0,10) to (init);
+				\draw[->,shorten >=0.5pt] (init) to (init2);
+				\draw[->,shorten >=0.5pt] (init2) to (0,5.5);
+				%proof structure successful
+				\draw[->,shorten >=0.5pt] (0,2.5) -- node[right] {\texttt{yes}} (build);
+				\draw[->,shorten >=0.5pt] (1.5,4) -- node[above] {\texttt{no}} (14.5,4);
+				\node (return) at (16,4) [align=center] {return\\model checking\\results};
+				\draw[->,shorten >=0.5pt] (build) to (0,-1.5);
+				%next formulae empty
+				\draw (-1.5,-3) -- node[above] {\texttt{yes}} (-6,-3);
+				\draw[->,shorten >=0.5pt] (0,-4.5) -- node[right] {\texttt{no}} (p1);
+				\draw[->,shorten >=0.5pt] (p1) to (p2);
+				\draw[->,shorten >=0.5pt] (p2) to (p22);
+				%model check
+				\draw[->,shorten >=0.5pt] (p22) to (4.5,-9.5);
+				\draw[->,shorten >=0.5pt] (7.5,-9.5) -- node[above] {\texttt{yes}} (9.5,-9.5);
+				%exists model checking contract
+				\draw (6,-11) to (6,-11.5);
+				\draw[->,shorten >=0.5pt] (6,-11.5) -- node[above] {\texttt{no}} (p3);
+				\draw (11,-11) edge (11,-11.5);
+				\draw[->,shorten >=0.5pt] (11,-11.5) -- node[above] {\texttt{yes}} (p3);
+				\draw (12.5,-9.5) -- node[above] {\texttt{no}} (14,-9.5);
+				\draw (14,-9.5) to (14,9);
+				\draw[->,shorten >=0.5pt] (14,9) to (init);
+				\node (checkProcedure) at (16,-7) [align=center] {generate\\and check\\called procedure\\state space};
+				
 				\draw[->,shorten >=0.5pt] (p3) to (p4);
 				\draw[->,shorten >=0.5pt] (p4) to (p5);			
-				\draw[->,shorten >=0.5pt] (p5) to (0,-4.9);
+				\draw[->,shorten >=0.5pt] (p5) to (0,-16);
 				
-				\draw[->,shorten >=0.5pt] (-1.5,-6.5) -- node[above] {\texttt{no}} (add);
-				\draw[->,shorten >=0.5pt] (1.5,-6.5) -- node[above] {\texttt{yes}} (4.5,-6.5);
+				\draw[->,shorten >=0.5pt] (-1.5,-17.5) -- node[above] {\texttt{no}} (add);
+				\draw (0,-19) edge (0,-19.5);
+				\draw (0,-19.5) -- node[above] {\texttt{yes}} (-10,-19.5);
+				\draw (-10,-19.5) edge (-10,-8);
+				\draw[->,shorten >=0.5pt] (-10,-8) to (-7.5,-8);
 				
-				\path (add) edge (-6,6);
-				\draw[->,shorten >=0.5pt] (-6,6) to (pick);
-				
-				\path (6,-4.9) edge node[right] {\texttt{no}} (6,6);
-				\draw[->,shorten >=0.5pt] (6,6) to (pick);
-				
-				\draw[->,shorten >=0.5pt] (7.5,-6.5) -- node[above] {\texttt{yes}} (8.5,-6.5);
+				\draw[->,shorten >=0.5pt] (add) to (-6,-9.5);
+				\draw (-6,-6.5) to (-6,-6);
+				\draw (-8,-6) to (-4,-6);
+				\draw[->,shorten >=0.5pt] (-8,-6) -- node[left] {\texttt{no}} (abort);
+				\draw[->,shorten >=0.5pt] (-4,-6) -- node[right] {\texttt{yes}} (addassert);
+				\draw (addassert) to (-4,-3.5);
+				\draw (abort) to (-8,-3.5);
+				\draw (-8,-3.5) to (-4,-3.5);
+				\draw (-6,-3.5) to (-6,4);
+				\draw[->,shorten >=0.5pt] (-6,4) to (-1.5,4);
 				
 				\end{tikzpicture}}
 			\caption{On-the-fly hierarchical model checking by a hierarchical tableaux construction.}\label{fig:otfHMC}
 		\end{center}
-	\end{figure}
+	\end{figure}	
+
+	%TODO reference example from introduction and show that algorithm will find error that previous version cannot
 	
-	%TODO label method
-	
-	
-	
-	
-	
-	%TODO correctness
+	The correctness of the on-the-fly tableaux construction for hierarchical state spaces follows from the correctness of the tableaux construction \cite{bhat1995efficient} and the correctness of the state space generation algorithm defined in \cite{arndt2018let}.
 	
 	\section{Implementation}
-	%TODO add UML diagram / architecture
+	%TODO add UML diagram / architecture?
+	We implemented the on-the-fly tableaux construction for hierarchical state spaces within the \textsc{Attestor} framework written in \textsc{Java}. The code can be found at \url{https://github.com/SallyChau/master_thesis/tree/master/attestor}. As both state space generation and model checking are performed, the on-the-fly hierarchical model checking algorithm encompasses \textsc{Attestor}'s present state space generation and model checking phases. We refer to the new phase as the \textit{on-the-fly model checking phase}.\\
+	
+	The implementation of the on-the-fly model checking phase requires two main adaptations in the \textsc{Attestor} framework. First, we need to adapt the tableaux construction algorithm such that it does not work on a complete state space, but rather successively demands for new states as soon as they are required for the building the proof structure. Second, we require a possibility to query for a list of successor states for a given state $s$. \\
+	
+	Let us turn to the on-the-fly tableaux construction first. The \texttt{ProofStructure} class implements the tableaux construction for a given state space and an LTL formula. By calling the method \texttt{build} on a given state space and an LTL formula to be checked, the proof structure is constructed. This method requires a completely generated state space to operate on. This class \texttt{OnTheFlyProofStructure} modifies the current implementation such that it is capable of constructing the proof structure for an on-the-fly constructed state space. Instead of requiring a completely generated state space, the on-the-fly version solely requires initial assertions. These are expanded according to the tableaux rules until an assertion which only contains $\bigcirc$-formula is reached. Since the underlying state space is not present, the proof structure cannot be continued. Thus, we require the generation of the successors of the current state. At this point, the control is handed to the \texttt{StateSpaceGenerator}, where \textsc{Attestor}'s state space generation is performed.\\
+	
+	By calling the \texttt{generate} method of the class \texttt{StateSpaceGenerator} the state space generation for the input program is performed and the completely generated state space is returned upon termination. For the on-the-fly approach, we do not require the complete state space, but rather a list of successor states for a given state $s$. We realize this functionality in the class \texttt{OnTheFlyStateSpaceGenerator} which generates the successors to a  state returned by the previously constructed proof structure. The list of successors are then communicated back to the proof structure by adding new assertions and reentering the model checking loop (cf. Figure~\ref{fig:otfHMC}).\\
+	
+	Further adjustments are required in the labeling of states in procedure state spaces which maps an atomic proposition $a \in AP$ to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap configuration of the state $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap configuration}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap configuration, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the method call. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap configuration under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap configuration is restored. Based on the resulting state, the corresponding atomic propositions are determined.
+	
 	\section{Evaluation}
 	
-	refer to advantages of the three aspects:
+	Model checking of hierarchical state spaces requires model checking of the procedure state spaces. \textsc{Attestor}'s current model checking approach only considers the top-level state space for model checking and thus disregards possible erroneous behavior within method executions. The on-the-fly approach on hierarchical model checking solves this gap by model checking procedure state spaces during their generation. Thus, the algorithm successfully interweaves state space generation and state space model checking. Violations can also be tracked on procedure state space level and hence offer more precise debugging instances. In order to avoid repetitive model checking of model checking instances, the algorithm applies model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand. Furthermore, the on-the-fly state space construction allows for early termination of the model checking procedure such that time and memory can be saved as not the complete state space needs to be generated. \\
 	
-	\begin{itemize}
-		\item Interweave state space construction and state space model checking,
-		\item Model check procedure state spaces, and
-		\item Create model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand.
-	\end{itemize}
+	However, in case of model checking a procedure state space for multiple distinct LTL formulae, the procedure state space needs to be computed afresh as the on-the-fly approach does not necessarily compute complete state spaces that cannot be reused. This might cause an overhead of state space generations.\\
+	
+	Thus, the on-the-fly approach is especially suitable for cases in which erroneous behavior is expected within method executions in order to quickly find a counterexample, whereas positive validation of a property might cause an overhead of computations. \\
+	
+	Chapter~\ref{chp:benchmarks} presents benchmarks on the on-the-fly hierarchical model checking algorithm described in this chapter.
+		
+	
+	%TODO example from introduction
 	
 	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
 
 	\section{Algorithm}
+	
 	\section{Implementation}
-	%TODO add UML diagram / architecture
+	%TODO add UML diagram / architecture?
+	
 	\section{Evaluation}
 	
 	
-	\chapter{Benchmarks}	
+	\chapter{Benchmarks}\label{chp:benchmarks}	
 	\section{Experimental Setup}
 	Describe Technical details here
 	\section{Instances}
