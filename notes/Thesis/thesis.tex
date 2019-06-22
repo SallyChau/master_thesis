@@ -5,7 +5,7 @@
 \usepackage{amsmath, amssymb, amsfonts, amsthm, dsfont}
 \usepackage{relsize}
 \usepackage{tikz}
-\usetikzlibrary{arrows, arrows.meta, calc, positioning}
+\usetikzlibrary{arrows, arrows.meta, calc, positioning,decorations.pathmorphing}
 \usepackage{float}
 \usepackage{caption}
 \usepackage{fancyhdr}
@@ -1214,24 +1214,25 @@
 	
 	Consider a method for reversing a singly-linked list given by
 	
-	\begin{lstlisting}[language=Java]
+	\begin{lstlisting}[language=Java,numbers=left,
+	stepnumber=1,keywordstyle=\color{blue},frame=single]
 	public static SLList reverse(SLList head) {
 	
-	SLList reversedList = null;
-	SLList current = head;
+	  SLList reversedList = null;
+	  SLList current = head;
 	
-	while (current != null) {
-	SLList next = current.next;
-	current.next = reversedList;
-	reversedList = current;
-	current = next;
-	}
+	  while (current != null) {
+	    SLList next = current.next;
+	    current.next = reversedList;
+	    reversedList = current;
+	    current = next;
+	  }
 	
-	return reversedList;
+	  return reversedList;
 	}
 	\end{lstlisting}
 	
-	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we want to check whether the formula $\varphi=\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}$ is satisfied. From Section~\ref{sec:ltl} we know that \[\varphi \equiv \text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))\] in PNF.
+	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we want to check whether the formula $\varphi=\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}$ is satisfied. From Section~\ref{sec:ltl} we know that \[\varphi \equiv \text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))\] in PNF.\\
 	
 	\begin{figure}[!h]
 		\begin{center}
@@ -1459,7 +1460,9 @@
 	\end{figure}
 	%TODO add example for tableaux	
 	
-	\section{Automata-Based Model Checking} 
+	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. An implementation of the on--the-fly state space generation is described in Chapter~\ref{chp:otf}.
+	
+	\section{Automata-Based Model Checking}\label{sec:automataMC}
 	
 	Recursive programs can be modeled as recursive state machines that capture the hierarchical nature of the underlying state space. Based on RSMs, LTL model checking can be performed to check whether an RSM, and thus the represented system, satsfies a temporal property. This section presents the basic ideas of the automata-theoretic approach to model checking transition systems for LTL specifications as introduced in \cite{vardi1986automata} by Vardi and Wolper. The algorithm can be adapted for RSMs. For an LTL formula $\varphi$ and a transition system $T$ the algorithm by Vardi and Wolper either returns "yes" if $T \models \varphi$ or "no" and a failure trace of the path that violates the formula $\varphi$. \\
 	
@@ -1524,20 +1527,95 @@
 	As the automaton-construction of the NBA $\mathcal{L}(\mathcal{B}_{\neg \varphi})$ as well as the product construction are quite costly in practice, %TODO source?
 	we approach automata-based model checking by combining the structures of recursive state machines and the procedures of the \textit{tableaux construction} for model checking LTL formulae. We depict the tableaux construction in the next section. The resulting algorithm from our combined approach is presented in Chapter~\ref{chp:hmc}.	
 	
-	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
+	\chapter{On-The-Fly Model Checking}\label{chp:otf}
 	
-	The tableaux construction is an on-the-fly approach to model checking transition systems for an LTL formula $\varphi$. In this chapter, we describe how we adapt the tableaux construction by Grumberg et al. to  hierarchical tableaux construction that accounts for model checking of hierarchical structures including procedure state spaces. In a next step, we present the implementation of hierarchical tableaux construction in the \textsc{Attestor} framework and conclusively evaluate our proceedings.
+	The tableaux construction is an on-the-fly approach to model checking transition systems for an LTL formula $\varphi$. In this chapter, we describe how we adapt the tableaux construction by Grumberg et al. describe in Section~\ref{sec:tableaux} to account for model checking of hierarchical structures including procedure state spaces. In a next step, we present the implementation of the algorithm within the \textsc{Attestor} framework and conclusively evaluate our proceedings.
 	
 	\section{Algorithm}
 	
-	Given a transition system (or state space) $T$ and a set of LTL formulae $\Phi$, the goal of the hierarchical tableaux construction is to verify whether the state space, including procedure state spaces induced by the method executions, satisfies the temporal properties specified by $\Phi$. We assume the state space to be flat and finite. The basis of the algorithm is the tableaux construction by Grumberg et al. that we extend by the following functionalities:
+	Given a transition system (or state space) $T$ and a set $\Phi$ of LTL formulae, the goal of the hierarchical tableaux construction is to verify whether the state space, including procedure state spaces induced by method executions, satisfies the temporal properties specified by $\Phi$. We assume the state space to be flat and finite. Currently, \textsc{Attestor} implements the tableaux construction by Grumberg et al. for model checking the generated state space of the main method of an input program. We extend the current approach by the following functionalities:
 	\begin{itemize}
-		\item Interweave state space construction and state space model checking,
+		\item Interweave state space generation and model checking,
 		\item Model check procedure state spaces, and
 		\item Create model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand.
 	\end{itemize}	
 
-	The algorithm is based on the procedure \texttt{generateAndCheck} (cf. Figure~\ref{fig:otfHMC}) that validates a set $\Phi$ of formulae for an input program based on the algorithm of the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the procedure \texttt{generateAndCheck} starts constructing the proof structure based on the tableaux rules defined in Section~\ref{sec:tableaux}. Successor states are generated on demand if the proof structure needs to be extended to further states due to validating $\bigcirc$-formulae. State generation involves that the statement of the current state is executed. In contrast to the \texttt{Attestor} state space generation, statement execution, and therefore state generation, includes model checking of the generated state. Hence, statements that invoke method executions trigger the model checking of procedure state spaces, that is, the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the current set $\Phi'$ of formulae. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once state space generation and model checking is completed for a method execution, the successor states and model checking results are returned to the above lying level. Model checking results include information on whether any formula is violated as well as the updated set of formulae for which the successor states need to be checked for. The model checking results are stored in contracts of the form
+	The algorithm is based on the procedure \texttt{generateAndCheck} (cf. Figure~\ref{fig:otfHMC}) that validates a set $\Phi$ of formulae for an input program and simultaneously generates the state space under consideration on-the-fly. The state space generation is based on the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the procedure \texttt{generateAndCheck} starts constructing the proof structure based on the tableaux rules defined in Section~\ref{sec:tableaux}. For $\bigcirc$ formulae the tableaux rule $(R^{\bigcirc})$ specifies a state switch. Thus, successor states need to be generated. State generation involves the statement execution of the current state. At this point, we extend the state space generation in \textsc{Attestor} by model checking the generated state. We differentiate between two types of statements: ones that invoke a method execution, and ones that are executed in place. Statements that invoke a method execution trigger the model checking of the corresponding procedure state space. That is, the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the current set $\Phi'$ of formulae. The set $\Phi'$ is a set of formulae resulting from successively applying tableaux rules to the formulae in the set $\Phi$. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once state space generation and model checking is completed for a method execution, the successor states and model checking results are returned to the above lying level. Figure~\ref{fig:otf_hierarchy} visualizes the flow of model checking information throughout a hierarchy of method calls $m_i(), 1 \leq i \leq 3$. Every executed method $i$ contributes a state space that is model checked during generation. The state labels $\Phi^{(k)}$ denote the set of LTL formulae to be validated.
+	
+	\begin{figure}[!h]
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick,minimum height=1cm},
+				rectstyle/.style={minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
+				
+				\node at (10,0) [rectstyle,minimum width=21.5cm, minimum height=1.25cm] {};
+				\node at (7.5,-2) [rectstyle,minimum width=11cm, minimum height=1.25cm] {};
+				\node at (16.5,-2) [rectstyle,minimum width=5cm, minimum height=1.25cm] {};
+				\node at (7.5,-4) [rectstyle,minimum width=5cm, minimum height=1.25cm] {};
+				
+				\node (m1) at (-0.5,-1) {$m_1()$};
+				\node (m1) at (2.5,-3) {$m_2()$};
+				\node (m1) at (5.5,-5) {$m_3()$};
+				\node (m1) at (14.5,-3) {$m_2()$};
+				
+				\node (a1) at (0,0) [normal] {$\Phi$};
+				\node (a11) at (1.5,0) [] {...};
+				\node (a2) at (3,0) [normal] {$\Phi'$};
+				
+				\node (b1) at (3,-2) [normal] {$\Phi'$};
+				\node (b11) at (4.5,-2) [] {...};
+				\node (b2) at (6,-2) [normal] {$\Phi''$};			
+				
+				\node (c1) at (6,-4) [normal] {$\Phi''$};
+				\node (c11) at (7.5,-4) [] {...};
+				\node (c2) at (9,-4) [normal] {$\Phi'''$};
+				
+				\node (d1) at (9,-2) [normal] {$\Phi'''$};
+				\node (d11) at (10.5,-2) [] {...};
+				\node (d2) at (12,-2) [normal] {$\Phi^{(4)}$};
+				
+				\node (e1) at (12,0) [normal] {$\Phi^{(4)}$};
+				\node (e11) at (13.5,0) [] {...};
+				\node (e2) at (15,0) [normal] {$\Phi^{(5)}$};
+				
+				\node (f1) at (15,-2) [normal] {$\Phi^{(5)}$};
+				\node (f11) at (16.5,-2) [] {...};
+				\node (f2) at (18,-2) [normal] {$\Phi^{(6)}$};
+				
+				\node (g1) at (18,0) [normal] {$\Phi^{(6)}$};
+				\node (g11) at (19.5,0) [] {...};
+				\node (g2) at (21,0) [] {};
+				
+				\draw [->,shorten >=0.5pt] (-1,0) -- (a1);
+				\draw (a1) -- (a11);
+				\draw [->,shorten >=0.5pt] (a11) -- (a2);
+				\draw [->,shorten >=0.5pt] (a2) -- node[left] {$\Phi'$} (b1);
+				\draw (b1) -- (b11);
+				\draw [->,shorten >=0.5pt] (b11) -- (b2);
+				\draw [->,shorten >=0.5pt] (b2) -- node[left] {$\Phi''$} (c1);
+				\draw (c1) -- (c11);
+				\draw [->,shorten >=0.5pt] (c11) -- (c2);
+				\draw [->,shorten >=0.5pt] (c2) -- node[left] {$\Phi'''$} (d1);
+				\draw (d1) -- (d11);
+				\draw [->,shorten >=0.5pt] (d11) -- (d2);
+				\draw [->,shorten >=0.5pt] (d2) -- node[left] {$\Phi^{(4)}$} (e1);
+				\draw (e1) -- (e11);
+				\draw [->,shorten >=0.5pt] (e11) -- (e2);
+				\draw [->,shorten >=0.5pt] (e2) -- node[left] {$\Phi^{(5)}$} (f1);
+				\draw (f1) -- (f11);
+				\draw [->,shorten >=0.5pt] (f11) -- (f2);
+				\draw [->,shorten >=0.5pt] (f2) -- node [left] {$\Phi^{(6)}$} (g1);
+				\draw (g1) -- (g11);
+				\draw [->,shorten >=0.5pt] (g11) -- (g2);
+							
+				\end{tikzpicture}}
+			\caption{Conceptual flow of model checking information in a state space with method invocations.}\label{fig:otf_hierarchy}
+		\end{center}
+	\end{figure}	
+	
+	Model checking results include information on whether a formula is violated as well as the updated set of formulae for which the successor states need to be checked for. The model checking results are stored in contracts of the form
 	
 	\[(HC_{in}, \Phi) \mapsto (\Phi', \delta_{0/1}, \pi),\]
 	
@@ -1555,7 +1633,7 @@
 				phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
 				
 				\node (back1) at (1,-7) [draw, minimum width=25cm, minimum height=26cm, rounded corners=1.5pt,fill=blue!10] {};
-				\node (check) at (-9.5, 6.25) {\textbf{generateAndCheck}};
+				\node (check) at (-9.5, 6.25) {\texttt{generateAndCheck}};
 				\node (back) at (0,-10.5) [rectstyle] {};
 				\node (exec) at (-3.25, -13.5) [rotate=90] {\textbf{abstract execution}};
 				
@@ -1664,39 +1742,119 @@
 	
 	Further adjustments are required in the labeling of states in procedure state spaces which maps an atomic proposition $a \in AP$ to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap configuration of the state $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap configuration}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap configuration, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the method call. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap configuration under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap configuration is restored. Based on the resulting state, the corresponding atomic propositions are determined.
 	
+	%TODO implementation of model checking results?
+	
 	\section{Evaluation}
 	
-	Model checking of hierarchical state spaces requires model checking of the procedure state spaces. \textsc{Attestor}'s current model checking approach only considers the top-level state space for model checking and thus disregards possible erroneous behavior within method executions. The on-the-fly approach on hierarchical model checking solves this gap by model checking procedure state spaces during their generation. Thus, the algorithm successfully interweaves state space generation and state space model checking. Violations can also be tracked on procedure state space level and hence offer more precise debugging instances. In order to avoid repetitive model checking of model checking instances, the algorithm applies model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand. Furthermore, the on-the-fly state space construction allows for early termination of the model checking procedure such that time and memory can be saved as not the complete state space needs to be generated. \\
+	When model checking procedural programs with possibly recursive method invocations, procedure state spaces need to be taken into account. \textsc{Attestor}'s current model checking approach only verifies the top-level state space and thus disregards possible erroneous behavior within method executions. The on-the-fly approach on hierarchical model checking presented in this chapter solves this gap by model checking procedure state spaces during their generation. Thus, the algorithm successfully interweaves state space generation and state space model checking. Violations can also be tracked on procedure state space level and hence offer more precise debugging instances. In order to avoid repetitive model checking of model checking instances, the algorithm applies model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand. Furthermore, the on-the-fly state space construction allows for early termination of the model checking procedure such that time and memory can be saved as not states need to be determined. \\
 	
-	However, in case of model checking a procedure state space for multiple distinct LTL formulae, the procedure state space needs to be computed afresh as the on-the-fly approach does not necessarily compute complete state spaces that cannot be reused. This might cause an overhead of state space generations.\\
+	However, in case of model checking a procedure state space for multiple distinct LTL formulae, the procedure state space needs to be computed afresh since procedure state spaces are not stored. This is due to the fact that the on-the-fly approach does not guarantee to return complete state spaces that can be reused. This might cause an overhead of state space generations.\\
 	
 	Thus, the on-the-fly approach is especially suitable for cases in which erroneous behavior is expected within method executions in order to quickly find a counterexample, whereas positive validation of a property might cause an overhead of computations. \\
 	
-	Chapter~\ref{chp:benchmarks} presents benchmarks on the on-the-fly hierarchical model checking algorithm described in this chapter.
+	Chapter~\ref{chp:benchmarks} presents benchmarks on the on-the-fly model checking algorithm described in this chapter.
 		
 	
 	%TODO example from introduction
 	
 	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
 
+	Recursive state machines model the control flow of sequential imperative programs containing possibly recursive method calls \cite{alur2001analysis}. In the concept of RSMs two kinds of states are differentiated: ordinary states that constitute a statement that is executed in place, and states that invoke method executions. This differentiation is helpful in modeling the hierarchical structure of procedural programs. Thus, we modify the previously presented on-the-fly model checking approach for procedure state spaces by model checking recursive state machines. However, instead of applying the automata-based approach by Vardi and Wolper presented in Chapter~\ref{sec:automataMC}, we propose an algorithm that constructs a tableaux for a component $A_i$ of an RSM $\mathcal{A}$ that stores the pre-generated procedure state space of the method $i$. By this means, model checking of procedure state spaces draws on stored procedure state spaces such that state spaces are not repeatedly generated. In the sequel of this chapter, we introduce the RSM-based algorithm in detail and describe its implementation within the \textsc{Attestor} framework. Finally, we evaluate this approach in terms of time and space efficiency.
+
 	\section{Algorithm}
 	
+	Given a transition system $T$ and a set $\Phi$ of LTL formulae, the goal of hierarchical model checking is to verify whether $T \models \Phi$. The RSM-based model checking algorithm consists of two main steps: First, a recursive state machine is constructed from the input program. Second, model checking is executed on the RSM.\\
+	
+	For the first step, we assume the (procedure) state spaces to be given. The construction of the RSM $\mathcal{A}$ starts with generating a component state machine $A_i$ for every procedure state space. Each component $A_i$ stores a set of procedure state spaces and a set of boxes that indicate which method is invoked by which state within the component $A_i$. \\
+	
+	The second step executes LTL model checking for the RSM $\mathcal{A}$ and a set $\Phi$ of formulae. Model checking the RSM $\mathcal{A}$ boils down to model checking the components $A_i$ in $\mathcal{A}$. Thus, starting with the component $A_1$ corresponding to the main method of the program, a tableaux is constructed for the state space of $A_1$. If during the construction, a state $s$ is found that invokes a method $j$, the according box is entered and model checking is continued for component $A_j$ for the set $\Phi'$ of formulae. By this means, a hierarchy of procedure model checking processes is created, as described in the on-the-fly approach (cf. Figure~\ref{fig:otf_hierarchy}). The model checking results from constructing the proof structure for a component $A_j$ are returned to the calling state, and included in the proof structure of the calling component. The procedure is continued until all relevant proof structures have been constructed such that the proof structure of the main state space, thus of the component $A_1$, comes to a conclusion. A sketch of the algorithm is depicted in Figure~\ref{fig:rsm_mc}.\\
+	
+	\begin{figure}[!h]
+		\begin{center}
+			%\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, minimum width=6cm, minimum height=9cm, rounded corners=1.5pt, fill=gray!10},
+				phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white}]
+				
+				\node (back) at (0,-1.5) [rectstyle,fill=blue!10,minimum width=6cm, minimum height=8cm] {};
+				\node (check) at (-2.5,2.75) {\texttt{check}};
+				
+				\node (init) at (0,8) [phase] {generate state space};
+				\node (rsm) at (0,6.5) [phase] {generate RSM};
+				\node (method) at (0,5) [phase] {get method};
+				\node (csm) at (0,3.5) [phase] {get CSM};
+				
+				\node (statespace) at (0,1.5) [phase] {get state space};
+				
+				\node (d1) at (0, -1.5) [rectangle,draw,xscale=8,yscale=8,rotate=45, fill=white] {};
+				\node (d1text) at (d1) [align=center] {$\exists$\\ model checking\\ contract};
+				
+				\node (ps) at (0,-4.5) [phase] {build proof structure};
+				
+				\draw[->,shorten >=0.5pt] (0,9) to (init);
+				\draw[->,shorten >=0.5pt] (init) to (rsm);
+				\draw[->,shorten >=0.5pt] (rsm) to (method);
+				\draw[->,shorten >=0.5pt] (method) to (csm);
+				\draw[->,shorten >=0.5pt] (csm) to (statespace);
+				\draw[->,shorten >=0.5pt] (statespace) to (0,0);
+				\draw[->,shorten >=0.5pt] (0,-3) --node[right,align=center] {\texttt{no}} (ps);
+				\draw[->,shorten >=0.5pt] (-1.5,-1.5) --node[above,align=center] {\texttt{yes}} (-3.5,-1.5);
+				\draw[->,shorten >=0.5pt] (ps) to (0,-6);
+				\draw (ps) to (3.5,-4.5);
+				\draw (3.5,-4.5) --node[right,align=center] {state\\invokes\\ method} (3.5,3.5);
+				\draw[->,shorten >=0.5pt] (3.5,3.5) to (csm);
+				
+				\end{tikzpicture}%}
+			\caption{Model checking RSMs using the tableaux construction.}\label{fig:rsm_mc}
+		\end{center}
+	\end{figure}
+	
+	Similar to the on-the-fly hierarchical model checking approach, repetitive model checking of the same set of formulae for a given procedure state space is avoided by storing the model checking results in form of contracts. Thus, if a previously solved model checking instance appears, the proof structure does not need to be repeatedly computed, but the stored results can be applied.\\
+	
+	Early termination of the algorithm can be achieved if a violating state is found or the set of formulae is determined to be true for all upcoming states. Thus, the proof structure does not need to be built entirely.
+	
 	\section{Implementation}
-	%TODO add UML diagram / architecture?
+	
+	An implementation of the RSM model checking using the tableaux construction can be found at \url{https://github.com/SallyChau/master_thesis/tree/master/attestor}. We implemented the model checking algorithm within the \textsc{Attestor} framework. The RSM-based model checking approach is an alternative to the currently implemented model checking phase that uses the tableaux construction to verify the top-level state space of an input program for an LTL formula $\varphi$. In order to realize the RSM-based algorithm within \textsc{Attestor}, we require the following adaptations:
+	\begin{itemize}
+		\item Retrieve procedure state spaces from state space generation phase,
+		\item Implement classes for recursive state machines and component state machines, and
+		\item Enrich RSM and CSM with proof structures to account for model checking procedure state spaces.
+	\end{itemize}
+
+	The first adaptation is realized by storing the generated procedure state spaces during \textsc{Attestor}'s state space generation phase including information on which state invoked the method call.\\
+	
+	Now, given a set of procedure state spaces, we construct an RSM for the input program. The class \texttt{RecursiveStateMachine} builds the corresponding RSM by creating an object of the class \texttt{ComponentStateMachine} for each method that is called. Since distinct calls to a method originating from two distinct states can result in distinct state spaces, a \texttt{ComponentStateMachine} internally maps the calling state to the resulting state space. Furthermore, \texttt{RecursiveStateMachine} manages the calling information of a state $s$ by creating boxes in the state's \texttt{ComponentStateMachine} that contains the information which \texttt{ComponentStateMachine} is called by state $s$. Moreover, a \texttt{ComponentStateMachine} stores the model checking results for executed tableaux constructions.\\
+	
+	In order to account for model checking procedure state spaces, we require a \texttt{ComponentStateMachine} to trigger the tableaux construction for the state space under consideration. Therefore, we implement the class \texttt{HierarchicalProofStructure} which adapts \textsc{Attestor}'s proof structure to work on \texttt{ComponentStateMachine}. Thus, if the proof structure construction finds a state that invokes a method execution, the model checking of the called \texttt{ComponentStateMachine} (procedure state space) is started. After termination of the sub-model checking procedure, we return to the previous proof structure applying the recent model checking results. If the result is a final one, that is the proof structure is unsuccessful or the proof structure is ultimately successful (there are no more formulae to check), the result can be reported to the dependent proof structures, such that the model checking process can be terminated. Together with a possible failure trace, the model checking result is returned.\\
+	
+	In order to avoid repetitive computation of proof structures, we store model checking results as contracts within a \texttt{ComponentStateMachine}, similar to the implementation in Chapter~\ref{chp:otf}. However, since the context of the method is unambiguously determined be the \texttt{ComponentStateMachine}, we do not require the context of procedure contracts as it is the case for on-the-fly model checking.
 	
 	\section{Evaluation}
+	structure is easy to understand
+	only compute state spaces once
 	
+	
+	
+	Chapter~\ref{chp:benchmarks} presents benchmarks on the RSM-based model checking algorithm described in this chapter.
 	
 	\chapter{Benchmarks}\label{chp:benchmarks}	
+	
 	\section{Experimental Setup}
 	Describe Technical details here
+	
 	\section{Instances}
 	Describe code examples and properties here
+	
 	\section{Result}
 	Table of values
 	
 	\chapter{Conclusion}
-	\section{Discussion}	
+	
+	\section{Discussion}
+		
 	\section{Outlook}
 	
 		- hierarchical failure trace and counter example generation, spuriosity
