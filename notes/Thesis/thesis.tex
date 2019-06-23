@@ -1734,13 +1734,58 @@
 	%TODO add UML diagram / architecture?
 	We implemented the on-the-fly tableaux construction for hierarchical state spaces within the \textsc{Attestor} framework written in \textsc{Java}. The code can be found at \url{https://github.com/SallyChau/master_thesis/tree/master/attestor}. As both state space generation and model checking are performed, the on-the-fly hierarchical model checking algorithm encompasses \textsc{Attestor}'s present state space generation and model checking phases. We refer to the new phase as the \textit{on-the-fly model checking phase}.\\
 	
-	The implementation of the on-the-fly model checking phase requires two main adaptations in the \textsc{Attestor} framework. First, we need to adapt the tableaux construction algorithm such that it does not work on a complete state space, but rather successively demands for new states as soon as they are required for the building the proof structure. Second, we require a possibility to query for a list of successor states for a given state $s$. \\
+	The implementation of the on-the-fly model checking phase requires two main adaptations in the \textsc{Attestor} framework. First, we need to adapt the tableaux construction algorithm such that it does not work on a complete state space, but rather successively demands for new states as soon as they are required for building the proof structure. Second, we require a possibility to query for a list of successor states for a given state $s$. Figure~\ref{fig:otf_mc_uml} sketches the architecture our implementation.\\
 	
-	Let us turn to the on-the-fly tableaux construction first. The \texttt{ProofStructure} class implements the tableaux construction for a given state space and an LTL formula. By calling the method \texttt{build} on a given state space and an LTL formula to be checked, the proof structure is constructed. This method requires a completely generated state space to operate on. This class \texttt{OnTheFlyProofStructure} modifies the current implementation such that it is capable of constructing the proof structure for an on-the-fly constructed state space. Instead of requiring a completely generated state space, the on-the-fly version solely requires initial assertions. These are expanded according to the tableaux rules until an assertion which only contains $\bigcirc$-formula is reached. Since the underlying state space is not present, the proof structure cannot be continued. Thus, we require the generation of the successors of the current state. At this point, the control is handed to the \texttt{StateSpaceGenerator}, where \textsc{Attestor}'s state space generation is performed.\\
+	Let us turn to the on-the-fly tableaux construction first. The \texttt{ProofStructure} class implements the tableaux construction. By calling the method \texttt{build} for a given state space and an LTL formula to be checked, the proof structure is constructed. This method requires a completely generated state space to operate on. The class \texttt{OnTheFlyProofStructure} modifies the current implementation such that it is capable of constructing the proof structure for an on-the-fly constructed state space. Instead of requiring a completely generated state space, the on-the-fly version solely requires initial assertions. These are expanded according to the tableaux rules until an assertion which only contains $\bigcirc$-formula is reached. Since the underlying state space is not present, the proof structure cannot be continued. Thus, we require the generation of the successors of the current state. At this point, the control is handed to the \texttt{StateSpaceGenerator}, where \textsc{Attestor}'s state space generation is performed.\\
 	
-	By calling the \texttt{generate} method of the class \texttt{StateSpaceGenerator} the state space generation for the input program is performed and the completely generated state space is returned upon termination. For the on-the-fly approach, we do not require the complete state space, but rather a list of successor states for a given state $s$. We realize this functionality in the class \texttt{OnTheFlyStateSpaceGenerator} which generates the successors to a  state returned by the previously constructed proof structure. The list of successors are then communicated back to the proof structure by adding new assertions and reentering the model checking loop (cf. Figure~\ref{fig:otfHMC}).\\
+	By calling the \texttt{generate} method of the class \texttt{StateSpaceGenerator} the state space generation for the input program is performed and the completely generated state space is returned upon termination. For the on-the-fly approach, we do not require the complete state space, but rather a list of successor states for a given state $s$. We realize this functionality in the class \texttt{OnTheFlyStateSpaceGenerator}. The list of successors is then communicated to the proof structure by adding new assertions and reentering the model checking loop (cf. Figure~\ref{fig:otfHMC}).\\
 	
-	Further adjustments are required in the labeling of states in procedure state spaces which maps an atomic proposition $a \in AP$ to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap configuration of the state $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap configuration}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap configuration, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the method call. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap configuration under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap configuration is restored. Based on the resulting state, the corresponding atomic propositions are determined.
+	Further adjustments are required in the labeling of procedure states. An atomic proposition $a \in AP$ is added to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap configuration of $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap configuration}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap configuration, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the current scope. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap configuration under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap configuration is restored. Based on the resulting state, the corresponding atomic propositions are determined.
+	
+	\begin{figure}[!h]
+		\begin{center}
+			%\resizebox{\textwidth}{!}{
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick},
+			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=gray!10},
+			phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white},
+			content/.style={anchor=west}]
+			
+			\node[header,minimum height=3cm] (back1) at (5.5,1.25) {};
+			\node[header,minimum height=2.5cm] (back2) at (5.5,-4) {};
+			\node[header,minimum height=3.5cm] (back3) at (5.5,-10) {};
+			
+			\node[content] at (0,2.25) {\texttt{OnTheFlyProofStructure}};
+			\draw (0,2) to (11,2);			
+			\node[content] at (0,1.5) {\texttt{...}};
+			\draw[dashed] (0,1) to (11,1);
+			\node[content] at (0,0.5) {\texttt{buildAndGetNextFormulaeToCheck()}};
+			\node[content] at (0,0) {\texttt{addAssertion(ProgramState state, Set<Node> formulae) }};
+			
+			\node[content] at (0,-3.25) {\texttt{OnTheFlyStateSpaceGenerator}};
+			\draw (0,-3.5) to (11,-3.5);
+			\node[content] at (0,-4) {\texttt{...}};
+			\draw[dashed] (0,-4.5) to (11,-4.5);
+			\node[content] at (0,-5) {\texttt{generateAndCheck()}};
+			
+			\node[content] (hps) at (0,-8.75) {\texttt{MethodExecutor}};
+			\draw (0,-9) to (11,-9);
+			\node[content] (hps) at (0,-9.5) {\texttt{...}};
+			\draw[dashed] (0,-10) to (11,-10);
+			\node[content] (psmethod) at (0,-10.5) {\texttt{generateAndAddContract(...)}};
+			\node[content] (psmethod) at (0,-11) {\texttt{getResultStates(...)}};
+			\node[content] (psmethod) at (0,-11.5) {\texttt{getModelCheckingContract(...)}};
+			
+			\draw[->, shorten >=0.5pt] (2,-0.25) --node[right] {$\bigcirc$-formulae} (2,-2.75);
+			\draw[->, shorten >=0.5pt] (9,-2.75) --node[right,align=left] {\texttt{build...()}\\ \texttt{addAssertion(...)}} (9,-0.25);
+			\draw[->, shorten >=0.5pt] (2,-5.25) --node[right,align=left] {\texttt{getResultStates(...)/}\\ \texttt{getModelCheckingContract()}} (2,-8.25);
+			\draw[->, shorten >=0.5pt] (9,-8.25) --node[right,align=left] {result states\\and contracts} (9,-5.25);
+			
+			\end{tikzpicture}%}
+			\caption{UML for on-the-fly model-checking.}\label{fig:otf_mc_uml}
+		\end{center}
+	\end{figure}
 	
 	%TODO implementation of model checking results?
 	
@@ -1822,7 +1867,9 @@
 		\item Retrieve procedure state spaces from state space generation phase,
 		\item Implement classes for recursive state machines and component state machines, and
 		\item Enrich RSM and CSM with proof structures to account for model checking procedure state spaces.
-	\end{itemize}
+	\end{itemize}	
+	
+	Figure~\ref{fig:rsm_mc_uml} sketches the implementation of the required adaptations.\\
 
 	The first adaptation is realized by storing the generated procedure state spaces during \textsc{Attestor}'s state space generation phase including information on which state invoked the method call.\\
 	
@@ -1832,10 +1879,66 @@
 	
 	In order to avoid repetitive computation of proof structures, we store model checking results as contracts within a \texttt{ComponentStateMachine}, similar to the implementation in Chapter~\ref{chp:otf}. However, since the context of the method is unambiguously determined be the \texttt{ComponentStateMachine}, we do not require the context of procedure contracts as it is the case for on-the-fly model checking.
 	
-	\section{Evaluation}
-	structure is easy to understand
-	only compute state spaces once
+	\begin{figure}[!h]
+		\begin{center}
+			%\resizebox{\textwidth}{!}{
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick},
+			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=gray!10},
+			phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white},
+			content/.style={anchor=west}]
+			
+			\node[header,minimum height=3cm] (back1) at (5.5,1.25) {};
+			\node[header,minimum height=4.5cm] (back2) at (5.5,-5) {};
+			\node[header,minimum height=2.5cm] (back3) at (5.5,-11) {};
+			
+			\node[content] (rsmHeader) at (0,2.25) {\texttt{RecursiveStateMachine}};
+			\draw (0,2) to (11,2);
+			\node[content] (rsmMethod) at (0,1.5) {\texttt{Map<Method, ComponentStateMachine> components}};			
+			\node[content] (rsmMethod) at (0,1) {\texttt{...}};
+			\draw[dashed] (0,0.5) to (11,0.5);
+			\node[content] (rsmMethod) at (0,0) {\texttt{check(ProcedureCall, LTLFormula)}};
+			
+			\node[content] (csmHeader) at (0,-3.25) {\texttt{ComponentStateMachine}};
+			\draw (0,-3.5) to (11,-3.5);
+			\node[content] (csmVar) at (0,-4) {\texttt{Method method}};
+			\node[content] (csmVar) at (0,-4.5) {\texttt{Map<ProgramState, StateSpace> stateSpaces}};
+			\node[content] (csmVar) at (0,-5) {\texttt{Map<ProgramState, ComponentStateMachine> boxes}};
+			\node[content] (csmVar) at (0,-5.5) {\texttt{List<ModelCheckingContract> modelCheckingContracts}};
+			\draw[dashed] (0,-6) to (11,-6);
+			\node[content] (csmMethod) at (0,-6.5) {\texttt{check(ProcedureCall, LTLFormula)}};
+			\node[content] (csmMethod) at (0,-7) {\texttt{check(ProgramState, SemanticsCommand, LTLFormula)}};
+			
+			\node[content] (hps) at (0,-10.25) {\texttt{HierarchicalProofStructure}};
+			\draw (0,-10.5) to (11,-10.5);
+			\node[content] (hps) at (0,-11) {\texttt{...}};
+			\draw[dashed] (0,-11.5) to (11,-11.5);
+			\node[content] (psmethod) at (0,-12) {\texttt{build(StateSpace stateSpace, LTLFormula formula)}};
+			
+			\draw[->, shorten >=0.5pt] (back1) --node[right] {\texttt{check(...)}} (back2);
+			\draw[->, shorten >=0.5pt] (3,-7.25) --node[right] {\texttt{build(...)}} (3,-9.75);
+			\draw[->, shorten >=0.5pt] (8,-9.75) --node[right] {\texttt{check(...)}} (8,-7.25);
+			
+			\end{tikzpicture}%}
+			\caption{UML for hierarchical model checking with RSMs.}\label{fig:rsm_mc_uml}
+		\end{center}
+	\end{figure}
 	
+	\section{Evaluation}
+	
+	
+	% summarize algorithm shortly
+	In this chapter, we presented a model checking algorithm for procedure state spaces that are summarized in an RSM. The advantages of the approach are manifold. The structure of the state space is captured by the RSM as every method is represented by a component. The component stores corresponding procedure state spaces, method invocations represented by boxes, and also model checking results. Model checking of a procedure state space is controlled by the corresponding component, such that model checking results can be easily communicated to the state that invoked the method execution. \\
+	
+	% advantages
+	% procedure state spaces are model checked
+	% state spaces and model checking results stored --> no extra computation
+	% procedural structure mimicked by RSM --> model checking order follows control flow
+	As procedure state spaces are stored within the component state machine of a method, procedure state spaces only need to be computed once during the state space generation phase. Similarly, model checking of a formula $\varphi$ can be skipped if the results are known due to previous model checking instances.\\	
+	% disadvantages
+	% memory intensive: the more methods and distinct calling states, the more state spaces are stored
+	% complete generation of state spaces necessary although proof structure might not require to visit all states (early termination)
 	
 	
 	Chapter~\ref{chp:benchmarks} presents benchmarks on the RSM-based model checking algorithm described in this chapter.
@@ -1850,6 +1953,7 @@
 	
 	\section{Result}
 	Table of values
+	Comparison regarding different topics: time, memory, ...
 	
 	\chapter{Conclusion}
 	
