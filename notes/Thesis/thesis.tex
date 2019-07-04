@@ -43,8 +43,8 @@
 	
 	
 %Definition
-\newcounter{defcounter}[section] \setcounter{defcounter}{0}
-\renewcommand{\thedefcounter}{\arabic{section}.\arabic{defcounter}}
+\newcounter{defcounter}[chapter] \setcounter{defcounter}{0}
+\renewcommand{\thedefcounter}{\arabic{chapter}.\arabic{defcounter}}
 \newenvironment{definition}[2][]{%
 	\refstepcounter{defcounter}%
 	\ifstrempty{#1}%
@@ -114,8 +114,6 @@
 		\vspace{1cm}
 		{\Large \textbf{Sally Chau} \\}
 		\vspace{0.25cm}
-		{\large Matriculation Number 370584} \\
-		%\vspace{0.3cm}
 		{\large \today}\\
 		\vspace{3cm}
 		{\large First Reviewer: apl. Prof. Dr. Thomas Noll \\ Second Reviewer: Prof. Dr. Ir. Dr. h. c. Joost-Pieter Katoen \\ Supervisor: Christoph Matheja} \\ 
@@ -168,11 +166,14 @@
 	
 	\section{\textsc{Attestor}}\label{sec:attestor}
 	
-	\textsc{Attestor} is a verification tool that generates an abstract state space of the input program and employs LTL model checking to verify specified properties. The state space generation is based on a finite representation of the program heap during execution by a (hyper)graph. Finiteness is achieved by employing abstraction based on graph grammars that specify the data structured maintained by the program and how subgraphs can be summarized in a so called hyperedges. Occurring methods in the input program are summarized by procedure contracts that specify the heap configurations prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap configuration. In a next step, property verification is performed by model checking the resulting state space against the LTL specifications. \textsc{Attestor} then either outputs that the program fulfills or (possibly) violates the property. In the latter case, a counterexample is provided.\\
+	%TODO explain attestor with simpler words: dont mention technical terms without definition
+	% Informally describe technical words (concrete, abstract, heap conf, properties, subgraph, hypergraph, state space, hyperedge, model checking)
 	
-	The structure of \textsc{Attestor} can be mainly divided into five parts, namely input, back-end, front-end, API and output, which is depicted in Figure~\ref{fig:attestor}. In order to specify a verification task, \textsc{Attestor} offers four possible input parameters of which the input program is mandatory. The user can further specify LTL specifications to be verified during model checking, a graph grammar for the data structures present in the input program, and further options such as initial heap configurations or properties to modify abstraction or garbage collection. The core of the \textsc{Attestor} tool is the back-end which describes the verification process. The \textsc{Attestor} front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
+	\textsc{Attestor} is a verification tool that takes a \textsc{Java} program as an input and then generates an abstract state space. \textsc{Attestor} employs LTL model checking to verify specified properties. The state space generation is based on a finite representation of the program heap during execution by a (hyper)graph. Finiteness is achieved by employing abstraction based on graph grammars that specify the data structured maintained by the program and how subgraphs can be summarized in hyperedges. Methods in the input program are summarized by procedure contracts that specify the heap prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap. In a next step, model checking is performed by checking the resulting state space against the LTL specifications. Possible outcomes for the model checking procedure are that the input program either fulfills the property, violates the property, or the result is unknown. In case of a property violation, a counterexample is provided.\\
 	
-	\begin{figure}[!h]
+	\textsc{Attestor} divides up into input, back-end, front-end, and output as depicted in Figure~\ref{fig:attestor}. \textsc{Attestor} offers several options to specify a verification task. The user defines a \textsc{Java} program as the program to be analyzed. LTL formulae describe the properties that are checked for the program during model checking. \textsc{Attestor} requires graph grammars in order to account for state space abstraction and concretization. Next to the pre-defined grammars in the tool, the user has the option to define custom graph grammars that define the data structures present in the input program. Further options include the specification of initial heaps or properties to modify abstraction or garbage collection. \textsc{Attestor}'s core is the back-end which contains the program analysis. The front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
+	
+	\begin{figure}
 		\begin{center}
 			\resizebox{\textwidth}{!}{
 			\begin{tikzpicture}
@@ -241,7 +242,7 @@
 	The \textsc{Attestor} back-end constitutes the core process of the tool which is divided into six phases. The first three phases comprise the preprocessing of the verification task, followed by the state space generation phase and the model checking phase.
 	
 	\paragraph{Phase 1: Parsing Inputs}
-	In the first phase, the supplied input options passed to \textsc{Attestor} are read including the input program, graph grammars, initial heap configurations as well as procedure contracts that contain predefined pre- and post-conditions that describe the behavior of a procedure execution.
+	In the first phase, the supplied input options passed to \textsc{Attestor}, including the input program and optional parameters, are parsed.
 	
 	\paragraph{Phase 2: Marking Generation} 
 	After parsing the input, markings are added to the initial heap if required by the specified LTL properties \cite{heinen2015verifyingPhd}. The markings track object identities during program execution along sequences of states so that properties such as neighborhood preservation can be checked.\\
@@ -250,9 +251,9 @@
 	In this phase, state space generation is prepared by refining the input grammar such that properties can be decided more efficiently, e.g., by only considering hypergraphs that satisfy a specified property. Furthermore, abstraction preprocessing computes the transformers required for state space generation itself, e.g., garbage collection. 
 	
 	\paragraph{Phase 4: State Space Generation}	
-	After the stages of preprocessing, the state space is generated by executing the statements of the input program on the initial heap such that new states are added. The procedure is illustrated in Figure~\ref{fig:stateSpaceGeneration}. The abstract execution loop is executed until either there are no more states left to process or a fixpoint has been reached. The loop starts with picking a state, which has not been processed yet, at random. The abstract semantics of the next statement are applied to the state. Therefore, the heap configuration potentially needs to be locally concretised so that the statement is executed on a concrete heap configuration. Concretisation is achieved by applying the grammar rules in a forward manner. Thereafter, the heap is cleared, e.g., dead variables are removed and the garbage collector performs its actions. In order to obtain a compact heap representation, an abstraction of the heap is followed where grammar rules are applied in a backward manner. Therefore, embeddings of the heap configuration in the right hand side of grammar rules have to be found. Finally, the resulting state is labeled with atomic propositions that are satisfied by the heap configuration. The labeling is implemented by heap automata \cite{arndt2018let}. Before adding the resulting state to the state space, it is checked whether a  more abstract state already covers the current state. If not, the state is added to the state space and the algorithm continues with the next state. Else, \textsc{Attestor} checks whether a fixpoint has been reached and terminates the procedure in this case. Otherwise, state space generation continues. The generated state space represents the transformation of the initial heap configuration during program execution for the main method of the input program.
+	After the stages of preprocessing, the state space of the input program is generated by executing program statements on the initial heap such that new states are added. The procedure is illustrated in Figure~\ref{fig:stateSpaceGeneration}. The abstract execution loop is executed until either there are no more states left to process, a fixpoint has been reached or computational resources are exceeded. The loop starts with picking a state, which has not been processed yet, in a DFS manner, i.e., unprocessed states are added to and removed from the end of a list of unprocessed states. The abstract semantics of the next statement are applied to the state. Therefore, the heap potentially needs to be concretised so that the statement is executed on a concrete heap. Concretisation is achieved by applying the grammar rules in a forward manner. Thereafter, the heap is cleared, e.g., dead variables are removed and the garbage collector performs its actions. In order to obtain a compact heap representation, heap abstraction is performed by applying grammar rules in a backward manner. Finally, the resulting state is labeled with atomic propositions that are satisfied by the heap. The labeling is implemented by heap automata \cite{arndt2018let}. Before adding the resulting state to the state space, it is checked whether a  more abstract state already covers the current one. If not, the state is added to the state space and the algorithm continues with the next state. Otherwise, \textsc{Attestor} checks whether a fixpoint has been reached and terminates the procedure in this case. The generated state space represents the transformation of the initial heap during program execution for the main method of the input program.
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{\textwidth}{!}{
 			\begin{tikzpicture}
@@ -310,7 +311,7 @@
 	\end{figure}
 	
 	\paragraph{Phase 5: Model Checking}
-	State space generation is followed by the model checking phase if LTL formulae have been specified. \textsc{Attestor} currently implements the tableaux method described in Section \ref{sec:tableaux} which checks the main state space for LTL formulae. In case a formulae is violated, a failure trace is returned that constitutes a counterexample generated in the next phase. If all properties are satisfied, \textsc{Attestor} outputs accordingly. A drawback of the current model checking procedure is that procedural programs contain (recursive) methods and method calls with proper state spaces that are not (directly) checked in the current implementation. Rather, procedure calls are woven into the main state space by considering their influence on the heap configuration only after the execution. However, properties should also be checked for the procedure state spaces themselves as they might introduce violations not visible in the main state space. We approach this gap by considering hierarchical model checking in Chapters ~\ref{chp:hmc} and ~\ref{chp:otf} that also verifies procedure state spaces for the specified LTL properties.
+	State space generation is followed by the model checking phase if LTL formulae have been specified. \textsc{Attestor} currently implements the tableaux method described in Section \ref{sec:tableaux} which checks the main state space for LTL formulae. In case a formula is violated, a failure trace is returned that constitutes a counterexample generated in the next phase. If all properties are satisfied, \textsc{Attestor} outputs accordingly. A drawback of the current model checking procedure is that procedural programs contain (recursive) methods and method calls with inherent state spaces that are not (directly) checked in the current implementation. Rather, procedure calls are woven into the main state space by considering their influence on the heap only after the execution. However, properties should also be checked for the procedure state spaces themselves as they might introduce violations not visible in the main state space. We approach this gap by considering hierarchical model checking in Chapters ~\ref{chp:hmc} and ~\ref{chp:otf} that also verifies procedure state spaces for the specified LTL properties.
 	
 	\paragraph{Phase 6: Counterexample Generation}
 	In case an LTL formula is found to be violated, the model checking phase returns a failure trace. Together with the violated formula a counterexample is generated in this phase in order to provide an instance for debugging purposes.
@@ -319,285 +320,79 @@
 	
 	\chapter{Preliminaries}
 	
-	Model checking is a formal verification technique that systematically analyses whether the system under consideration satisfies a set of specified properties. It then either returns that the system fulfills the desired properties or outputs a counterexample if a property is violated. The resulting counterexample offers useful information for debugging purposes. Two parameters are crucial for model checking in order to obtain an expressive and valuable outcome: the \textit{model} of the system under consideration and the formal description of the \textit{properties} the model is to be checked for.  
-	
-	\section{System Model}
-	
-	An important aspect in model checking is the model of the system under consideration. A model describes the behavior of the system. The more accurate the model represents the system, the more expressive the model checking results are. In this section, we first introduce the general concept of \textit{transition systems} that are commonly used to represent hardware and software systems. In order to describe \textit{hierarchical} system structures relevant to modeling pointer-manipulating programs, we focus on \textit{recursive state machines} that capture the hierarchical (or recursive) nature of method calls in programs. \\
-	
-	The states of the transition system consist of heap configurations that accommodate information about the current state of the program execution. As the heap can become unboundedly large, we introduce \textit{hypergraphs} and \textit{graph grammars}, that offer a finite representation for heap configurations, in the second part of this section.
-	
-	\subsection{Transition Systems}
-	
-	Transition systems are a model that represent the behavior of a system. A transition system can be regarded as a directed graph, where the nodes of the graph represent the \textit{states} of the system and the edges indicate the \textit{transition} of one state into another. A state encodes information about the system at a certain moment which are formulated as a set of \textit{atomic propositions}. A transition within a transition system thus reflects that the state of the system changes, e.g. the values of parameters have changed, new variables have been introduced or a process has terminated. These transitions can be annotated by \textit{action names} that capture the possible source of change, e.g. the communication with another system or process, like user interaction or input. 
-	
-	\begin{definition}[Transition System \cite{baier2008principles}]{def:transition system}
-		A \textit{transition system} $T$ is a tuple $(S, Act, \rightarrow, I, AP, L)$ where
-		\begin{itemize}
-			\item $S$ is a set of states,
-			\item $Act$ is a set of actions,
-			\item $\rightarrow \subseteq S \times Act \times S$ is a transition relation,
-			\item $I \subseteq S$ is a set of initial states,
-			\item $AP$ is a set of atomic propositions, and
-			\item $L: S \rightarrow 2^{AP}$ is a labeling function.
-		\end{itemize}
-		$T$ is called \textit{finite} if $S$, $Act$, and $AP$ are finite.
-	\end{definition}
+	Model checking is a formal verification technique that systematically analyses whether the program under consideration satisfies a specified property. The analysis yields three possible outcomes:
+	\begin{enumerate}
+		\item The program satisfies the property.
+		\item The program violates the property. The analysis returns a counterexample indicating at which state of the program the property is violated. 		
+		\item It is unknown whether the program satisfies the property. This answer is returned if the analysis terminates as computational resources are exceeded, e.g., the computation runs out of memory.
+	\end{enumerate}  
 
-	The set $AP$ of atomic propositions consists of the specified properties a state $s \in S$ might satisfy. The labeling function $L$ maps a state $s$ to a set $L(s) \in 2^{AP}$ stating the atomic proposition $a\in AP$ is satisfied by state $s$. Based on the set $L(s)$, we can specify that $s$ satisfies a propositional logic formula $\phi$ if the evaluation induced by $L(s)$ fulfills the formula $\phi$. Therefore,
-		\[s \models \phi \text{ iff } L(s) \models \phi.\]
+	Two parameters are crucial for model checking in order to obtain an expressive and valuable outcome: the model of the program under consideration and the formal description of the properties which are checked. The following sections introduce how we model input programs for model checking. Sections~\ref{sec:heap} and~\ref{sec:transition_system} describe how states and transitions of pointer-manipulating programs are represented by graphs and transitions between them, respectively. In order to describe hierarchical structures relevant to modeling programs with procedure calls, we focus on recursive state machines in Section~\ref{sec:rsm}. This chapter concludes by presenting linear temporal logic that formalizes properties that are checked for a program.
 	
-	The transition relation $\rightarrow$ formally describes how the transition system $T$ evolves starting in an initial state $s_0 \in I$. Thus, the transition $s \xrightarrow{\alpha} s'$ defines that state $s$ evolves to state $s'$ after the action $\alpha$ has been performed. If a state has more than one outgoing transition, the next transition is chosen nondeterministically. This procedure can be continued until a state without any outgoing transitions has been reached. Such a state is called a \textit{terminal state}.
+	\section{Heap Representation}\label{sec:heap}
 	
-	\begin{definition}[Terminal State \cite{baier2008principles}]{def:terminal_state}
-		A state $s \in S$ in a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is called \textit{terminal} if and only if 
-		\[\bigcup_{\alpha \in Act} \{s'\in S | s \xrightarrow{\alpha} s'\} = \emptyset.\]
-	\end{definition}
+	Our focus in model checking lies on pointer-manipulating programs. Therefore, we consider the heap of the program under consideration at every state. The heap encompasses a set of locations with variables and pointers, i.e., references to locations. It is represented by a graph where vertices represent heap objects, directed edges depict selectors and labeled edges depict the mapping of program variables to heap objects. Selectors are pointer variables that are connected to two vertices, i.e., a selector points from its source node to its target node.\\
 	
-	The resulting sequence of executed transitions starting in an initial state $s_0 \in I$ and either ending in a terminal state $s \in S$ or infinitely prolonging, is called an \textit{execution} of the transition system $T$.
+	Consider the class definition of a doubly-linked list (DLL) in \textsc{Java} code in Listing~\ref{lst:dll}. The class defines a doubly-linked list to have the selectors \texttt{next} and \texttt{prev} to point to the successor and predecessor node, respectively. 
 	
-	\begin{definition}[Execution]{def:execution}
-		Let $T=(S, Act, \rightarrow, I, AP, L)$. A \textit{finite execution} 
-		of $T$ is an alternating sequence \[s_0 \alpha_1 s_1 \alpha_2 \dots \alpha_n s_n\] of states and actions such that 
-		\begin{itemize}
-			\item $s_0 \in I$ is an initial state,
-			\item $s_i \xrightarrow{\alpha_{i+1}} s_{i+1}$ for all $0 \leq i < n$, where $n \geq 0$, and
-			\item $s_n$ is a terminal state.
-		\end{itemize}  
-		$n$ is also called the \textit{length} of the execution.
-		An \textit{infinite execution} of $T$ is an infinite, alternating sequence \[s_0 \alpha_1 s_1 \alpha_2 s_2 \alpha_3 \dots \] of states and actions such that
-		\begin{itemize}
-			\item $s_0 \in I$ is an initial state and
-			\item $s_i \xrightarrow{\alpha_{i+1}} s_{i+1}$ for all $0 \leq i$.
-		\end{itemize} 
-	\end{definition}
+	\begin{lstlisting}[language=Java,numbers=left,
+	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} class definition for doubly-linked lists.},captionpos=b,label={lst:dll}]
+	public class DLList {
 	
-	\begin{definition}[Reachable States \cite{baier2008principles}]{def:reachable_state}
-		A state $s \in S$ in a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is called \textit{reachable} in $T$ if there exists an execution of the form \[s_0 \alpha_1 s_1 \alpha_2 \dots \alpha_n s_n = s.\]
-		$Reach(T)$ denotes the set of all reachable states in $T$.
-	\end{definition}
+	  private DLList next;
+	  private DLList prev;
+	
+	  public DLList(DLList list) {
+	
+	    this.next = list;
+	    this.prev = null;
+	    list.prev = this;
+	  }
+	}
+	\end{lstlisting}
+	
+	Figure~\ref{fig:dll} illustrates a heap for a doubly-linked list. The list consists of five elements represented by circles. The selectors \texttt{next} and \texttt{prev} are represented by directed edges of the graph. Furthermore, the program variables \texttt{head} and \texttt{tail} are attached to the first and the last vertex of the list, respectively.\\
 
-	For our purpose of model checking pointer-manipulating programs, we focus on the states and the attached atomic propositions of the transition system under consideration, hence, we omit the actions. Multiple transitions between two states with different actions are thus summarized into a single transition. Therefore, the notion of an execution shifts to the notion of \textit{paths} that denote sequences of states that are visited throughout a run.	 
-	 
-	\begin{definition}[Paths \cite{baier2008principles}]{def:paths}
-		A \textit{finite path} $\pi$ of a transition system $T=(S, Act, \rightarrow, I, AP, L)$ is a finite sequence \[s_0 s_1 \dots s_n\] such that 
-		\begin{itemize}
-			\item $s_0 \in I$ is an initial state, 
-			\item $s_i \in \bigcup_{\alpha \in Act} \{s\in S | s_{i-1} \xrightarrow{\alpha} s\}$ for all $0<i\leq n$, where $n \geq 0$, and 
-			\item $s_n$ is a terminal state.
-		\end{itemize} 
-		An \textit{infinite path} $\pi$ is an infinite sequence \[s_0 s_1 s_2 \dots\] such that 
-		\begin{itemize}
-			\item $s_0 \in I$ is an initial state and 
-			\item $s_i \in \bigcup_{\alpha \in Act} \{s\in S | s_{i-1} \xrightarrow{\alpha} s\}$ for all $i > 0$.
-		\end{itemize}
-		$Paths(T)$ denotes the set of all paths in $T$.
-	\end{definition}
-
-	For a path $\pi$, $\pi[i]$ denotes the $i$th state of $\pi$, while $\pi[..i]$ and $\pi[i..]$ denote the $i$th prefix and the $i$th suffix of $\pi$, respectively. Paths display the order of states that are traversed throughout an execution of a transition system. However, the related sets of atomic propositions of the traversed states, which are relevant for model checking, are not observable in the path itself. Therefore, we consider the notion of \textit{traces} which are sequences of sets of atomic propositions that are satisfied along a path $\pi$.
-	
-	\begin{definition}[Trace \cite{baier2008principles}]{def:trace}
-		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system without terminal states.  The \textit{trace} of the finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots L(s_n).\] The \textit{trace} of the infinite path $\pi=s_0 s_1 \dots$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots.\]
-		
-		$Traces(s)$ denotes the set of traces of paths starting in state $s$ and $Traces(T)$ denotes the set of traces of the initial states of a transition system $T$.\\
-	\end{definition}
-
-	The condition that the transition system $T$ does not have any terminal states is not a restriction since for every transition system it is possible to construct an equivalent one without terminal states. This is achieved by adding a new state $s_{stop}$ with a self-loop to the transition system to which all terminal states have a transition. Thus, the resulting system does not contain any terminal states. In the following we assume that a transition system does not have any terminal states.\\
-	
-	Transition systems are a valid model for computer programs as they represent the control flow of the program and thus reflect the program execution. However, our current model does not consider the hierarchical or even recursive nature of programs containing (recursive) method calls. A transition system would hence depict all states of the program execution in a flat setting where method environments are not differentiated. In order to represent the hierarchical structure of method calls, we employ the concept of \textit{recursive state machines} described in the next section.	
-
-	\subsection{Recursive State Machines}
-	
-	Often computer programs do not only consist of a linear sequence of commands, but also generate (recursive) calls to methods. Therefore, the execution of these programs contains call- and return-statements to different sections of the input program. In order to capture this hierarchical (or recursive) structure of the system, we introduce the notion of \textit{recursive state machines}, as defined in \cite{alur2001analysis}, that encapsulate each method in an own \textit{component}. Each component consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component in the recursive state machine. A box can be understood as an interface with entry and exit nodes that models the transition into another method environment, e.g. entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. 
-	
-	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]{def:rsm}
-		A \textit{recursive state machine} (RSM) $\mathcal{A}$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} (CSM) $A_i = (N_i \cup B_i, Y_i, En_i, Ex_i, \delta_i)$, $1 \leq i \leq k$, consists of
-		\begin{itemize}
-			\item a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
-			\item a \textit{labeling} $Y_i: B_i \mapsto \{1, ..., k\}$ that assigns to every box an index $j \in \{1, ..., k\}$ referring to one of the component state machines $A_1, ..., A_k$,
-			\item a set of \textit{entry nodes} $En_i \subseteq N_i$,
-			\item a set of \textit{exit nodes} $Ex_i \subseteq N_i$, and
-			\item a \textit{transition relation} $\delta_i$, where transitions are of the form $(u, \sigma, v)$, where 
-			\begin{itemize}
-				\item the source $u$ is either a node of $N_i$ or a pair $(b, x)$, where $b$ is a box in $B_i$ and $x$ is an exit node in $Ex_j$ for $j = Y_i(b)$,
-				\item the label $\sigma$ is in $\Sigma$, and 
-				\item the destination $v$ is either a node in $N_i$ or a pair $(b, e)$, where $b$ is a box in $B_i$ and $e$ is an entry node in $En_j$ for $j = Y_i(b)$.
-			\end{itemize}
-		\end{itemize}
-	\end{definition}
-	
-	A sample RSM with three components $A_1, A_2, A_3$ is depicted in Figure~\ref{fig:rsm}. The nodes drawn at the border of the components represent the entry and exit nodes, respectively. The arrows depict the transitions between the states of a component as well as between states and boxes. Each box is mapped to a component, e.g. box $b_1$ in component $A_1$ is mapped to component $A_2$ and box $c_2$ in component $A_2$ is mapped to component $A_3$. Thus, entering box $b_1$ or $c_2$ changes the current component under control from component $A_1$ to $A_2$ or from component $A_2$ to $A_3$, respectively. This can be understood as an invocation of program methods where entry nodes represent input arguments to the called method and exit nodes model return values. \\
-	
-	% example RSM
-	\begin{figure}[!h]
-		\begin{center}
-			%\resizebox{0.7\textwidth}{!}{
-			\begin{tikzpicture}
-			%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
-			[node distance=2cm,thick,
-			normal/.style={circle, draw, fill=white, thick, font=\sffamily\Large\bfseries},
-			rectstyle/.style={draw, minimum width=7.5cm, minimum height=4.5cm, rounded corners=1.5pt, fill=gray!10}]
-			
-			\node (a1) at (-3.5, 2.5) {$A_1$};
-			\node (rect1) at (0,0) [rectstyle] {};
-			\node (u1) at (-3.75,1) [normal, label=180:$u_1$] {};
-			\node (u2) at (-3.75,-1) [normal, label=180:$u_2$] {};
-			\node (u3) at (-2,-1) [normal, label=-90:$u_3$] {};
-			\node (u4) at (3.75, 0) [normal, label=0:$u_4$] {};
-			%boxes
-			\node (b1) at (0,1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_1:A_2$};
-			\node (b11) at (-1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b12) at (-1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b13) at (1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b14) at (1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b2) at (1,-1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_2:A_3$};
-			\node (b21) at (-0.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (b22) at (2.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			% arrows
-			\draw[->,shorten >=0.5pt,out=0,in=180] (u1) to (b12);
-			\draw[->,shorten >=0.5pt,out=0,in=180] (u2) to (u3);
-			\draw[->,shorten >=0.5pt,out=0,in=180] (u3) to (b21);
-			\draw[->,shorten >=0.5pt,out=0,in=225] (b22) to (u4);
-			\draw[->,shorten >=0.5pt,out=0,in=135] (b14) to (u4);
-			\draw[->,shorten >=0.5pt,out=-45,in=225,distance=1.5cm] (b13) to (b11);
-			
-			\node (a2) at (-3.5, -3) {$A_2$};
-			\node (rect2) at (0,-5.5) [rectstyle] {};
-			\node (v1) at (-3.75,-4.5) [normal, label=180:$v_1$] {};
-			\node (v2) at (-3.75,-6.5) [normal, label=180:$v_2$] {};
-			\node (v3) at (3.75, -4.5) [normal, label=0:$v_3$] {};
-			\node (v4) at (3.75,-6.5) [normal, label=0:$v_4$] {};
-			%boxes
-			\node (c1) at (0,-4.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_1:A_2$};
-			\node (c11) at (-1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c12) at (-1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c13) at (1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c14) at (1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c2) at (0,-6.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_2:A_3$};
-			\node (c21) at (-1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			\node (c22) at (1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
-			% arrows
-			\draw[->,shorten >=0.5pt,out=0,in=180] (v1) to (c11);
-			\draw[->,shorten >=0.5pt,out=45,in=180] (v2) to (c12);
-			\draw[->,shorten >=0.5pt,out=-45,in=180] (v2) to (c21);
-			\draw[->,shorten >=0.5pt,out=45,in=225,distance=2.75cm] (c22) to (c12);
-			\draw[->,shorten >=0.5pt,out=0,in=-135] (c22) to (v4);
-			\draw[->,shorten >=0.5pt,out=0,in=135] (c13) to (v4);
-			\draw[->,shorten >=0.5pt,out=0,in=180] (c14) to (v3);
-			
-			\node (a3) at (-3.5, -8.5) {$A_3$};
-			\node (rect3) at (0,-11) [rectstyle] {};
-			\node (w1) at (-3.75,-11) [draw, thick, fill=white, circle, label=180:$w_1$] {};
-			\node (w2) at (3.75,-11) [draw, thick, fill=white, circle, label=0:$w_2$] {};
-			%boxes
-			\node (d) at (0,-11) [draw, thick, fill=gray!20,minimum width=2.5cm,minimum height=1.5cm,rounded corners=1.5pt] {$d:A_1$};
-			\node (d1) at (-1.25,-10.75) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
-			\node (d2) at (-1.25,-11.25) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
-			\node (d3) at (1.25,-11) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
-			% arrows
-			\draw[->,shorten >=0.5pt,out=0,in=180] (w1) to (d1);
-			\draw[->,shorten >=0.5pt,out=0,in=135] (d3) to (w2);
-			\draw[->,shorten >=0.5pt,out=-45,in=-135] (w1) to (w2);
-			
-			\end{tikzpicture}%}
-			\caption{A sample recursive state machine. Adapted from \cite{alur2001analysis}.}\label{fig:rsm}
-		\end{center}
-	\end{figure}
-	
-	% semantics of RSM
-	In order to define the execution of an RSM $\mathcal{A}=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
-	
-	\begin{definition}[(Global) State \cite{alur2001analysis}]{def:rsm_semantics}
-		A \textit{(global) state} of an RSM $\mathcal{A}=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1, ..., b_r$ are boxes and $u$ is a node. The set $Q$ of global states of $\mathcal{A}$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${Y_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${Y_j}_r(b_r) = j$.
-	\end{definition}
-	
-	% TODO A state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ can also be viewed as a string. 
-	% TODO example here
-	
-	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $\mathcal{A}=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $\mathcal{A}$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.\\
-	
-	Consider the sample RSM given in Figure~\ref{fig:rsm}. A global state in the sample RSM is given by \[(b_1, c_1, c_1, c_1, c_2, d, b_2, d, u_3),\] where the sequence of boxes protocols which components are visited before reaching the current state $u_3$. The state is well-formed as for every box $b \in \{b_1, b_2, c_1, c_2, d\}$ the labeling function $Y_i$ coincides with the component referred to by the next box in the sequence, e.g., $Y_1(b_1)=A_2$, which is exactly the component in which the following box $c_1$ is defined.\\
-	
-	In order to transition between global states of an RSM $\mathcal{A}$, we require the notion of a \textit{global transition relation} $\delta$ which enables us to not only transition between states within a CSM $A_j$ as defined by its transition relation $\delta_j$, but also between pairs of CSMs.
-	
-	\begin{definition}[(Global) Transition Relation \cite{alur2001analysis}]{def:rsm_transitionRelation}
-		Let $s=(b_1, ..., b_r, u) \in Q$ be a state with $u\in N_j$ and $b_r \in B_m$ for an RSM $\mathcal{A}=(A_1, ..., A_k)$. A \textit{(global) transition relation} $\delta$ for $\mathcal{A}$ defines $(s, \sigma, s') \in \delta$ if and only if one of the following holds:
-		\begin{enumerate}
-			\item $(u, \sigma, u') \in \delta_j$ for a node $u'$ of $A_j$ and $s'=(b_1, ..., b_r, u')$.
-			\item $(u, \sigma, (b',e))\in \delta_j$ for a box $b'$ of $A_j$ and $s'=(b_1, ..., b_r, b', e)$.
-			\item $u$ is an exit-node of $A_j$, $((b_r, u), \sigma, u') \in \delta_m$ for a node $u'$ of $A_m$, and $s'=(b_1, ..., b_{r-1}, u')$.
-			\item $u$ is an exit-node of $A_j$, $((b_r, u), \sigma, (b',e)) \in \delta_m$ for a box $b'$ of $A_m$, and $s'=(b_1, ..., b_{r-1}, b', e)$.
-		\end{enumerate}
-	\end{definition}
-	
-	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $\mathcal{A}$. Consider the RSM given in Figure~\ref{fig:rsm}. For each case depicted in Definition~\ref{def:rsm_transitionRelation}, we can find an example in order to illustrate the global transition relation: \\
-	
-	\underline{Case 1} describes the scenario where the source and the destination nodes are both within the same component $A_j$. For instance, the component $A_1$ defines $(u_2, \sigma, u_3) \in \delta_1$, thus, in terms of the global transition relation $\delta$, a valid global transition would be $((b_2,d,u_2), \sigma, (b_2,d, u_3)) \in \delta$.\\ 
-	
-	\underline{Case 2} depicts that a new component is entered via box $b'$ of $A_j$. Thus, the current node of the destination state $s'$ is the entry-node $e$. An example for this case is given by regarding the global state $(b_1, c_1, c_2, d, u_3)$ which is located in component $A_1$. The local transition relation $\delta_1$ contains the transition $(u_3, \sigma, (b_2, v_1))$. Therefore, globally $((b_1, c_1, c_2, d, u_3), \sigma, (b_1, c_1, c_2, d, b_2, v_1))\in \delta$ which corresponds to  entering component $A_2$ via box $b_2$ and transitioning to state $(b_1, c_1, c_2, d, b_2, v_1)$.\\
-	
-	\underline{Case 3 and 4} are both exiting component $A_j$ via the exit-node $u$. While case 3 returns to component $A_m$, from where we entered $A_j$ before, case 4 directly enters a new component via box $b'$ of component $A_m$. An example for case 3 is given by the transition $((b_1,c_1,c_2,d,u_4),\sigma, (b_1,c_1,c_2,w_2)) \in \delta$, where we return from component $A_1$ via box $d$ to component $A_3$. If we continue the return action for state $(b_1,c_1,c_2,w_2)$, we get $((b_1,c_1,c_2,w_2), \sigma, (b_1,c_1,c_1,v_2)) \in \delta$ as a sample transition for case 4. The transition describes that we exit component $A_3$ entered via box $c_2$ and directly enter component $A_2$ via box $c_1$ as $((c_2,w_2),\sigma,(c_1, v_2))$ is a valid transition according to $\delta_2$. \\
-	
-	After defining the terms of global states and the global transition relation for an RSM $\mathcal{A}$, we can summarize these components together with the finite alphabet $\Sigma$ within the concept of a \textit{labeled transition system} $T_{\mathcal{A}}$, which encodes the execution of $\mathcal{A}$.
-	
-	\begin{definition}[Labeled Transition System \cite{alur2001analysis}]{def:rsm_transitionSystem}
-		For an RSM $\mathcal{A}=(A_1, ..., A_k)$, the \textit{labeled transition system} (LTS) $T_\mathcal{A}=(Q, \Sigma, \delta)$ consists of
-		\begin{itemize}
-			\item a set of global states $Q$, 
-			\item a finite alphabet $\Sigma$, and
-			\item a global transition relation $\delta$.
-		\end{itemize}		
-		The LTS of an RSM $\mathcal{A}$ is also called the \textit{unfolding} of $\mathcal{A}$.
-	\end{definition}
-
-	The LTS of an RSM is basically the flattening of the hierarchical structure induced by the components and boxes of an RSM. Therefore, an LTS corresponds to our initial definition of a transition system, where the set $Act$ of actions, the set $I$ of initial states, the set $AP$ of atomic propositions, and the labeling function $L$ are implicitly specified by the underlying RSM (cf. Definition~\ref{def:transition system}). 
-	
-	\subsection{Heap Representation}
-	
-	After describing recursive state machines as a model for model checking hierarchical programs, we now focus on the representation of the \textit{states} in the transition system. The states under consideration are \textit{heap configurations} holding information on heap objects, program variables, and selectors. Heap configurations are represented by graphs as described in \cite{heinen2015verifying}, where vertices  represent heap objects and edges depict selectors and the mapping of program variables to heap objects. Figure~\ref{fig:dll} illustrates a heap configuration for a doubly-linked list. The list consists of five elements represented by the round vertices of the graph. The selectors \texttt{next} and \texttt{prev} are represented by the edges of the graph. Furthermore, the program variables \texttt{head} and \texttt{tail} are attached to the first and the last vertex of the list, respectively. 
-	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
-			\begin{tikzpicture}
-			%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
-			[node distance=2cm,thick,
-			normal/.style={circle, draw, fill=white, thick, minimum width=1cm, font=\sffamily\Large\bfseries},
-			rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
-			
-			\node (a1) at (0,0) [normal] {};
-			\node (a2) at (2,0) [normal] {};
-			\node (a3) at (4,0) [normal] {};
-			\node (a4) at (6,0) [normal] {};
-			\node (a5) at (8,0) [normal] {};
-			\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
-			\node (r2) at (10, 0) [rectstyle] {\texttt{tail}};
-			
-			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
-			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-			
-			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
-			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
-			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[below] {\texttt{prev}} (a3);
-			\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
-			
-			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-			\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
-			
-			\end{tikzpicture}}
-			\caption{Heap configuration of a doubly-linked list. Adapted from \cite{heinen2015verifying}.}\label{fig:dll}
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick, minimum width=1cm, font=\sffamily\Large\bfseries},
+				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
+				
+				\node (a1) at (0,0) [normal] {};
+				\node (a2) at (2,0) [normal] {};
+				\node (a3) at (4,0) [normal] {};
+				\node (a4) at (6,0) [normal] {};
+				\node (a5) at (8,0) [normal] {};
+				\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
+				\node (r2) at (10, 0) [rectstyle] {\texttt{tail}};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[below] {\texttt{prev}} (a3);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
+				
+				\end{tikzpicture}}
+			\caption{Heap for a doubly-linked list. Adapted from \cite{heinen2015verifying}.}\label{fig:dll}
 		\end{center}
 	\end{figure}
-
-	Pointer-manipulating operations are represented by graph transformations. For instance, executing the operation \texttt{head := tail.prev} on the heap configuration given in Figure~\ref{fig:dll} results in the heap configuration shown in Figure~\ref{fig:dll_op}. 
 	
-	\begin{figure}[!h]
+	Pointer-manipulating operations are represented by graph transformations. For instance, executing the operation \texttt{head := tail.prev} on the heap given in Figure~\ref{fig:dll} attaches the variable \texttt{head} to the vertex pointed to by the \texttt{prev} selector of the last vertex. The resulting heap is shown in Figure~\ref{fig:dll_op}.\\ 
+	
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.75\textwidth}{!}{
 				\begin{tikzpicture}
-				%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
 				[node distance=2cm,thick,
 				normal/.style={circle, draw, fill=white, thick, minimum width=1cm, font=\sffamily\Large\bfseries},
 				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
@@ -624,14 +419,11 @@
 				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
 				
 				\end{tikzpicture}}
-			\caption{Modified heap configuration after pointer-operation.}\label{fig:dll_op}
+			\caption{Modified heap after pointer-operation \texttt{head := tail.prev}.}\label{fig:dll_op}
 		\end{center}
-	\end{figure}
+	\end{figure}	
 	
-	Over the course of the program execution the size of the heap can become unboundedly large, e.g. when new objects are added to the heap. In order to avoid an unbounded size of the heap representation, we exploit the concept of \textit{hypergraphs}. Hypergraphs are similar to the common graph except that they allow for the graph to contain \textit{abstracted} subgraphs. These subgraphs are connected to the concrete part of the heap by \textit{hyperedges}. Hyperedges differ from commonly known edges in the property that they connect arbitrarily many vertices, instead of only two. The number of vertices a hyperedge connects is captured in its \textit{rank}.\\
-	
-	In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe \textit{concrete} heaps that do not contain an abstract part such as the heap depicted in Figure~\ref{fig:dll}.
-
+	The number of objects in a heap can become unboundedly large. For instance, a program that contains a loop in which a new element is added to a list. If the loop is visited infinitely often, the resulting heap size will increase with every iteration. In order to obtain a finite representation of a heap, parts of the graph are abstracted, i.e., a subgraph is replaced by a placeholder. An example for an abstracted graph is depicted in Figure~\ref{fig:dll_hyper}. The graph shows a doubly-linked list with a placeholder labeled \textit{DLL} which represents a doubly-linked list of arbitrary length. The example illustrates the concept of \textit{hypergraphs}. Hypergraphs are graphs in which an edge is connected to an arbitrary number of nodes. These edges are called \textit{hyperedges}. The number of vertices a hyperedge connects is captured in its \textit{rank}. Hypergraphs represent heaps that are partially concrete and partially abstract. In our example from Figure~\ref{fig:dll_hyper}, the hyperedge labeled \textit{DLL} is the abstracted part of the hypergraph in the otherwise concrete graph. In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe \textit{concrete} heaps that do not contain an abstract part such as the heap depicted in Figure~\ref{fig:dll}.\\	
 	
 	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]{def:hypergraph}
 		Given a finite ranked alphabet $\Sigma = \Sigma_N \uplus \Sigma_T$ with associated ranking function $rk : \Sigma \rightarrow \mathds{N}$. A (labeled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, att, lab, ext)\]
@@ -646,56 +438,51 @@
 		For every $e \in E$, we let $rk(e) = |att(e)|$ and we require $rk(e) = rk(lab(e))$. The set of all hypergraphs over $\Sigma$ is denoted by $HG_{\Sigma}$.
 	\end{definition}
 	
-	An example for a hypergraph with an abstracted subgraph is depicted in Figure~\ref{fig:dll_hyper}. Here, the abstracted subgraph is represented by the hyperedge labeled $DLL$. This indicates that the hyperedge replaces a doubly-linked list of arbitrary length.
-	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
-			\begin{tikzpicture}
-			%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
-			[node distance=2cm,thick,
-			normal/.style={circle, draw, fill=white, thick, minimum width=1cm, font=\sffamily\Large\bfseries},
-			rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
-			
-			\node (a1) at (0,0) [normal] {};
-			\node (a2) at (2,0) [normal] {};
-			\node (a3) at (4,0) [normal] {};
-			\node (a4) at (8,0) [normal] {};
-			\node (a5) at (10,0) [normal] {};
-			\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
-			\node (r2) at (12, 0) [rectstyle] {\texttt{tail}};
-			\node (r) at (6, 0) [draw, fill=gray!10, minimum height=1cm] {$DLL$};
-			
-			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-			
-			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
-			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
-			\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
-			
-			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-			\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
-			\path[] (r) edge[] node[fill=white, below] {1} (a3);
-			\path[] (r) edge[] node[fill=white, below] {2} (a4);
-			
-			\end{tikzpicture}}
+				\begin{tikzpicture}
+				%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick, minimum width=1cm, font=\sffamily\Large\bfseries},
+				rectstyle/.style={draw, minimum width=1.5cm, minimum height=1cm, rounded corners=1.5pt, fill=gray!10}]
+				
+				\node (a1) at (0,0) [normal] {};
+				\node (a2) at (2,0) [normal] {};
+				\node (a3) at (4,0) [normal] {};
+				\node (a4) at (8,0) [normal] {};
+				\node (a5) at (10,0) [normal] {};
+				\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
+				\node (r2) at (12, 0) [rectstyle] {\texttt{tail}};
+				\node (r) at (6, 0) [draw, fill=gray!10, minimum height=1cm] {$DLL$};
+				
+				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+				
+				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[below] {\texttt{prev}} (a1);
+				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[below] {\texttt{prev}} (a2);
+				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[below] {\texttt{prev}} (a4);
+				
+				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+				\path[] (r2) edge[line width=0.75mm] node[fill=white, below] {1} (a5);
+				\path[] (r) edge[] node[fill=white, below] {1} (a3);
+				\path[] (r) edge[] node[fill=white, below] {2} (a4);
+				
+				\end{tikzpicture}}
 			\caption{A doubly-linked list with abstracted subgraph represented as a hypergraph. Adapted from \cite{heinen2015verifying}.}\label{fig:dll_hyper}
 		\end{center}
 	\end{figure}
 	
-	In order to obtain all possible heap configurations represented by an abstract subgraph, we require the concept of \textit{graph grammars} or more specifically \textit{hyperedge replacement grammars}. Graph grammars are similar to string grammars and define a set of \textit{rules} for graph manipulation. They prescribe how nonterminals can be replaced by hypergraphs. Continuously applying grammar rules to a hypergraph gradually replaces nonterminals by hypergraphs so that concrete heap configurations can be reached eventually.
+	In order to obtain all possible heaps represented by an abstract subgraph, we require the concept of graph grammars. Graph grammars define a set of production rules that define how nonterminals can be replaced by hypergraphs. Nonterminals represent abstract parts of the graph such as $DLL$ in Figure~\ref{fig:dll_hyper}. Exhaustively applying production rules to a graph gradually replaces nonterminals by graphs so that concrete graphs without nonterminals can be reached eventually. Graph grammars are therefore comparable to string grammars that define rules to manipulate strings. As we consider hypergraphs in our analysis, we focus on hyperedge replacement grammars that are graph grammars working on hypergraphs, where nonterminals represent hyperedges.  
 	
 	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]{def:hrg}
-		A \textit{hyperedge replacement grammar} $G$ over the ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal that forms the left-hand
-		side and $R \in HG_{\Sigma}$ is the rule graph, a hypergraph with $|ext_R|=rk(X)$, the right-hand side pf the rule.
+		A \textit{hyperedge replacement grammar} $G$ over a ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal and $R \in HG_{\Sigma}$ is a rule graph, i.e., a hypergraph with $|ext_R|=rk(X)$.
 	\end{definition}
-
-	The language of a hyperedge replacement grammar contains all concrete hypergraphs that are obtained by repeatedly applying the production rules to a given hypergraph.\\
 	
-	An example for a hyperedge replacement grammar, that describes the language of all doubly-linked lists with at least two elements, is given in Figure~\ref{fig:dll_grammar}. The first production rule recursively adds an element to the existing list introducing a new nonterminal $DLL$ in order to allow for adding more elements during another production. The second rule terminates the production by replacing the nonterminal $DLL$ by a concrete graph. 
+	The language of a hyperedge replacement grammar contains all concrete hypergraphs that are obtained by repeatedly applying the production rules to a given hypergraph. In this context, a nonterminal in a hypergraph is replaced by a hypergraph according to the production rules. The replacement requires that the external nodes of the replacing hypergraph are mapped to the placeholders in the hypergraph. To illustrate an hyperedge replacement, consider the hyperedge replacement grammar given in Figure~\ref{fig:dll_grammar}. The grammar describes the language of all doubly-linked lists with at least two elements. The first production rule recursively adds an element to the existing list introducing a new nonterminal $DLL$ in order to allow for adding more elements during another production. The second rule terminates the production by replacing the nonterminal $DLL$ by a concrete graph. Let us consider the hypergraph from Figure~\ref{fig:dll}. We have two options to apply the hyperedge replacement grammar for doubly-linked lists to the hypergraph under consideration. Applying the first rule yields the (abstract) hypergraph depicted in Figure~\ref{fig:dll_hyper_r1}, while applying the second rule yields a concrete hypergraph as shown in Figure~\ref{fig:dll_hyper_r2}.\\
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
 				\begin{tikzpicture}
@@ -725,11 +512,9 @@
 				\end{tikzpicture}}
 			\caption{A hyperedge replacement grammar for doubly-linked lists. Adapted from \cite{heinen2015verifying}.}\label{fig:dll_grammar}
 		\end{center}
-	\end{figure}
-
-	Let us consider the hypergraph from Figure~\ref{fig:dll}. We have two options to apply the grammar from Figure~\ref{fig:dll_grammar} to the hypergraph under consideration. Applying the first rule yields the (abstract) hypergraph depicted in Figure~\ref{fig:dll_hyper_r1}, while applying the second rule yields a concrete hypergraph as shown in Figure~\ref{fig:dll_hyper_r2}.
+	\end{figure}	
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
 				\begin{tikzpicture}
@@ -808,7 +593,7 @@
 		\end{center}
 	\end{figure}
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{0.9\textwidth}{!}{
 				\begin{tikzpicture}
@@ -878,44 +663,325 @@
 			\caption{By applying the second production rule from Figure~\ref{fig:dll_grammar} a concrete hypergraph is obtained.}\label{fig:dll_hyper_r2}
 		\end{center}
 	\end{figure}	
+	
+	Figures~\ref{fig:dll_hyper_r1} and~\ref{fig:dll_hyper_r2} display the forward application of production rules on a hypergraph also called \textit{concretisation} as an abstract fragment is replaced by a (more) concrete subgraph. A concretisation step can yield more than one concrete hypergraph if several production rules are applicable. Therefore, concretisation needs to consider all possible hypergraphs. In fact, the application of the production rules of the hyperedge replacement grammar for doubly-linked lists in Figures~\ref{fig:dll_hyper_r1} and ~\ref{fig:dll_hyper_r2} is an example for a case where more than one rule is applicable. \\
+	
+	In contrast to concretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction of subgraphs yield an over-approximation of the current set of concrete hypergraphs, since information on what exactly has been abstracted is lost during abstraction. Abstraction allows us to represent possibly unboundedly large graphs in a finite manner.\\
+	
+	\section{Transition Systems}\label{sec:transition_system}
+	
+	Hypergraphs model the heap of a program at a certain moment. In order to describe the behavior of a program, we use the notion of a \textit{transition system}. A transition system is a graph where nodes represent \textit{states} reachable by a program and edges indicate \textit{transitions} between states. A transition reflects how a state of the system changes, e.g., due to a statement execution.
+	
+	\begin{definition}[Transition System \cite{baier2008principles}]{def:transition system}
+		A \textit{transition system} $T$ is a tuple $(S, I, \rightarrow, AP, L)$ where
+		\begin{itemize}
+			\item $S$ is a set of states,
+			\item $I \subseteq S$ is a set of initial states,
+			\item $\rightarrow \;\subseteq S \times S$ is a transition relation,
+			\item $AP$ is a set of atomic propositions, and
+			\item $L: S \rightarrow 2^{AP}$ is a labeling function.
+		\end{itemize}
+		$T$ is called \textit{finite} if $S$, $Act$, and $AP$ are finite.
+	\end{definition}
 
-	Figures~\ref{fig:dll_hyper_r1} and ~\ref{fig:dll_hyper_r2} display the forward application of production rules on a hypergraph also called \textit{concretisation} as an abstract fragment is replaced by a (more) concrete subgraph. A concretisation step can yield more than one concrete hypergraph if several production rules are applicable. Thus, abstraction of subgraphs yield an over-approximation of the current set of concrete hypergraphs, since information is lost during abstraction. It is not always possible to uniquely identify the initial hypergraph of which the abstracted graph has been derived of. Therefore, concretisation needs to consider all possible hypergraphs. In fact, the application of the production rules of the hyperedge replacement grammar for doubly-linked lists in Figures~\ref{fig:dll_hyper_r1} and ~\ref{fig:dll_hyper_r2} is an example for a case where more than one rule is applicable. \\
+	We consider transition systems where a state is a hypergraph that encompasses the current heap of the program under consideration. The set $AP$ of atomic propositions consists of the properties under consideration. The labeling function $L$ maps a state $s$ to a set $L(s) \in 2^{AP}$ of atomic propositions satisfied by $s$. For example, the atomic proposition $"i<0"$ holds for a state where the variable $i$ is set to the value $-2$.
+	%TODO check whether this is correct 
+	Based on the set $L(s)$, we can specify that $s$ satisfies a propositional logic formula $\phi$ if the evaluation induced by $L(s)$ fulfills the formula $\phi$. Therefore,
+		\[s \models \phi \text{ iff } L(s) \models \phi.\]
 	
-	In contrast to concretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction hence allows us to represent possibly unboundedly large graphs in a finite manner.\\
+	The transition relation $\rightarrow$ formally describes how the transition system $T$ evolves starting in a state $s \in S$. Thus, the transition $(s,s') \in\; \rightarrow$ defines that state $s$ evolves to state $s'$. If a state has more than one outgoing transition, the next transition is chosen nondeterministically. A state without any outgoing transitions is called a \textit{terminal state}.
 	
-	% TODO require check for embeddings of right hand sides
+	\begin{definition}[Terminal State \cite{baier2008principles}]{def:terminal_state}
+		A state $s \in S$ in a transition system $T=(S, I, \rightarrow, AP, L)$ is called \textit{terminal} if and only if 
+		\[\bigcup\; \{s'\in S | s \rightarrow s'\} = \emptyset.\]
+	\end{definition}
+
+	Figure~\ref{fig:example_statespace} depicts an example of a transition system $T=(S, I, \rightarrow, AP, L)$. Every state encompasses a graph that represents the heap. The initial state $s_0 \in I$ is marked with a short incoming arrow. It consists of a doubly-linked list with two elements. The variables \texttt{head} and \texttt{tail} are attached to the first and last node of the list, respectively. $s_0$ is succeeded by state $s_1$ which contains a list of three elements. $s_1$ has two successor states: itself and $s_2$, which contains a list of four elements. The transition relation $\rightarrow$ is represented by arrows connecting two states. For example, $(s_0, s_1) \in\; \rightarrow$ and $(s_1, s_2) \in\; \rightarrow$. The self-loop at state $s_1$ depicts the transition $(s_1,s_1) \in\; \rightarrow$. State $s_2$ is a terminal state as it does not have any outgoing transitions. The states in $T$ are labeled with atomic propositions that they satisfy. State $s_0$ satisfies proposition $a$. Therefore, $L(s_0)=\{a\}$. $s_1$ does not satisfy any propositions, while $s_2$ satisfies propositions $a$ and $b$. From the stated propositions, the set $AP$ of atomic propositions is implicitly given as $AP=\{a,b\}$.\\
 	
-	Concluding with the concept of hypergraphs and hyperedge replacement grammars we specified the relevant framework for model checking pointer-manipulating programs. We model the program execution by recursive state machines capturing the hierarchical nature of method calls, while hypergraphs offer a finite representation of heap configurations that constitute the states of the model under consideration. The second ingredient to model checking is the formal definition of the properties the model is to be validated for. Here, we focus on \textit{linear temporal logic} described in the following section.
+	\begin{figure}
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, minimum width=3.5cm, minimum height=3cm, rounded corners=1.5pt, fill=gray!10},
+				var/.style={draw, rounded corners=1.5pt, fill=white}]
+				
+				%state 1
+				\node (back1) at (0,0) [rectstyle] {};
+				\node (text) at (-1.5,1.25) {$s_0$};
+				\node (1) at (-1,0) [normal] {};
+				\node (2) at (0,0) [normal] {};
+				\node (3) at (1,0) [normal] {};
+				\node (head) at (-1,-1) [var] {\texttt{head}};
+				\node (null) at (1,1) [var] {\texttt{tail}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{p}} (1);
+				\draw[->,shorten >=0.5pt] (3) edge[bend left] node[below] {\texttt{p}} (2);
+				\draw (head) to (1);
+				\draw (null) to (3);
+				
+				\node (AP) at (0,1.85) {$\{a\}$};
+				
+				%state 2
+				\node (back2) at (5,0) [rectstyle,minimum width=4.5cm] {};
+				\node (text) at (3,1.25) {$s_1$};
+				\node (1) at (3.5,0) [normal] {};
+				\node (2) at (4.5,0) [normal] {};
+				\node (3) at (5.5,0) [normal] {};
+				\node (4) at (6.5,0) [normal] {};
+				\node (head) at (3.5,-1) [var] {\texttt{head}};
+				\node (null) at (6.5,1) [var] {\texttt{tail}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{p}} (1);
+				\draw[->,shorten >=0.5pt] (3) edge[bend left] node[below] {\texttt{p}} (2);
+				\draw[->,shorten >=0.5pt] (3) edge[bend left] node[above] {\texttt{n}} (4);
+				\draw[->,shorten >=0.5pt] (4) edge[bend left] node[below] {\texttt{p}} (3);
+				\draw (head) to (1);
+				\draw (null) to (4);
+				
+				\node (AP) at (5,1.85) {$\emptyset$};
+				
+				%state 3
+				\node (back3) at (11,0) [rectstyle,minimum width=5.5cm] {};
+				\node (text) at (8.5,1.25) {$s_2$};
+				\node (1) at (9,0) [normal] {};
+				\node (2) at (10,0) [normal] {};
+				\node (3) at (11,0) [normal] {};
+				\node (4) at (12,0) [normal] {};
+				\node (5) at (13,0) [normal] {};
+				\node (head) at (9,-1) [var] {\texttt{head}};
+				\node (null) at (13,1) [var] {\texttt{tail}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[below] {\texttt{p}} (1);
+				\draw[->,shorten >=0.5pt] (3) edge[bend left] node[below] {\texttt{p}} (2);
+				\draw[->,shorten >=0.5pt] (3) edge[bend left] node[above] {\texttt{n}} (4);
+				\draw[->,shorten >=0.5pt] (4) edge[bend left] node[below] {\texttt{p}} (3);
+				\draw[->,shorten >=0.5pt] (4) edge[bend left] node[above] {\texttt{n}} (5);
+				\draw[->,shorten >=0.5pt] (5) edge[bend left] node[below] {\texttt{p}} (4);
+				\draw (head) to (1);
+				\draw (null) to (5);
+				
+				\node (AP) at (11,1.85) {$\{{a,b}\}$};				
+				
+				\draw[->,shorten >=0.5pt] (-2.25,0) to (-1.75,0);
+				\draw[->,shorten >=0.5pt] (back1) to (back2);
+				\draw[->,shorten >=0.5pt] (back2) to (back3);
+				\draw[->,shorten >=0.5pt] (back2) edge [loop below] (back2);
+				\end{tikzpicture}}
+			\caption{Sample state space.}\label{fig:example_statespace}
+		\end{center}
+	\end{figure}
+	
+	A sequence of transitions starting in an initial state $s_0 \in I$ and either ending in a terminal state $s \in S$ or infinitely prolonging, is called a \textit{path} of transition system $T$.
+	 
+	\begin{definition}[Paths \cite{baier2008principles}]{def:paths}
+		A \textit{finite path} $\pi$ of a transition system $T=(S, I, \rightarrow, AP, L)$ is a finite sequence \[s_0 s_1 \dots s_n\] such that 
+		\begin{itemize}
+			\item $s_0 \in I$ is an initial state, 
+			\item $s_i \in \bigcup \{s\in S | s_{i-1} \rightarrow s\}$ for all $0<i\leq n$, where $n \geq 0$, and 
+			\item $s_n$ is a terminal state.
+		\end{itemize} 
+		An \textit{infinite path} $\pi$ is an infinite sequence \[s_0 s_1 s_2 \dots\] such that 
+		\begin{itemize}
+			\item $s_0 \in I$ is an initial state and 
+			\item $s_i \in \bigcup \{s\in S | s_{i-1} \rightarrow s\}$ for all $i > 0$.
+		\end{itemize}
+		$Paths(T)$ denotes the set of all paths in $T$.
+	\end{definition}
+
+	For a path $\pi$, $\pi[i]$ denotes the $i$th state of $\pi$, while  $\pi[i..]$ denotes the $i$th suffix of $\pi$. Paths display the order of states that are traversed throughout a sequence of transitions. However, the related sets of atomic propositions of the traversed states, which are relevant for model checking, are not observable in the path itself. Therefore, we consider the notion of \textit{traces} which are sequences of sets of atomic propositions that are satisfied along a path $\pi$.
+	
+	\begin{definition}[Trace \cite{baier2008principles}]{def:trace}
+		Let $T=(S, I, \rightarrow, AP, L)$ be a transition system without terminal states.  The \textit{trace} of the finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots L(s_n).\] The \textit{trace} of the infinite path $\pi=s_0 s_1 \dots$ is defined as \[trace(\pi)=L(s_0)L(s_1)\dots.\]
+		
+		$Traces(s)$ denotes the set of traces of paths starting in state $s$ and $Traces(T)$ denotes the set of traces of the initial states of a transition system $T$.\\
+	\end{definition}
+
+	The condition that a transition system does not have any terminal states is not a restriction since, for every transition system, it is possible to construct an equivalent one without terminal states. This is achieved by adding a new state $s_{stop}$ with a self-loop to the transition system to which all terminal states have a transition. Thus, the resulting system does not contain any terminal states. In the following we assume that a transition system does not have any terminal states.\\
+	
+	Consider the sample transition system $T$ in Figure~\ref{fig:example_statespace}. A path $\pi$ in $T$ is the finite sequence $s_0s_1s_2$. The corresponding trace of $\pi$ is given by \[L(s_0)L(s_1)L(s_2) = \{a\}\emptyset\{a,b\}.\] 
+	An infinite path $\pi'$ in $T$ is the sequence $s_0s_1s_1s_1\dots$ that infinitely loops around the state $s_1$. $\pi'$ implies the trace  
+	\[L(s_0)L(s_1)L(s_1)L(s_1)\dots = \{a\}\emptyset\emptyset\emptyset\dots.\]
+
+	\section{Recursive State Machines}\label{sec:rsm}
+	
+	Often computer programs do not only consist of a sequence of commands, but also contain (recursive) calls to methods. The execution of procedural programs contains call- and return-statements to different sections of the input program. In order to capture the hierarchical (or recursive) structure, we introduce the notion of \textit{recursive state machines}, as defined in \cite{alur2001analysis}, that encapsulate each method in its own \textit{component}. Each component consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component in the recursive state machine. A box can be understood as an interface with entry and exit nodes that models the transition into another method environment, e.g. entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. 
+	
+	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]{def:rsm}
+		A \textit{recursive state machine} (RSM) $\mathcal{A}$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} (CSM) $A_i = (N_i \cup B_i, Y_i, En_i, Ex_i, \delta_i)$, $1 \leq i \leq k$, consists of
+		\begin{itemize}
+			\item a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
+			\item a \textit{labeling} $Y_i: B_i \mapsto \{1, ..., k\}$ that assigns to every box an index $j \in \{1, ..., k\}$ referring to one of the component state machines $A_1, ..., A_k$,
+			\item a set of \textit{entry nodes} $En_i \subseteq N_i$,
+			\item a set of \textit{exit nodes} $Ex_i \subseteq N_i$, and
+			\item a \textit{transition relation} $\delta_i$, where transitions are of the form $(u, \sigma, v)$, where 
+			\begin{itemize}
+				\item the source $u$ is either a node of $N_i$ or a pair $(b, x)$, where $b$ is a box in $B_i$ and $x$ is an exit node in $Ex_j$ for $j = Y_i(b)$,
+				\item the label $\sigma$ is in $\Sigma$, and 
+				\item the destination $v$ is either a node in $N_i$ or a pair $(b, e)$, where $b$ is a box in $B_i$ and $e$ is an entry node in $En_j$ for $j = Y_i(b)$.
+			\end{itemize}
+		\end{itemize}
+	\end{definition}
+	
+	A sample RSM with three components $A_1, A_2, A_3$ is depicted in Figure~\ref{fig:rsm}. The nodes drawn at the border of the components represent the entry and exit nodes, respectively. The arrows depict the transitions between the states of a component as well as between states and boxes. Each box is mapped to a component, e.g. box $b_1$ in component $A_1$ is mapped to component $A_2$. Box $c_2$ in component $A_2$ is mapped to component $A_3$. Thus, entering box $b_1$ or $c_2$ changes the current component under control from component $A_1$ to $A_2$ or from component $A_2$ to $A_3$, respectively. This can be understood as an invocation of program methods where entry nodes represent input arguments to the called method and exit nodes model return values. \\
+	
+	% example RSM
+	\begin{figure}
+		\begin{center}
+			%\resizebox{0.7\textwidth}{!}{
+			\begin{tikzpicture}
+			%	\draw [gray, line width=0.05pt] (0.1,0.1) rectangle (0.2,0.2);
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, font=\sffamily\Large\bfseries},
+			rectstyle/.style={draw, minimum width=7.5cm, minimum height=4.5cm, rounded corners=1.5pt, fill=gray!10}]
+			
+			\node (a1) at (-3.5, 2.5) {$A_1$};
+			\node (rect1) at (0,0) [rectstyle] {};
+			\node (u1) at (-3.75,1) [normal, label=180:$u_1$] {};
+			\node (u2) at (-3.75,-1) [normal, label=180:$u_2$] {};
+			\node (u3) at (-2,-1) [normal, label=-90:$u_3$] {};
+			\node (u4) at (3.75, 0) [normal, label=0:$u_4$] {};
+			%boxes
+			\node (b1) at (0,1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_1:A_2$};
+			\node (b11) at (-1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (b12) at (-1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (b13) at (1.25,0.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (b14) at (1.25,1.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (b2) at (1,-1) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$b_2:A_3$};
+			\node (b21) at (-0.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (b22) at (2.25,-1) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			% arrows
+			\draw[->,shorten >=0.5pt,out=0,in=180] (u1) to (b12);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (u2) to (u3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (u3) to (b21);
+			\draw[->,shorten >=0.5pt,out=0,in=225] (b22) to (u4);
+			\draw[->,shorten >=0.5pt,out=0,in=135] (b14) to (u4);
+			\draw[->,shorten >=0.5pt,out=-45,in=225,distance=1.5cm] (b13) to (b11);
+			
+			\node (a2) at (-3.5, -3) {$A_2$};
+			\node (rect2) at (0,-5.5) [rectstyle] {};
+			\node (v1) at (-3.75,-4.5) [normal, label=180:$v_1$] {};
+			\node (v2) at (-3.75,-6.5) [normal, label=180:$v_2$] {};
+			\node (v3) at (3.75, -4.5) [normal, label=0:$v_3$] {};
+			\node (v4) at (3.75,-6.5) [normal, label=0:$v_4$] {};
+			%boxes
+			\node (c1) at (0,-4.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_1:A_2$};
+			\node (c11) at (-1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (c12) at (-1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (c13) at (1.25,-4.25) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (c14) at (1.25,-4.75) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (c2) at (0,-6.5) [draw,thick,minimum width=2.5cm,minimum height=1.5cm,fill=gray!20,rounded corners=1.5pt] {$c_2:A_3$};
+			\node (c21) at (-1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			\node (c22) at (1.25,-6.5) [normal, minimum size=0.2cm, inner sep=0pt] {};
+			% arrows
+			\draw[->,shorten >=0.5pt,out=0,in=180] (v1) to (c11);
+			\draw[->,shorten >=0.5pt,out=45,in=180] (v2) to (c12);
+			\draw[->,shorten >=0.5pt,out=-45,in=180] (v2) to (c21);
+			\draw[->,shorten >=0.5pt,out=45,in=225,distance=2.75cm] (c22) to (c12);
+			\draw[->,shorten >=0.5pt,out=0,in=-135] (c22) to (v4);
+			\draw[->,shorten >=0.5pt,out=0,in=135] (c13) to (v4);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (c14) to (v3);
+			
+			\node (a3) at (-3.5, -8.5) {$A_3$};
+			\node (rect3) at (0,-11) [rectstyle] {};
+			\node (w1) at (-3.75,-11) [draw, thick, fill=white, circle, label=180:$w_1$] {};
+			\node (w2) at (3.75,-11) [draw, thick, fill=white, circle, label=0:$w_2$] {};
+			%boxes
+			\node (d) at (0,-11) [draw, thick, fill=gray!20,minimum width=2.5cm,minimum height=1.5cm,rounded corners=1.5pt] {$d:A_1$};
+			\node (d1) at (-1.25,-10.75) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
+			\node (d2) at (-1.25,-11.25) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
+			\node (d3) at (1.25,-11) [draw, thick, fill=white, circle, minimum size=0.2cm, inner sep=0pt] {};
+			% arrows
+			\draw[->,shorten >=0.5pt,out=0,in=180] (w1) to (d1);
+			\draw[->,shorten >=0.5pt,out=0,in=135] (d3) to (w2);
+			\draw[->,shorten >=0.5pt,out=-45,in=-135] (w1) to (w2);
+			
+			\end{tikzpicture}%}
+			\caption{A sample recursive state machine. Adapted from \cite{alur2001analysis}.}\label{fig:rsm}
+		\end{center}
+	\end{figure}
+	
+	% semantics of RSM
+	In order to define the execution of an RSM $\mathcal{A}=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
+	
+	\begin{definition}[Global State \cite{alur2001analysis}]{def:rsm_semantics}
+		A \textit{global state} of an RSM $\mathcal{A}=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1 \in B_1, ..., b_r \in B_r$ are boxes and $u$ is a node. The set $Q$ of global states of $\mathcal{A}$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${Y_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${Y_j}_r(b_r) = j$.
+	\end{definition}
+	
+	% TODO A state $(b_1, ..., b_r, u)$ of an RSM $A=(A_1, ..., A_k)$ can also be viewed as a string. 
+	% TODO example here
+	
+	A well-formed state $(b_1, ..., b_r, u)$ of an RSM $\mathcal{A}=(A_1, ..., A_k)$ corresponds to a path through the components $A_j$ of $\mathcal{A}$, where we enter component $A_j$ via box $b_r$ of component ${A_j}_r$.\\
+	
+	Consider the sample RSM given in Figure~\ref{fig:rsm}. A global state in the sample RSM is given by \[(b_1, c_1, c_1, c_1, c_2, d, b_2, d, u_3),\] where the sequence of boxes reflects which components are visited before reaching the current state $u_3$. The state is well-formed as for every box $b \in \{b_1, b_2, c_1, c_2, d\}$ the labeling function $Y_i$ coincides with the component referred to by the next box in the sequence, e.g., $Y_1(b_1)=A_2$, which is exactly the component in which the following box $c_1$ is defined.\\
+	
+	In order to move between global states of an RSM $\mathcal{A}$, we require the notion of a \textit{global transition relation} $\delta$ which enables us to not only transition between states within a CSM $A_j$ as defined by its transition relation $\delta_j$, but also between pairs of CSMs.
+	
+	\begin{definition}[Global Transition Relation \cite{alur2001analysis}]{def:rsm_transitionRelation}
+		Let $s=(b_1, ..., b_r, u) \in Q$ be a state with $u\in N_j$ and $b_r \in B_m$ for an RSM $\mathcal{A}=(A_1, ..., A_k)$. The \textit{global transition relation} $\delta$ for $\mathcal{A}$ defines $(s, \sigma, s') \in \delta$ if and only if one of the following holds:
+		\begin{enumerate}
+			\item $(u, \sigma, u') \in \delta_j$ for a node $u'$ of $A_j$ and $s'=(b_1, ..., b_r, u')$.
+			\item $(u, \sigma, (b',e))\in \delta_j$ for a box $b'$ of $A_j$ and $s'=(b_1, ..., b_r, b', e)$.
+			\item $u$ is an exit-node of $A_j$, $((b_r, u), \sigma, u') \in \delta_m$ for a node $u'$ of $A_m$, and $s'=(b_1, ..., b_{r-1}, u')$.
+			\item $u$ is an exit-node of $A_j$, $((b_r, u), \sigma, (b',e)) \in \delta_m$ for a box $b'$ of $A_m$, and $s'=(b_1, ..., b_{r-1}, b', e)$.
+		\end{enumerate}
+	\end{definition}
+	
+	Definition~\ref{def:rsm_transitionRelation} defines the possible kinds of transitions between global states $s, s' \in Q$ of an RSM $\mathcal{A}$. Consider the RSM given in Figure~\ref{fig:rsm}. For each case depicted in Definition~\ref{def:rsm_transitionRelation}, we can find an example in order to illustrate the global transition relation: \\
+	
+	\underline{Case 1} describes the scenario where the source and the destination nodes are both within the same component $A_j$. For instance, the component $A_1$ defines $(u_2, \sigma, u_3) \in \delta_1$, thus, in terms of the global transition relation $\delta$, a valid global transition would be $((b_2,d,u_2), \sigma, (b_2,d, u_3)) \in \delta$.\\ 
+	
+	\underline{Case 2} depicts that a new component is entered via box $b'$ of $A_j$. Thus, the current node of the destination state $s'$ is the entry-node $e$. An example for this case is given by regarding the global state $(b_1, c_1, c_2, d, u_3)$ which is located in component $A_1$. The local transition relation $\delta_1$ contains the transition $(u_3, \sigma, (b_2, v_1))$. Therefore, globally $((b_1, c_1, c_2, d, u_3), \sigma, (b_1, c_1, c_2, d, b_2, v_1))\in \delta$ which corresponds to  entering component $A_2$ via box $b_2$ and transitioning to state $(b_1, c_1, c_2, d, b_2, v_1)$.\\
+	
+	\underline{Case 3 and 4} are both exiting component $A_j$ via the exit-node $u$. While case 3 returns to component $A_m$, from where we entered $A_j$ before, case 4 directly enters a new component via box $b'$ of component $A_m$. An example for case 3 is given by the transition $((b_1,c_1,c_2,d,u_4),\sigma, (b_1,c_1,c_2,w_2)) \in \delta$, where we return from component $A_1$ via box $d$ to component $A_3$. If we continue the return action for state $(b_1,c_1,c_2,w_2)$, we get $((b_1,c_1,c_2,w_2), \sigma, (b_1,c_1,c_1,v_2)) \in \delta$ as a sample transition for case 4. The transition describes that we exit component $A_3$ entered via box $c_2$ and directly enter component $A_2$ via box $c_1$ as $((c_2,w_2),\sigma,(c_1, v_2))$ is a valid transition according to $\delta_2$. \\
+	
+	After defining the terms of global states and the global transition relation for an RSM $\mathcal{A}$, we can summarize these components together with the finite alphabet $\Sigma$ within the concept of a \textit{labeled transition system} $T_{\mathcal{A}}$, which encodes the execution of $\mathcal{A}$.
+	
+	\begin{definition}[Labeled Transition System induced by an RSM \cite{alur2001analysis}]{def:rsm_transitionSystem}
+		The \textit{labeled transition system} (LTS) $T_\mathcal{A}=(Q, \Sigma, \delta)$ induced by an RSM $\mathcal{A}=(A_1, ..., A_k)$ consists of
+		\begin{itemize}
+			\item the set of global states $Q$, 
+			\item the finite alphabet $\Sigma$, and
+			\item the global transition relation $\delta$.
+		\end{itemize}		
+	\end{definition}
+
+	The LTS of an RSM is basically the flattening of the hierarchical structure induced by the components and boxes of an RSM. Therefore, an LTS corresponds to our initial definition of a transition system, where the set $I$ of initial states, the set $AP$ of atomic propositions, and the labeling function $L$ are implicitly specified by the underlying RSM (cf. Definition~\ref{def:transition system}). \\	
+	
+	We specified the relevant framework for model checking pointer-manipulating programs. We model the program execution by recursive state machines capturing the hierarchical nature of method calls, while hypergraphs offer a finite representation of heaps that constitute the states of the model under consideration. Another ingredient to model checking is the formal definition of the properties the model is to be validated for. Here, we focus on \textit{linear temporal logic} described in the following section.	
 	
 	\section{Linear Temporal Logic}\label{sec:ltl}
 	 
-	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a modal temporal logic suited to describe \textit{linear-time properties}. 
+	First proposed by Pnueli in 1977, \textit{Linear Temporal Logic} (LTL) is a logic suited to describe \textit{linear-time properties}. 
 	Linear-time properties specify requirements on paths (or rather their traces) and can be understood as a set of (infinite) words over a set $AP$ of atomic propositions.
 	
 	\begin{definition}[Linear-Time Property \cite{baier2008principles}]{def:lt_property}
-		A \textit{linear-time property} over the set of atomic propositions $AP$ is a subset of $(2^{AP})^{\omega}$.
+		A \textit{linear-time property} over the set of atomic propositions $AP$ is a subset of the set $(2^{AP})^{\omega}$, i.e., all infinite words defined over the alphabet $2^{AP}$.
 	\end{definition}
-
-	Thus, a linear-time property can be interpreted as a language of infinite words defined over the alphabet $2^{AP}$.\\
 	
-	The satisfaction relation $\models$ for linear-time properties defines that a transition system $T$ satisfies a linear-time property if and only if all traces of $T$ are included in the set $P$ meaning that every trace of $T$ is a word in the language induced by $P \subseteq (2^{AP})^{\omega}$.
+	The satisfaction relation $\models$ for linear-time properties defines that a transition system $T$ satisfies a linear-time property $P \subseteq (2^{AP})^{\omega}$ if and only if all traces of $T$ are included in the set $P$ meaning that every trace of $T$ is a word in the language induced by $P$.
 	
 	\begin{definition}[Satisfaction Relation for Linear-Time Properties \cite{baier2008principles}]{def:satis_lt_property}
 		Let $P$ be a linear-time property over $AP$ and $T=(S, Act, \rightarrow, I, AP, L)$ a transition system. Then, $T$ \textit{satisfies} $P$, denoted $T \models P$, iff $Traces(T) \subseteq P$. A state $s \in S$ satisfies $P$, denoted $s \models P$, iff $Traces(s) \subseteq P$.
 	\end{definition}
 	
-	Linear-time properties can be specified by LTL formulae that encode temporal specifications for paths. In LTL, time is understood as a discrete time-unit where a point in time is followed by a single time-unit. In contrast to LTL, CTL (Computation Tree Logic) considers tree-like paths which can split into alternative courses. Here, we focus on LTL formulae.\\
+	%TODO is this true?
+	Linear-time properties can be specified by LTL formulae that encode temporal specifications for paths. \\
 	
-	LTL formulae are composed of three components: the boolean operators \textit{negation} ($\neg$) and \textit{conjunction} ($\wedge$), the temporal operators \textit{next} ($\bigcirc$) and \textit{until} ($\textbf{\textit{U}}$), and a set of atomic propositions $AP$. Atomic propositions are state labels of a transition system, which express properties that hold for a single state, e.g., "$i=1$". Formally, the set of LTL formulae is defined as follows:
+	LTL formulae are composed of three components: the Boolean operators \textit{negation} ($\neg$) and \textit{conjunction} ($\wedge$), the temporal operators \textit{next} ($\bigcirc$) and \textit{until} ($\textbf{\textit{U}}$), and a set of atomic propositions $AP$. Atomic propositions are state labels of a transition system, which express properties that hold for a single state, e.g., "$i=1$". Formally, the syntax of LTL formulae is defined as follows:
 	
 	\begin{definition}[Syntax of LTL \cite{baier2008principles}]{def:ltl_syntax}
-		Given a set $AP$ of atomic propositions with $a \in AP$, \textit{LTL formulae} are recursively defined by
+		Given a set $AP$ of atomic propositions with $a \in AP$, \textit{LTL formulae} are given by the context-free grammar below:
 		\begin{equation*}		
 			\varphi := \texttt{\textup{true}} \mid a \mid \neg \varphi \mid \varphi_1 \wedge \varphi_2 \mid \bigcirc \varphi \mid \varphi_1 \textbf{\textup{U}} \varphi_2.
 		\end{equation*}
 	\end{definition}
 
-	Further temporal operators that are commonly used, but are not included in the definition of LTL formulae, are the temporal modalities \textit{eventually}  ($\lozenge$), \textit{globally} ($\square$), and \textit{release} ($\textbf{\textup{R}}$). They can be derived using the operators given in Definition~\ref{def:ltl_syntax} as follows: 
+	Further temporal operators that are commonly used, but are not included in the definition of LTL formulae, are the temporal modalities \textit{eventually}  ($\lozenge$), \textit{globally} ($\square$), and \textit{release} ($\textbf{\textup{R}}$). They are derived by the operators given in Definition~\ref{def:ltl_syntax} as follows: 
 	
 	\begin{align*}		
 		\lozenge \varphi &:= \texttt{\textup{true}} \textbf{\textup{U}} \varphi\\
@@ -923,172 +989,172 @@
 		\varphi_1 \textbf{\textup{R}} \varphi_2 &:= \neg(\neg\varphi_1 \textbf{\textup{U}} \neg \varphi_2).
 	\end{align*}
 	
-	Before formally defining the satisfaction relation for LTL formulae and a transition system $T$, we first constitute an intuitive understanding of temporal operators by visualizing their semantics in Figure~\ref{fig:temporal_ops}.\\
-	
-	\begin{figure}[h!]
-		\begin{center}		
-			\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, font=\sffamily\Large\bfseries}]
-				
-				\node (1) at (2,0) [normal, label=90:$1$, label=-90:$\texttt{\textup{true}}$] {};
-				\node (2) at (3.5,0) [normal, label=90:$2$, label=-90:$\texttt{\textup{true}}$] {};
-				\node (3) at (5,0) [normal, label=90:$i$, label=-90:$\texttt{\textup{true}}$] {};
-				\node (4) at (6.5,0) [normal, label=90:$i+1$, label=-90:$\texttt{\textup{true}}$] {};
-				\node (5) at (8,0) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (2) to (3);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
-				
-				\node () at (0,0) {$\texttt{\textup{true}}$};
-				\node () at (11.5,0) [align=left,text width=6cm]{$\pi \models \texttt{\textup{true}}$ since every state satisfies $\texttt{\textup{true}}$. Thus, $\varphi=\texttt{\textup{true}}$ is fulfilled by every path $\pi$.};	
-				
-				\node (1) at (2,-2) [normal, label=90:$1$, label=-90:$\models a$] {};
-				\node (2) at (3.5,-2) [normal, label=90:$2$] {};
-				\node (3) at (5,-2) [normal, label=90:$3$] {};
-				\node (4) at (6.5,-2) [normal, label=90:$4$] {};
-				\node (5) at (8,-2) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
-				
-				\node () at (0,-2) {$a \in AP$};
-				\node () at (11.5,-2) [align=left,text width=6cm]{$\pi \models a$ if the first state of path $\pi$ satisfies the proposition $a$.};	
-				
-				\node (1) at (2,-4) [normal, label=90:$1$, label=-90:$\neg\varphi$] {};
-				\node (2) at (3.5,-4) [normal, label=90:$2$] {};
-				\node (3) at (5,-4) [normal, label=90:$3$] {};
-				\node (4) at (6.5,-4) [normal, label=90:$4$] {};
-				\node (5) at (8,-4) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
-				
-				\node () at (0,-4) {$\neg\varphi$};
-				\node () at (11.5,-4) [align=left,text width=6cm]{$\pi \models \neg \varphi$ if the first state of path $\pi$ does not satisfy $\varphi$.};
-				
-				\node (1) at (2,-6) [normal, label=90:$1$, label=-90:$\varphi_1 \wedge \varphi_2$] {};
-				\node (2) at (3.5,-6) [normal, label=90:$2$] {};
-				\node (3) at (5,-6) [normal, label=90:$3$] {};
-				\node (4) at (6.5,-6) [normal, label=90:$4$] {};
-				\node (5) at (8,-6) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
-				
-				\node () at (0,-6) {$\varphi_1 \wedge \varphi_2$};
-				\node () at (11.5,-6) [align=left,text width=6cm]{$\pi \models \varphi_1 \wedge \varphi_2$ if the first state of path $\pi$ satisfies both formulae $\varphi_1$ and $\varphi_2$ at the same time.};	
-				
-				\node (1) at (2,-8) [normal, label=90:$1$] {};
-				\node (2) at (3.5,-8) [normal, label=90:$2$, label=-90:$\varphi$] {};
-				\node (3) at (5,-8) [normal, label=90:$3$] {};
-				\node (4) at (6.5,-8) [normal, label=90:$4$] {};
-				\node (5) at (8,-8) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
-				
-				\node () at (0,-8) {$\bigcirc \varphi$};
-				\node () at (11.5,-8) [align=left,text width=6cm]{$\pi \models \bigcirc \varphi$ if the next state in path $\pi$ satisfies the formula $\varphi$.};		
-				
-				\node (1) at (2,-10) [normal, label=90:$1$, label=-90:$\varphi_1$] {};
-				\node (2) at (3.5,-10) [normal, label=90:$i-1$,label=-90:$\varphi_1$] {};
-				\node (3) at (5,-10) [normal, label=90:$i$,label=-90:$\varphi_2$] {};
-				\node (4) at (6.5,-10) [normal, label=90:$i+1$] {};
-				\node (5) at (8,-10) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
-				
-				\node () at (0,-10) {$\varphi_1 \textbf{\textup{U}} \varphi_2$};
-				\node () at (11.5,-10) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{U}} \varphi_2$ if $\varphi_1$ holds for states $1$ to $i-1$ and there exists a state $i$ that satisfies $\varphi_2$.};
-				
-				\node (1) at (2,-12) [normal, label=90:$1$,label=-90:$\neg\varphi$] {};
-				\node (2) at (3.5,-12) [normal, label=90:$i-1$,label=-90:$\neg\varphi$] {};
-				\node (3) at (5,-12) [normal, label=90:$i$,label=-90:$\varphi$] {};
-				\node (4) at (6.5,-12) [normal, label=90:$i+1$] {};
-				\node (5) at (8,-12) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
-				
-				\node () at (0,-12) {$\lozenge\varphi$};
-				\node () at (11.5,-12) [align=left,text width=6cm]{$\pi \models \lozenge \varphi$ if there exists a state $i$ on path $\pi$ which satisfies $\varphi$.};
-				
-				\node (1) at (2,-14) [normal, label=90:$1$,label=-90:$\varphi$] {};
-				\node (2) at (3.5,-14) [normal, label=90:$2$,label=-90:$\varphi$] {};
-				\node (3) at (5,-14) [normal, label=90:$3$,label=-90:$\varphi$] {};
-				\node (4) at (6.5,-14) [normal, label=90:$4$,label=-90:$\varphi$] {};
-				\node (5) at (8,-14) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
-				
-				\node () at (0,-14) {$\square \varphi$};
-				\node () at (11.5,-14) [align=left,text width=6cm]{$\pi \models \square \varphi$ if all states on path $\pi$ satisfy $\varphi$.};
-				
-				\node (1) at (2,-16) [normal, label=90:$1$, label=-90:$\varphi_2$] {};
-				\node (2) at (3.5,-16) [normal, label=90:$i-1$,label=-90:{$\varphi_2$}] {};
-				\node (3) at (5,-16) [normal, label=90:$i$,label=-90:{$\varphi_2,\varphi_1$}] {};
-				\node (4) at (6.5,-16) [normal, label=90:$i+1$] {};
-				\node (5) at (8,-16) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
-				
-				\node () at (0,-16) {$\varphi_1 \textbf{\textup{R}} \varphi_2$};
-				\node () at (11.5,-16) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{R}} \varphi_2$ if $\varphi_2$ holds for states $1$ to $i-1$ and there exists a state $i$ that satisfies $\varphi_1$.};
-				
-				\node (1) at (2,-18) [normal, label=90:$1$, label=-90:$\varphi_2$] {};
-				\node (2) at (3.5,-18) [normal, label=90:$2$,label=-90:$\varphi_2$] {};
-				\node (3) at (5,-18) [normal, label=90:$3$,label=-90:$\varphi_2$] {};
-				\node (4) at (6.5,-18) [normal, label=90:$4$,label=-90:$\varphi_2$] {};
-				\node (5) at (8,-18) {};
-				\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
-				\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
-				\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
-				\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
-				
-				\node () at (0,-18) {$\varphi_1 \textbf{\textup{R}} \varphi_2$};
-				\node () at (11.5,-18) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{R}} \varphi_2$ if $\varphi_2$ holds for all states of $\pi$.};
-		\end{tikzpicture}
-		\caption{Intuitive semantics of temporal operators.}\label{fig:temporal_ops}
-		\end{center}
-	\end{figure}	
-	
-	The following definition captures the relation between linear-time properties and LTL formulae as the latter can also be interpreted as words over the alphabet $2^{AP}$.
+	The following definition captures the relation between linear-time properties and LTL formulae as the latter can be interpreted as words over the alphabet $2^{AP}$.
 	
 	\begin{definition}[Semantics of LTL (Interpretation over Words) \cite{baier2008principles}]{def:ltl_words_semantics}
-		Let $\varphi$ be an LTL formula over $AP$. The linear-time property induced by $\varphi$ is \[Words(\varphi) = \{\sigma \in (2^{AP})^{\omega}\text{ }|\text{ }\sigma \models \varphi\}\] where the satisfaction relation $\models \subseteq (2^{AP})^{\omega} \times LTL$ is the smallest relation with the following properties 
+		Let $\varphi$ be an LTL formula over $AP$. The linear-time property induced by $\varphi$ is \[Words(\varphi) = \{\sigma \in (2^{AP})^{\omega}\text{ }|\text{ }\sigma \models \varphi\}\] where the satisfaction relation $\models \subseteq (2^{AP})^{\omega} \times LTL$ is the smallest relation with the following properties: 
 		\begin{align*}
 			\sigma &\models \texttt{true}\\
-			\sigma &\models a &&\text{ iff } a \in A_0, \text{ where } \sigma = A_0A_1A_2\dots\\
-			\sigma &\models \varphi_1 \wedge \varphi_2 &&\text{ iff } \sigma \models \varphi_1 \text{ and } \sigma \models \varphi_2\\
-			\sigma &\models \neg \varphi &&\text{ iff } \sigma \nvDash \varphi\\
-			\sigma &\models \bigcirc \varphi &&\text{ iff } \sigma[1\dots]=A_1A_2A_3 \dots \models \varphi\\
-			\sigma &\models \varphi_1 \text{\textbf{U}} \varphi_2 &&\text{ iff } \exists j \geq 0. \sigma[j \dots ] \models \varphi_2 \text{ and } \sigma[i\dots] \models \varphi_1, \forall 0 \leq i < j.
+			\sigma &\models a &&\text{iff}\quad a \in A_0, \text{ where } \sigma = A_0A_1A_2\dots\\
+			\sigma &\models \varphi_1 \wedge \varphi_2 &&\text{iff}\quad \sigma \models \varphi_1 \text{ and } \sigma \models \varphi_2\\
+			\sigma &\models \neg \varphi &&\text{iff}\quad \sigma \nvDash \varphi\\
+			\sigma &\models \bigcirc \varphi &&\text{iff}\quad \sigma[1\dots]=A_1A_2A_3 \dots \models \varphi\\
+			\sigma &\models \varphi_1 \text{\textbf{U}} \varphi_2 &&\text{iff}\quad \exists j \geq 0. \sigma[j \dots ] \models \varphi_2 \text{ and } \sigma[i\dots] \models \varphi_1, \forall 0 \leq i < j.
 		\end{align*}
 	\end{definition}
+
+	We constitute an intuitive understanding of temporal operators by visualizing their semantics in Figure~\ref{fig:temporal_ops}.\\
+	
+	\begin{figure}
+		\begin{center}		
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, font=\sffamily\Large\bfseries}]
+			
+			\node (1) at (2,0) [normal, label=90:$1$, label=-90:$\texttt{\textup{true}}$] {};
+			\node (2) at (3.5,0) [normal, label=90:$2$, label=-90:$\texttt{\textup{true}}$] {};
+			\node (3) at (5,0) [normal, label=90:$i$, label=-90:$\texttt{\textup{true}}$] {};
+			\node (4) at (6.5,0) [normal, label=90:$i+1$, label=-90:$\texttt{\textup{true}}$] {};
+			\node (5) at (8,0) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
+			
+			\node () at (0,0) {$\texttt{\textup{true}}$};
+			\node () at (11.5,0) [align=left,text width=6cm]{$\pi \models \texttt{\textup{true}}$ since every state satisfies $\texttt{\textup{true}}$. Thus, $\varphi=\texttt{\textup{true}}$ is fulfilled by every path $\pi$.};	
+			
+			\node (1) at (2,-2) [normal, label=90:$1$, label=-90:$\models a$] {};
+			\node (2) at (3.5,-2) [normal, label=90:$2$] {};
+			\node (3) at (5,-2) [normal, label=90:$3$] {};
+			\node (4) at (6.5,-2) [normal, label=90:$4$] {};
+			\node (5) at (8,-2) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
+			
+			\node () at (0,-2) {$a \in AP$};
+			\node () at (11.5,-2) [align=left,text width=6cm]{$\pi \models a$ if the first state of path $\pi$ satisfies the proposition $a$.};	
+			
+			\node (1) at (2,-4) [normal, label=90:$1$, label=-90:$\neg\varphi$] {};
+			\node (2) at (3.5,-4) [normal, label=90:$2$] {};
+			\node (3) at (5,-4) [normal, label=90:$3$] {};
+			\node (4) at (6.5,-4) [normal, label=90:$4$] {};
+			\node (5) at (8,-4) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
+			
+			\node () at (0,-4) {$\neg\varphi$};
+			\node () at (11.5,-4) [align=left,text width=6cm]{$\pi \models \neg \varphi$ if the first state of path $\pi$ does not satisfy $\varphi$.};
+			
+			\node (1) at (2,-6) [normal, label=90:$1$, label=-90:$\varphi_1 \wedge \varphi_2$] {};
+			\node (2) at (3.5,-6) [normal, label=90:$2$] {};
+			\node (3) at (5,-6) [normal, label=90:$3$] {};
+			\node (4) at (6.5,-6) [normal, label=90:$4$] {};
+			\node (5) at (8,-6) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
+			
+			\node () at (0,-6) {$\varphi_1 \wedge \varphi_2$};
+			\node () at (11.5,-6) [align=left,text width=6cm]{$\pi \models \varphi_1 \wedge \varphi_2$ if the first state of path $\pi$ satisfies both formulae $\varphi_1$ and $\varphi_2$ at the same time.};	
+			
+			\node (1) at (2,-8) [normal, label=90:$1$] {};
+			\node (2) at (3.5,-8) [normal, label=90:$2$, label=-90:$\varphi$] {};
+			\node (3) at (5,-8) [normal, label=90:$3$] {};
+			\node (4) at (6.5,-8) [normal, label=90:$4$] {};
+			\node (5) at (8,-8) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
+			
+			\node () at (0,-8) {$\bigcirc \varphi$};
+			\node () at (11.5,-8) [align=left,text width=6cm]{$\pi \models \bigcirc \varphi$ if the next state in path $\pi$ satisfies the formula $\varphi$.};		
+			
+			\node (1) at (2,-10) [normal, label=90:$1$, label=-90:$\varphi_1$] {};
+			\node (2) at (3.5,-10) [normal, label=90:$i-1$,label=-90:$\varphi_1$] {};
+			\node (3) at (5,-10) [normal, label=90:$i$,label=-90:$\varphi_2$] {};
+			\node (4) at (6.5,-10) [normal, label=90:$i+1$] {};
+			\node (5) at (8,-10) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);		
+			
+			\node () at (0,-10) {$\varphi_1 \textbf{\textup{U}} \varphi_2$};
+			\node () at (11.5,-10) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{U}} \varphi_2$ if $\varphi_1$ holds for states $1$ to $i-1$ and there exists a state $i$ that satisfies $\varphi_2$.};
+			
+			\node (1) at (2,-12) [normal, label=90:$1$,label=-90:$\neg\varphi$] {};
+			\node (2) at (3.5,-12) [normal, label=90:$i-1$,label=-90:$\neg\varphi$] {};
+			\node (3) at (5,-12) [normal, label=90:$i$,label=-90:$\varphi$] {};
+			\node (4) at (6.5,-12) [normal, label=90:$i+1$] {};
+			\node (5) at (8,-12) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
+			
+			\node () at (0,-12) {$\lozenge\varphi$};
+			\node () at (11.5,-12) [align=left,text width=6cm]{$\pi \models \lozenge \varphi$ if there exists a state $i$ on path $\pi$ which satisfies $\varphi$.};
+			
+			\node (1) at (2,-14) [normal, label=90:$1$,label=-90:$\varphi$] {};
+			\node (2) at (3.5,-14) [normal, label=90:$2$,label=-90:$\varphi$] {};
+			\node (3) at (5,-14) [normal, label=90:$3$,label=-90:$\varphi$] {};
+			\node (4) at (6.5,-14) [normal, label=90:$4$,label=-90:$\varphi$] {};
+			\node (5) at (8,-14) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
+			
+			\node () at (0,-14) {$\square \varphi$};
+			\node () at (11.5,-14) [align=left,text width=6cm]{$\pi \models \square \varphi$ if all states on path $\pi$ satisfy $\varphi$.};
+			
+			\node (1) at (2,-16) [normal, label=90:$1$, label=-90:$\varphi_2$] {};
+			\node (2) at (3.5,-16) [normal, label=90:$i-1$,label=-90:{$\varphi_2$}] {};
+			\node (3) at (5,-16) [normal, label=90:$i$,label=-90:{$\varphi_2,\varphi_1$}] {};
+			\node (4) at (6.5,-16) [normal, label=90:$i+1$] {};
+			\node (5) at (8,-16) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
+			
+			\node () at (0,-16) {$\varphi_1 \textbf{\textup{R}} \varphi_2$};
+			\node () at (11.5,-16) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{R}} \varphi_2$ if $\varphi_2$ holds for states $1$ to $i-1$ and there exists a state $i$ that satisfies $\varphi_1$.};
+			
+			\node (1) at (2,-18) [normal, label=90:$1$, label=-90:$\varphi_2$] {};
+			\node (2) at (3.5,-18) [normal, label=90:$2$,label=-90:$\varphi_2$] {};
+			\node (3) at (5,-18) [normal, label=90:$3$,label=-90:$\varphi_2$] {};
+			\node (4) at (6.5,-18) [normal, label=90:$4$,label=-90:$\varphi_2$] {};
+			\node (5) at (8,-18) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
+			
+			\node () at (0,-18) {$\varphi_1 \textbf{\textup{R}} \varphi_2$};
+			\node () at (11.5,-18) [align=left,text width=6cm]{$\pi \models \varphi_1 \textbf{\textup{R}} \varphi_2$ if $\varphi_2$ holds for all states of $\pi$.};
+			\end{tikzpicture}
+			\caption{Intuitive semantics of temporal operators for  a path $\pi$.}\label{fig:temporal_ops}
+		\end{center}
+	\end{figure}	
 	
 	The interpretation of LTL formulae over words can be used to describe the semantics of LTL formulae over paths and states of a transition system $T$.
 	
 	\begin{definition}[Semantics of LTL over Paths and States \cite{baier2008principles}]{def:ltl_paths_semantics}
 		Let $T=(S, Act, \rightarrow, I, AP, L)$ be a transition system without terminal states, and let $\varphi$ be an LTL-formula over $AP$.\\
-		For an infinite path $\pi$ of $T$, the satisfaction relation is defined by \[\pi \models \varphi \text{ iff } trace(\pi) \models \varphi.\]
-		For a state $s \in S$, the satisfaction relation $\models$ is defined by \[s \models \varphi \text{ iff } (\forall \pi \in Paths(T). \pi \models \varphi).\]
+		For an infinite path $\pi$ of $T$, the satisfaction relation is defined by \[\pi \models \varphi \quad\text{iff}\quad trace(\pi) \models \varphi.\]
+		For a state $s \in S$, the satisfaction relation $\models$ is defined by \[s \models \varphi \quad\text{iff}\quad (\forall \pi \in Paths(T). \pi \models \varphi).\]
 		$T$ satisfies $\varphi$, denoted $T \models \varphi$, if $Traces(T) \subseteq Words(\varphi).$
 	\end{definition}
 
-	From Definition~\ref{def:ltl_paths_semantics}, it follows that \[T \models \varphi \text{ iff } s_0 \models \varphi, \forall s_0 \in I.\]
+	From Definition~\ref{def:ltl_paths_semantics}, it follows that \[T \models \varphi \quad\text{iff}\quad \forall s_0 \in I: s_0 \models \varphi.\]
 	
 	Based on the satisfaction relation of LTL formulae over paths and states, we can specify the semantics of LTL for a transition system $T$.
 
@@ -1119,7 +1185,7 @@
 	\[\bigcirc \{\texttt{SLList}\}\]
 	where \texttt{SLList} is assumed to be an atomic proposition describing that the heap is a singly-linked list. Hence, the formula states that the heap of the next state is a singly-linked list. Another example is the formula
 	\[\square \{\texttt{SLList}\}\]
-	which requires the heap of every state to be a singly-linked list. Thus, any state not satisfying the atomic proposition \texttt{SLList} falsifies the formula $\square \{\texttt{SLList}\}$. The formula \[\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}\] includes another atomic proposition, \texttt{terminated}, that describes that a state is a terminating state. Thus, the above formula states that the heap is a singly-linked list upon termination of the program.\\
+	which requires the heap of every state to be a singly-linked list. Thus, any state not satisfying the atomic proposition \texttt{SLList} falsifies the formula $\square \{\texttt{SLList}\}$. The formula \[\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}\] includes another atomic proposition, \texttt{terminated}, that describes that a state is a terminating state. Thus, the above formula states that the heap is a singly-linked list upon termination of the analyzed program.\\
 
 	Two LTL formulae are semantically equivalent if they evaluate to the same results under all interpretations.	For every LTL formula, there exists an equivalent formula in \textit{positive normal form} (PNF), where negations are only allowed on the level of literals \cite{baier2008principles}.
 	
@@ -1148,7 +1214,7 @@
 		\equiv \quad &\neg(\neg\lozenge\neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\}))\\ &\vee (\neg\lozenge\neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{definition of } \square) \\
 		\equiv \quad &\neg(\neg(\text{\texttt{true}}  \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\})))\\ &\vee (\neg(\text{\texttt{true}} \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))) \qquad &(\text{definition of } \lozenge) \\
 		\equiv \quad &\neg(\neg\text{\texttt{true}}  \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\}))\\ &\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{duality of } \text{\textbf{U}} \text{ and } \text{\textbf{R}}) \\
-		\equiv \quad &\text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \\&\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{duality of } \text{\textbf{U}} \text{  and} \text{\textbf{R}}) \\
+		\equiv \quad &\text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \\&\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})). \qquad &(\text{duality of } \text{\textbf{U}} \text{  and } \text{\textbf{R}}) \\
 	\end{align*}	
 	
 	\chapter{Hierarchical Model Checking}
@@ -1167,9 +1233,9 @@
 	
 	\section{Tableaux Construction}\label{sec:tableaux}
 	
-	This section presents the on-the-fly approach by Grumberg et al. that constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to show whether a formula $\varphi$ is satisfied by a transition system $T$. \\
+	This section presents the on-the-fly approach by Grumberg et al. \cite{bhat1995efficient} that constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to show whether a formula $\varphi$ is satisfied by a transition system $T$. \\
 	
-	A proof structure is a directed graph $(V,E)$, where the set of vertices $V$ are composed of a set of \textit{assertions} $\Lambda$ and the set $E$ of edges contains the edge $(\lambda_1, \lambda_2)$ between two assertions $\lambda_1$ and $\lambda_2$ if the underlying tableaux contains the rule $\frac{\lambda_1}{\lambda_2}$.
+	A proof structure is a directed graph $(V,E)$, where the set of vertices $V$ are composed of a set of \textit{assertions} $\Lambda$ and the set $E$ of edges contains the edge $(\lambda_1, \lambda_2)$ between two assertions $\lambda_1$ and $\lambda_2$ if the underlying tableaux contains the inference rule $\frac{\lambda_1}{\lambda_2}$.
 	
 	\begin{definition}[Proof Structure \cite{bhat1995efficient}]{def:ps}
 		A \textit{proof structure} for $\lambda \in \Lambda$ is a tuple $(V,E)$ with $V \subseteq (\Lambda \; \cup \ \texttt{true})$ and $E \subseteq V \times V$, such that for any $\lambda'$ it holds that $\lambda'$ is reachable from $\lambda$ and that the successors of $\lambda'$ are the ones that result from applying some of the rules, i.e. \[(\lambda_1, \lambda_2) \in E \qquad \text{ iff } \qquad \frac{\lambda_1}{\lambda_2 \quad s \dots}.\]
@@ -1212,10 +1278,10 @@
 	
 	%TODO example
 	
-	Consider a method for reversing a singly-linked list given by
+	Consider a method for reversing a singly-linked list given by Listing~\ref{lst:sll_reverse}.
 	
 	\begin{lstlisting}[language=Java,numbers=left,
-	stepnumber=1,keywordstyle=\color{blue},frame=single]
+	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} method for reversing a singly-linked list.},captionpos=b,label={lst:sll_reverse}]
 	public static SLList reverse(SLList head) {
 	
 	  SLList reversedList = null;
@@ -1232,9 +1298,9 @@
 	}
 	\end{lstlisting}
 	
-	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we want to check whether the formula $\varphi=\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}$ is satisfied. From Section~\ref{sec:ltl} we know that \[\varphi \equiv \text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))\] in PNF.\\
+	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we want to check whether the formula $\varphi=\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}$ is satisfied. From Section~\ref{sec:ltl} we know that \[\varphi \equiv \text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))\] is an equivalent formula in PNF.\\
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{\textwidth}{!}{
 				\begin{tikzpicture}
@@ -1542,7 +1608,7 @@
 
 	The algorithm is based on the procedure \texttt{generateAndCheck} (cf. Figure~\ref{fig:otfHMC}) that validates a set $\Phi$ of formulae for an input program and simultaneously generates the state space under consideration on-the-fly. The state space generation is based on the \textsc{Attestor} state space generation described in Section~\ref{sec:attestor}. After initialising the state space and the proof structure, the procedure \texttt{generateAndCheck} starts constructing the proof structure based on the tableaux rules defined in Section~\ref{sec:tableaux}. For $\bigcirc$ formulae the tableaux rule $(R^{\bigcirc})$ specifies a state switch. Thus, successor states need to be generated. State generation involves the statement execution of the current state. At this point, we extend the state space generation in \textsc{Attestor} by model checking the generated state. We differentiate between two types of statements: ones that invoke a method execution, and ones that are executed in place. Statements that invoke a method execution trigger the model checking of the corresponding procedure state space. That is, the procedure \texttt{generateAndCheck} is executed on the calling state of the method and the current set $\Phi'$ of formulae. The set $\Phi'$ is a set of formulae resulting from successively applying tableaux rules to the formulae in the set $\Phi$. It follows that a hierarchy of calls to \texttt{generateAndCheck} is constructed where each level represents the model checking procedure of a method execution. Once state space generation and model checking is completed for a method execution, the successor states and model checking results are returned to the above lying level. Figure~\ref{fig:otf_hierarchy} visualizes the flow of model checking information throughout a hierarchy of method calls $m_i(), 1 \leq i \leq 3$. Every executed method $i$ contributes a state space that is model checked during generation. The state labels $\Phi^{(k)}$ denote the set of LTL formulae to be validated.
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{\textwidth}{!}{
 				\begin{tikzpicture}
@@ -1619,11 +1685,11 @@
 	
 	\[(HC_{in}, \Phi) \mapsto (\Phi', \delta_{0/1}, \pi),\]
 	
-	where $HC_{in}$ denotes the input heap configuration for which the set $\Phi$ of formulae is to be validated. The tuple $(HC_{in}, \Phi)$ is mapped to a tuple of model checking results containing the resulting set $\Phi'$ of formulae to be checked for possible successor states, a boolean value $\delta_{0/1}$ that indicates whether model checking was successful, and a failure trace $\pi$ in case any formulae is found to be violated. Model checking contracts are stored in the context of \textit{procedure contracts} which unambiguously define the executed method. Procedure contracts capture the overall effect of a procedure by defining pairs of pre- and post-conditions. Pre- and post-conditions specify the heap configurations before and after the execution of a procedure, respectively. Details on procedure contracts are described in \cite{jansen2014generating}. Thus, model checking contracts can be used to avoid repetitive model checking of a procedure state space for a set of input formulae.\\
+	where $HC_{in}$ denotes the input heap for which the set $\Phi$ of formulae is to be validated. The tuple $(HC_{in}, \Phi)$ is mapped to a tuple of model checking results containing the resulting set $\Phi'$ of formulae to be checked for possible successor states, a boolean value $\delta_{0/1}$ that indicates whether model checking was successful, and a failure trace $\pi$ in case any formulae is found to be violated. Model checking contracts are stored in the context of \textit{procedure contracts} which unambiguously define the executed method. Procedure contracts capture the overall effect of a procedure by defining pairs of pre- and post-conditions. Pre- and post-conditions specify the heap before and after the execution of a procedure, respectively. Details on procedure contracts are described in \cite{jansen2014generating}. Thus, model checking contracts can be used to avoid repetitive model checking of a procedure state space for a set of input formulae.\\
 	
 	Together with the set $\Phi'$ of formulae, the resulting successor states induce new assertions that are added to the proof structure. If the proof structure is (still) successful, then the new assertions are added to the proof structure and the procedure is continued. Otherwise, a violating path has been found and the proof structure is declared to be unsuccessful. Hence, the proof structures of the above lying state spaces can be aborted as a violating path has been found such that it can be concluded that the set of formulae $\Phi$ is not satisfied for the complete program state space. Thus, an early termination of the model checking procedure is possible that does not require building the complete state space. The concept of the hierarchical tableaux construction is depicted in Figure~\ref{fig:otfHMC}. \\
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			\resizebox{\textwidth}{0.75\textheight}{
 				\begin{tikzpicture}
@@ -1740,9 +1806,9 @@
 	
 	By calling the \texttt{generate} method of the class \texttt{StateSpaceGenerator} the state space generation for the input program is performed and the completely generated state space is returned upon termination. For the on-the-fly approach, we do not require the complete state space, but rather a list of successor states for a given state $s$. We realize this functionality in the class \texttt{OnTheFlyStateSpaceGenerator}. The list of successors is then communicated to the proof structure by adding new assertions and reentering the model checking loop (cf. Figure~\ref{fig:otfHMC}).\\
 	
-	Further adjustments are required in the labeling of procedure states. An atomic proposition $a \in AP$ is added to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap configuration of $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap configuration}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap configuration, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the current scope. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap configuration under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap configuration is restored. Based on the resulting state, the corresponding atomic propositions are determined.
+	Further adjustments are required in the labeling of procedure states. An atomic proposition $a \in AP$ is added to a state $s$ if $s \models a$.  Up until now, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap of $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap, so that the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the current scope. Hence, in order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in the scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied back to the state in reversed order, such that the original heap is restored. Based on the resulting state, the corresponding atomic propositions are determined.
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			%\resizebox{\textwidth}{!}{
 			\begin{tikzpicture}
@@ -1814,7 +1880,7 @@
 	
 	The second step executes LTL model checking for the RSM $\mathcal{A}$ and a set $\Phi$ of formulae. Model checking the RSM $\mathcal{A}$ boils down to model checking the components $A_i$ in $\mathcal{A}$. Thus, starting with the component $A_1$ corresponding to the main method of the program, a tableaux is constructed for the state space of $A_1$. If during the construction, a state $s$ is found that invokes a method $j$, the according box is entered and model checking is continued for component $A_j$ for the set $\Phi'$ of formulae. By this means, a hierarchy of procedure model checking processes is created, as described in the on-the-fly approach (cf. Figure~\ref{fig:otf_hierarchy}). The model checking results from constructing the proof structure for a component $A_j$ are returned to the calling state, and included in the proof structure of the calling component. The procedure is continued until all relevant proof structures have been constructed such that the proof structure of the main state space, thus of the component $A_1$, comes to a conclusion. A sketch of the algorithm is depicted in Figure~\ref{fig:rsm_mc}.\\
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			%\resizebox{\textwidth}{!}{
 				\begin{tikzpicture}
@@ -1879,7 +1945,7 @@
 	
 	In order to avoid repetitive computation of proof structures, we store model checking results as contracts within a \texttt{ComponentStateMachine}, similar to the implementation in Chapter~\ref{chp:otf}. However, since the context of the method is unambiguously determined be the \texttt{ComponentStateMachine}, we do not require the context of procedure contracts as it is the case for on-the-fly model checking.
 	
-	\begin{figure}[!h]
+	\begin{figure}
 		\begin{center}
 			%\resizebox{\textwidth}{!}{
 			\begin{tikzpicture}
@@ -1929,9 +1995,10 @@
 	
 	
 	% summarize algorithm shortly
-	In this chapter, we presented a model checking algorithm for procedure state spaces that are summarized in an RSM. The advantages of the approach are manifold. The structure of the state space is captured by the RSM as every method is represented by a component. The component stores corresponding procedure state spaces, method invocations represented by boxes, and also model checking results. Model checking of a procedure state space is controlled by the corresponding component, such that model checking results can be easily communicated to the state that invoked the method execution. \\
+	In this chapter, we presented an algorithm for model checking procedure state spaces represented as an RSM. The hierarchical structure of the state space is captured by the RSM as every method is represented by a component. The component stores corresponding procedure state spaces, boxes that represent method invocations, and model checking results. Model checking of a procedure state space is controlled by the corresponding component, such that model checking results can be easily communicated to the state that invoked the method execution. \\
 	
 	% advantages
+	
 	% procedure state spaces are model checked
 	% state spaces and model checking results stored --> no extra computation
 	% procedural structure mimicked by RSM --> model checking order follows control flow
