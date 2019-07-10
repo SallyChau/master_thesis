@@ -1,44 +1,60 @@
 package de.rwth.i2.attestor.phases.modelChecking.modelChecker;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
+import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalProofStructure;
 
 public class ModelCheckingContract {
 	
-	private HeapConfiguration input;
+	// Input parameter
+	private HeapConfiguration inputHeap;
 	private Set<Node> inputFormulae;
+	
+	private HierarchicalProofStructure proofStructure;
+	
+	// Result parameter
 	private Set<Node> resultFormulae;
-	private ModelCheckingResult mcResult;
-	private HierarchicalFailureTrace hierarchicalFailureTrace;
+	private boolean isSuccessful;
 	private FailureTrace failureTrace;
 	
-	public ModelCheckingContract(HeapConfiguration input, Set<Node> inputFormulae, Set<Node> outputFormulae, ModelCheckingResult mcResult, HierarchicalFailureTrace failureTrace) {
-
-		this.input = input;
+	
+	/**
+	 * Creates a model checking contract without result parameters.
+	 * @param input
+	 * @param inputFormulae
+	 */
+	public ModelCheckingContract(HeapConfiguration input, Set<Node> inputFormulae, HierarchicalProofStructure proofStructure) {
+		this.inputHeap = input;
 		this.inputFormulae = inputFormulae;
-		this.resultFormulae = outputFormulae;
-		this.mcResult = mcResult;
-		this.hierarchicalFailureTrace = failureTrace;
-		this.failureTrace = null;
+		this.proofStructure = proofStructure;
 	}
 	
-	// TODO adapt to normal failure trace
-	public ModelCheckingContract(HeapConfiguration input, Set<Node> inputFormulae, Set<Node> outputFormulae, ModelCheckingResult mcResult, FailureTrace failureTrace) {
-
-		this.input = input;
+	public ModelCheckingContract(HeapConfiguration input, Set<Node> inputFormulae, Set<Node> resultFormulae,
+			boolean isSuccessful, FailureTrace failureTrace) {
+		this.inputHeap = input;
 		this.inputFormulae = inputFormulae;
-		this.resultFormulae = outputFormulae;
-		this.mcResult = mcResult;
-		this.hierarchicalFailureTrace = null;
+		this.resultFormulae = resultFormulae;
+		this.isSuccessful = isSuccessful;
 		this.failureTrace = failureTrace;
+	}
+
+	public HierarchicalProofStructure getProofStructure() {
+		
+		return proofStructure;
+	}
+	
+	public void setProofStructure(HierarchicalProofStructure proofStructure) {
+		
+		this.proofStructure = proofStructure;
 	}
 	
 	public HeapConfiguration getInputHeap() {
 		
-		return input;
+		return inputHeap;
 	}
 	
 	public Set<Node> getInputFormulae() {
@@ -51,19 +67,60 @@ public class ModelCheckingContract {
 		return resultFormulae;
 	}
 	
-	public ModelCheckingResult getModelCheckingResult() {
-	
-		return mcResult;
+	public void setResultFormulae(Set<Node> formulae) {
+		
+		this.resultFormulae = formulae;
 	}
 	
-	public boolean modelCheckingIsSuccessful() {
+	public ModelCheckingResult getModelCheckingResult() {
+	
+		return isModelCheckingSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
+	}
+	
+	public boolean isModelCheckingSuccessful() {
 		
-		return mcResult == ModelCheckingResult.SATISFIED;
+		return isSuccessful;
+	}
+	
+	public void setModelCheckingSuccessful(boolean successful) {
+		
+		this.isSuccessful = successful;
+	}
+	
+	public boolean matches(HeapConfiguration heapConf, Set<Node> formulae) {
+		
+		if (heapConf.equals(inputHeap)) {
+			Set<String> formulaeStrings = new HashSet<>();
+			formulae.forEach((Node node) -> formulaeStrings.add(node.toString()));
+			
+			Set<String> inputFormulaeStrings = new HashSet<>();
+			inputFormulae.forEach((Node node) -> inputFormulaeStrings.add(node.toString()));
+			
+			return formulaeStrings.equals(inputFormulaeStrings);
+		}
+			
+		return false;
+	}
+	
+	public boolean matches(Set<Node> formulae) {
+		
+		Set<String> formulaeStrings = new HashSet<>();
+		formulae.forEach((Node node) -> formulaeStrings.add(node.toString()));
+		
+		Set<String> inputFormulaeStrings = new HashSet<>();
+		inputFormulae.forEach((Node node) -> inputFormulaeStrings.add(node.toString()));
+		
+		return formulaeStrings.equals(inputFormulaeStrings);
+	}
+	
+	public boolean isComplete() {
+		
+		return (resultFormulae != null);
 	}
 	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace() {
 		
-		return hierarchicalFailureTrace;
+		return proofStructure.getHierarchicalFailureTrace();
 	}
 	
 	public FailureTrace getFailureTrace() {
@@ -71,9 +128,14 @@ public class ModelCheckingContract {
 		return failureTrace;
 	}
 	
+	public void setFailureTrace(FailureTrace failureTrace) {
+		
+		this.failureTrace = failureTrace;
+	}
+	
 	@Override
 	public String toString() {
 		
-		return "Heap: " + input.toString() + "\n" + "Input: " + inputFormulae + "\n" + "Output: " + resultFormulae;
+		return "Heap: " + inputHeap.toString() + "\n" + "Input: " + inputFormulae + "\n" + "Output: " + resultFormulae;
 	}
 }

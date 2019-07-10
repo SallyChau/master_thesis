@@ -63,7 +63,7 @@ public class InternalContractMatch implements ContractMatch {
 	public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
 
 		for (ModelCheckingContract contract : modelCheckingContracts) {
-			if (contract.getInputFormulae().equals(inputFormulae)) {
+			if (contract.matches(inputFormulae)) {
 				return contract;
 			}
 		}

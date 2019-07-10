@@ -48,7 +48,7 @@ public class SimpleProofStructure extends AbstractProofStructure {
 		while (!queue.isEmpty()) {
 			Assertion2 currentAssertion = queue.poll();
 			checkedAssertions++;
-			
+
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
 				Node currentFormula = currentAssertion.getFirstFormula();
@@ -242,7 +242,6 @@ public class SimpleProofStructure extends AbstractProofStructure {
         return vertices;
     }
     
-    @Override
     public FailureTrace getFailureTrace() {
 
     	// proof was successful, no counterexample exists

@@ -108,7 +108,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
                         } 
                         // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
                         else if (isRealCycle(successorAssertion) && !containsReleaseOperator(successorAssertion)) {        
-                        	System.out.println("ProofStructure: unsuccessful due to cycle");
+                       
                             this.successful = false;                                    
                             setOriginOfFailure(successorAssertion);
                             hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
@@ -121,7 +121,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 			} 
 			// assertion does not contain any formulae to check (unsuccessful)
 			else {
-				System.out.println("ProofStructure: unsuccessful due to empty formulae set");
+			
 				this.successful = false;				
 				setOriginOfFailure(currentAssertion);
 				hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
@@ -156,16 +156,14 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 				// skip model checking of procedure call if called csm does not exist (can be configured by input settings: mc-skip)
 				Set<Node> inputFormulae = nextFormulae;
 				Set<Node> returnFormulae = calledCSM.check(state, statement, inputFormulae); // call new proof structure
-				System.err.println("ProofStructure: ReturnFormulae: " + returnFormulae);
+
 				if (returnFormulae != null) {
 					nextFormulae = returnFormulae;
 				}
-				System.out.println("ProofStructure: checking called csm");
-				System.out.println("ProofStructure: called csm successful: " + calledCSM.modelCheckingSuccessful(state, statement, inputFormulae));
+
 				if (!calledCSM.modelCheckingSuccessful(state, statement, inputFormulae)) {
 					this.successful = false;				
 					setOriginOfFailure(assertion);
-					System.out.println("ProofStructure: unsuccessful during expandNextAssertion");
 					hierarchicalFailureTrace.addFailureTrace(new FailureTrace(this.originOfFailure, stateSpace));
 					hierarchicalFailureTrace.addHierarchicalFailureTrace(calledCSM.getHierarchicalFailureTrace(state, statement, inputFormulae));
 					
@@ -178,16 +176,12 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		// Create Assertions
 		for (ProgramState successorState : getSuccessorStates(state)) {
 			
-			System.out.println("ProofStructure: Adding successor assertions.");
-			
 			// set return formulae in case this proof structure is successful in order to continue model checking in above CSM
 			if (stateSpace.getFinalStates().contains(state)) {
-				System.err.println("ProofStructure: Output Formulae for this proof structure: " + assertion.getNextFormulae());
 				outputFormulae.addAll(assertion.getNextFormulae());
 			}
 			
 			// successor nodes of the current node have to satisfy the Next formulae of the current node
-			
 			if (!nextFormulae.isEmpty()) {
 				Assertion2 successorAssertion = new Assertion2(successorState, assertion, true);
 				for (Node formula : nextFormulae) {
@@ -195,7 +189,6 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 				}
 				
 				successorAssertions.add(successorAssertion);
-				System.out.println("Added assertion " + successorAssertion);
 			}
 		}
 		return successorAssertions;
@@ -317,6 +310,11 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 		return signature;
 	}
     
+    public StateSpace getStateSpace() {
+    	
+    	return this.stateSpace;
+    }
+    
 	/**
 	 * Returns formulae that are to be checked at the final states of the state space.
 	 * Output formulae can be used to continue model checking in other states spaces that called this state space.
@@ -361,7 +359,6 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
         return vertices;
     }    
 
-	@Override
 	public FailureTrace getFailureTrace() {
 		// proof was successful, no counterexample exists
         if (isSuccessful()) return null;
@@ -370,6 +367,7 @@ public class HierarchicalProofStructure extends AbstractProofStructure {
 	}
 	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace() {
+		
 		if (isSuccessful()) return null;
         
         return this.hierarchicalFailureTrace;		

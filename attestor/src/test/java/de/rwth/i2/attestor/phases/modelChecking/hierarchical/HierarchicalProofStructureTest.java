@@ -11,6 +11,8 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Before;
@@ -42,6 +44,7 @@ public class HierarchicalProofStructureTest {
     private StateSpace stateSpace;
     private ComponentStateMachine csm;
     private Method method;
+    private Map<ProgramState, ComponentStateMachine> boxes;
     
 	@Before
     public void setup() {
@@ -70,6 +73,7 @@ public class HierarchicalProofStructureTest {
         method.setMethodExecution(executor);
         
 		csm = spy(new ComponentStateMachine(method));
+		boxes = new HashMap<>();
     }
 	
 	
@@ -96,7 +100,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.build(stateSpace, formula);
 
         // Expected output
@@ -138,7 +142,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -176,7 +180,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -207,7 +211,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -247,7 +251,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -284,7 +288,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -317,7 +321,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -350,7 +354,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -383,7 +387,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -417,7 +421,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(initialState, state1);
         stateSpace.addArtificialInfPathsTransition(state1);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -443,7 +447,7 @@ public class HierarchicalProofStructureTest {
         //stateSpace.addStateIfAbsent(state1);
         stateSpace.addControlFlowTransition(initialState, initialState);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -475,7 +479,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addInitialState(initialState);
         stateSpace.addControlFlowTransition(initialState, initialState);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -508,7 +512,7 @@ public class HierarchicalProofStructureTest {
         //stateSpace.addStateIfAbsent(state1);
         stateSpace.addControlFlowTransition(initialState, initialState);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -556,7 +560,7 @@ public class HierarchicalProofStructureTest {
         stateSpace.addControlFlowTransition(state1, state2);
         stateSpace.addControlFlowTransition(state2, initialState);
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         proofStruct.build(stateSpace, formula);
 
@@ -592,12 +596,12 @@ public class HierarchicalProofStructureTest {
 		// invoke method call (start 2nd level of model checking)
 		doReturn(method.getBody().getStatement(1)).when(csm).getSemanticsCommand(any());		
         when(csm.getStateSpace(any(), any())).thenReturn(stateSpace);
-		when(csm.getBox(any())).thenReturn(csm);
+		when(boxes.get(any())).thenReturn(csm);
 		
 		// assume model checking of box was successful
 		doReturn(true).when(csm).modelCheckingSuccessful(any(), any(), any());
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         
         //when
@@ -639,13 +643,13 @@ public class HierarchicalProofStructureTest {
 		// invoke method call (start 2nd level of model checking)
 		doReturn(method.getBody().getStatement(1)).when(csm).getSemanticsCommand(any());		
         when(csm.getStateSpace(any(), any())).thenReturn(stateSpace);
-		when(csm.getBox(any())).thenReturn(csm);
+		when(boxes.get(any())).thenReturn(csm);
 		
 		// assume model checking of box was not successful
 		doReturn(false).when(csm).modelCheckingSuccessful(any(), any(), any());
 		doReturn(mock(HierarchicalFailureTrace.class)).when(csm).getHierarchicalFailureTrace(any(), any(), any());
 
-        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(csm);
+        HierarchicalProofStructure proofStruct = new HierarchicalProofStructure(method, boxes);
         proofStruct.setBuildFullStructure();
         
         //when

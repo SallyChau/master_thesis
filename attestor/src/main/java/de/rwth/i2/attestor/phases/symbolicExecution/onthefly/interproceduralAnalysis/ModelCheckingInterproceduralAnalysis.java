@@ -14,7 +14,7 @@ import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailure
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyPartialStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProcedureCall;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.procedures.Method;
@@ -38,6 +38,7 @@ public class ModelCheckingInterproceduralAnalysis {
 	protected Set<Method> methodsToSkip = new HashSet<>();
 
 
+	
 	public void registerStateSpace(ProcedureCall call, StateSpace stateSpace) {
 
 		stateSpaceToAnalyzedCall.put(stateSpace, call);
@@ -62,10 +63,12 @@ public class ModelCheckingInterproceduralAnalysis {
 	}
 
 	public void registerProofStructure(ProcedureCall procedureCall, OnTheFlyProofStructure proofStructure) {
+		
 		callToProofStructure.put(procedureCall, proofStructure);
 	}
 	
 	public void registerFormulae(ProcedureCall procedureCall, Set<Node> formulae) {
+		
 		if(!callToFormulae.containsKey(procedureCall)) {
 			callToFormulae.put(procedureCall, formulae);
 		} else {
@@ -73,7 +76,8 @@ public class ModelCheckingInterproceduralAnalysis {
 		}
 	}
 	
-	public void registerReturnFormulae(ProcedureCall procedureCall, Set<Node> returnFormulae) {
+	public void registerResultFormulae(ProcedureCall procedureCall, Set<Node> returnFormulae) {
+		
 		if(!callToReturnFormulae.containsKey(procedureCall)) {
 			callToReturnFormulae.put(procedureCall, returnFormulae);
 		} else {
@@ -82,6 +86,7 @@ public class ModelCheckingInterproceduralAnalysis {
 	}
 	
 	public void registerMethodToSkip(Method method) {
+		
 		methodsToSkip.add(method);
 	}
 	
@@ -104,71 +109,58 @@ public class ModelCheckingInterproceduralAnalysis {
 
 	public void run() {
 
-		while(!remainingProcedureCalls.isEmpty() || !remainingPartialStateSpaces.isEmpty()) {
+		while (!remainingProcedureCalls.isEmpty() || !remainingPartialStateSpaces.isEmpty()) {
 			
 			OnTheFlyProcedureCall call;
 			Set<Node> formulae;
 			boolean contractChanged;
-			if(!remainingProcedureCalls.isEmpty()) {
+			
+			if (!remainingProcedureCalls.isEmpty()) {
+				
 				// creates new state space for recursive methods
 				call = (OnTheFlyProcedureCall) remainingProcedureCalls.pop();
 				formulae = callToFormulae.get(call);
 				call.setModelCheckingFormulae(formulae);
-				
-				System.out.println("ModelCheckingInterproceduralAnalysis: Handling remaining procedure calls");
-				System.out.println("ModelCheckingInterproceduralAnalysis: Current call " + call.getMethod().getSignature());
-				
+
 				StateSpace stateSpace = call.execute();
 				
 				OnTheFlyProofStructure proofStructure = callToProofStructure.get(call);
-				System.out.println("ModelCheckingInterproceduralAnalysis: Proofstructure was successful: " + proofStructure.isSuccessful());
 				if (!proofStructure.isSuccessful()) {
 					abortDependingProofStructures(call);
 					FailureTrace ft = proofStructure.getFailureTrace(stateSpace);
-					System.out.println("ModelCheckingInterproceduralAnalysis: FailureTrace (remaining PC): " + ft);
 					addFailureTrace(ft);
 				}				
 				
 				contractChanged = stateSpace.getFinalStateIds().size() > 0;
 			} else {
+				
 				// continue partial state space 
-				System.out.println("ModelCheckingInterproceduralAnalysis: Handling partial state spaces");
-				OnTheFlyPartialStateSpace partialStateSpace = remainingPartialStateSpaces.pop();
-				
+				OnTheFlyPartialStateSpace partialStateSpace = remainingPartialStateSpaces.pop();				
 				int currentNumberOfFinalStates = partialStateSpace.unfinishedStateSpace().getFinalStateIds().size();
-				call = (OnTheFlyProcedureCall) stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
-
-				System.out.println("ModelCheckingInterproceduralAnalysis: Current call " + call.getMethod().getSignature());
 				
-				OnTheFlyProofStructure proofStructure = callToProofStructure.get(call);
-				System.out.println("ModelCheckingInterproceduralAnalysis: before: Proof Structure successful: " + proofStructure.isSuccessful());
+				call = (OnTheFlyProcedureCall) stateSpaceToAnalyzedCall.get(partialStateSpace.unfinishedStateSpace());
 				
-				Set<Node> inputFormulae = partialStateSpaceToContinueFormulae.get(partialStateSpace);
-				
-				System.out.println("ModelCheckingInterproceduralAnalysis: continuing with formulae " + inputFormulae);
+				OnTheFlyProofStructure proofStructure = callToProofStructure.get(call);				
+				Set<Node> continueFormulae = partialStateSpaceToContinueFormulae.get(partialStateSpace);	
 				
 				if (!proofStructure.isSuccessful()) {
 	            	// abort this structure and notify others
-	            	System.out.println("ModelCheckingInterproceduralAnalysis: this proofstructure is already unsuccessful. aborting ...");
 	            	abortDependingProofStructures(call);
-	            	FailureTrace ft = proofStructure.getFailureTrace(partialStateSpace.unfinishedStateSpace());
-					System.out.println("ModelCheckingInterproceduralAnalysis: FailureTrace (PartialSS): " + ft);
-					addFailureTrace(ft);
-	            } else {				
-	            	Method method = call.getMethod();
-	            	boolean modelCheck = !getMethodsToSkip().contains(method);
-	            	partialStateSpace.setModelCheckingFormulae(inputFormulae);
+					addFailureTrace(proofStructure.getFailureTrace(partialStateSpace.unfinishedStateSpace()));
+	            } else {	
+	            	// prepare execution
+	            	partialStateSpace.setModelCheckingFormulae(continueFormulae);
 	            	partialStateSpace.setProofStructure(proofStructure);
-	            	partialStateSpace.modelCheck(modelCheck);
-					partialStateSpace.continueExecution(call);
+	            	partialStateSpace.modelCheck(!getMethodsToSkip().contains(call.getMethod()));
 					
-					// abort depending proof structures if current proofstructure was unsuccessful
-					System.out.println("ModelCheckingInterproceduralAnalysis: after: Proof Structure successful: " + proofStructure.isSuccessful());
+	            	partialStateSpace.continueExecution(call);
+					
+					// abort depending proof structures if current proof structure was unsuccessful
 					if (!proofStructure.isSuccessful()) {
 						abortDependingProofStructures(call);
-						FailureTrace ft = proofStructure.getFailureTrace(partialStateSpace.unfinishedStateSpace());
-						System.out.println("ModelCheckingInterproceduralAnalysis: FailureTrace (PartialSS2): " + ft);
-						addFailureTrace(ft);
+						addFailureTrace(proofStructure.getFailureTrace(partialStateSpace.unfinishedStateSpace()));
+					} else {
+						registerResultFormulae(call, partialStateSpace.getModelCheckingResultFormulae());
 					}
 	            }				
 
@@ -176,7 +168,7 @@ public class ModelCheckingInterproceduralAnalysis {
 				contractChanged = newNumberOfFinalsStates > currentNumberOfFinalStates;
 			}
 			
-			if(contractChanged) {
+			if (contractChanged) {
 				notifyDependencies(call);
 			}
 		}
@@ -187,12 +179,14 @@ public class ModelCheckingInterproceduralAnalysis {
 		Set<OnTheFlyPartialStateSpace> dependencies = callingDependencies.getOrDefault(call, Collections.emptySet());
 		remainingPartialStateSpaces.addAll(dependencies);
 		
+		Set<Node> continueFormulae = callToReturnFormulae.get(call);
+		
 		// map return formulae and partial state spaces
 		for (PartialStateSpace dependency : dependencies) {
 			if (!partialStateSpaceToContinueFormulae.containsKey(dependency)) {
-				partialStateSpaceToContinueFormulae.put(dependency, callToReturnFormulae.get(call));
-			} else {
-				partialStateSpaceToContinueFormulae.get(dependency).addAll(callToReturnFormulae.get(call));
+				partialStateSpaceToContinueFormulae.put(dependency, continueFormulae);
+			} else {				
+				partialStateSpaceToContinueFormulae.get(dependency).addAll(continueFormulae);
 			}
 		}
 	}
@@ -204,7 +198,6 @@ public class ModelCheckingInterproceduralAnalysis {
 
 			ProcedureCall dependenedCall = stateSpaceToAnalyzedCall.get( partialStateSpace.unfinishedStateSpace() );
 
-//			System.out.println("ModelCheckingInterproceduralAnalysis: aborting proofstructure for " + dependenedCall.getMethod().getSignature());
 			OnTheFlyProofStructure proofStructure = callToProofStructure.get(dependenedCall);
 			proofStructure.abort();			
 		}

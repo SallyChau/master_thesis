@@ -26,6 +26,11 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
+/**
+ * 
+ * @author chau
+ *
+ */
 public class ComponentStateMachine {
 	
 	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");
@@ -35,66 +40,14 @@ public class ComponentStateMachine {
 	private Map<ProgramState, ComponentStateMachine> boxes = new LinkedHashMap<>();	
 	private List<ModelCheckingContract> modelCheckingContracts = new LinkedList<>();
 	
+	
+	
 	public ComponentStateMachine(Method method) {
-
+	
 		this.method = method;
 	}
-	
-	public void addBox(ProgramState callingState, ComponentStateMachine calledCSM) {
-		
-		boxes.put(callingState, calledCSM);
-	}
 
-	public ComponentStateMachine getBox(ProgramState programState) {
-
-		return boxes.get(programState);
-	}
 	
-	public void addStateSpace(ProgramState inputState, StateSpace stateSpace) {
-		
-		stateSpaces.put(inputState, stateSpace);
-	}
-	
-	/**
-	 * Get state space whose input heap matches the calling state.
-	 * @param callingState
-	 * @param statement
-	 * @return state space whose input heap matches the calling state
-	 */
-	public StateSpace getStateSpace(ProgramState callingState, SemanticsCommand statement) {
-
-		StateSpace result = null;
-		
-		if (statement != null) {	    
-		    for (ProgramState inputState : stateSpaces.keySet()) {
-				if (inputState.getHeap().equals(getHeapInScope(callingState, statement))) {
-					result = stateSpaces.get(inputState);
-				}
-			}
-		} else {
-			for (StateSpace stateSpace : stateSpaces.values()) {
-				if (stateSpace.getInitialStates().contains(callingState)) {
-					result = stateSpace;
-				}
-			}
-		}
-	    
-	    return result;
-	}
-	
-	public Collection<StateSpace> getStateSpaces() {
-		
-		return stateSpaces.values();
-	}
-	
-	public SemanticsCommand getSemanticsCommand(ProgramState programState) {
-		
-		if (method != null && method.getBody() != null) {
-			return method.getBody().getStatement(programState.getProgramCounter());
-		} else {
-			throw new IllegalStateException("Method not initialized for component state machine.");
-		}
-	}
 	
 	/**
 	 * Model checks the underlying state spaces of the (main) procedure call for the given formula using the tableau method. 
@@ -104,13 +57,13 @@ public class ComponentStateMachine {
 	 * @return list of formulae to be checked in above lying state space
 	 */
 	public Set<Node> check(ProcedureCall call, LTLFormula formula) {
-
+	
 		Set<Node> formulae = new HashSet<>();
 		formulae.add(formula.getASTRoot().getPLtlform());
 		
 		return check(call.getInput(), null, formulae);
 	}
-	
+
 	/**
 	 * Model checks the underlying state spaces of the procedure call for the given formula using the tableau method. 
 	 * 
@@ -122,31 +75,42 @@ public class ComponentStateMachine {
 	public Set<Node> check(ProgramState inputState, SemanticsCommand statement, Set<Node> formulae) {
 		
 		logger.debug("Model checking method " + method.getSignature() + " for formulae " + formulae);
-		
-		StateSpace stateSpace = getStateSpace(inputState, statement);
+				
 		HeapConfiguration heapInScope = getHeapInScope(inputState, statement);
+		StateSpace stateSpace = getStateSpace(inputState, statement);
+		
+		Set<Node> resultFormulae;
 		ModelCheckingContract mc = matchModelCheckingContract(heapInScope, formulae);
-		Set<Node> returnFormulae;
-		if (mc != null) {		
-			returnFormulae = mc.getResultFormulae();
-		} else {
-			// model check
-			System.out.println("Starting new model checking routine for method " + method.getSignature());
-
-			HierarchicalProofStructure proofStructure = new HierarchicalProofStructure(method, boxes);
-			proofStructure.build(stateSpace, formulae);		 
-			returnFormulae = proofStructure.getOutputFormulae();
-			addModelCheckingContract(heapInScope, formulae, returnFormulae, proofStructure.isSuccessful(), proofStructure.getHierarchicalFailureTrace());
+		HierarchicalProofStructure proofStructure;
+		
+		if (mc == null) {
+					
+			proofStructure = new HierarchicalProofStructure(method, boxes);
+			mc = new ModelCheckingContract(heapInScope, formulae, proofStructure);	
+			modelCheckingContracts.add(mc);
+				
+			proofStructure.build(stateSpace, formulae);	
+			mc.setResultFormulae(proofStructure.getOutputFormulae());
+			mc.setModelCheckingSuccessful(proofStructure.isSuccessful());
+			mc.setFailureTrace(proofStructure.getFailureTrace());
+		} else if (!mc.isComplete()) {
 			
-			logger.debug("Proofstructure was successful for " + method.getSignature() + "? " + proofStructure.isSuccessful());
+			// continue model checking
+			proofStructure = mc.getProofStructure();
+			proofStructure.build(stateSpace, formulae);
+			mc.setResultFormulae(proofStructure.getOutputFormulae());
+			mc.setModelCheckingSuccessful(proofStructure.isSuccessful());
+			mc.setFailureTrace(proofStructure.getFailureTrace());
 		}
-		return returnFormulae;		
+		
+		resultFormulae = mc.getResultFormulae();
+		return resultFormulae;		
 	}
-	
+
 	private ModelCheckingContract matchModelCheckingContract(HeapConfiguration heap, Set<Node> formulae) {
-	    
+		
 		for (ModelCheckingContract mc : modelCheckingContracts) {
-			if (mc.getInputHeap().equals(heap) && mc.getInputFormulae().equals(formulae)) {
+			if (mc.matches(heap, formulae)) {
 				return mc;
 			}
 		}
@@ -168,12 +132,6 @@ public class ComponentStateMachine {
 		return matchModelCheckingContract(call.getInput().getHeap(), formulae);
 	}
 	
-	private void addModelCheckingContract(HeapConfiguration heapInScope, Set<Node> formulae, Set<Node> returnFormulae, boolean successful, HierarchicalFailureTrace failureTrace) {
-		
-		ModelCheckingResult mcResult = successful ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;		
-		modelCheckingContracts.add(new ModelCheckingContract(heapInScope, formulae, returnFormulae, mcResult, failureTrace));
-	}
-	
 	public HeapConfiguration getHeapInScope(ProgramState state, SemanticsCommand statement) {
 		
 		HeapConfiguration heapInScope = state.getHeap();
@@ -189,28 +147,6 @@ public class ComponentStateMachine {
 		}      	    
 	    
 	    return heapInScope;
-	}
-		
-	
-	
-	public Method getMethod() {
-		
-		return this.method;
-	}
-	
-	
-	/**
-	 * Gets the model checking result for a heap and a formula.
-	 * @param heap 
-	 * @param formula
-	 * @return model checking result for a heap and a formula
-	 */
-	private ModelCheckingResult getModelCheckingResult(HeapConfiguration heap, LTLFormula formula) {
-		
-		Set<Node> formulae = new HashSet<>();
-		formulae.add(formula.getASTRoot().getPLtlform());
-		
-		return getModelCheckingResult(heap, formulae);
 	}
 	
 	/**
@@ -230,6 +166,62 @@ public class ComponentStateMachine {
 		return ModelCheckingResult.UNKNOWN;
 	}
 	
+	public void addBox(ProgramState callingState, ComponentStateMachine calledCSM) {
+		
+		boxes.put(callingState, calledCSM);
+	}
+
+	public ComponentStateMachine getBox(ProgramState programState) {
+	
+		return boxes.get(programState);
+	}
+
+	public void addStateSpace(ProgramState inputState, StateSpace stateSpace) {
+		
+		stateSpaces.put(inputState, stateSpace);
+	}
+
+	/**
+	 * Get state space whose input heap matches the calling state.
+	 * @param callingState
+	 * @param statement
+	 * @return state space whose input heap matches the calling state
+	 */
+	public StateSpace getStateSpace(ProgramState callingState, SemanticsCommand statement) {
+	
+		StateSpace result = null;
+		
+		if (statement != null) {	    
+		    for (ProgramState inputState : stateSpaces.keySet()) {
+				if (inputState.getHeap().equals(getHeapInScope(callingState, statement))) {
+					result = stateSpaces.get(inputState);
+				}
+			}
+		} else {
+			for (StateSpace stateSpace : stateSpaces.values()) {
+				if (stateSpace.getInitialStates().contains(callingState)) {
+					result = stateSpace;
+				}
+			}
+		}
+	    
+	    return result;
+	}
+
+	public Collection<StateSpace> getStateSpaces() {
+		
+		return stateSpaces.values();
+	}
+
+	public SemanticsCommand getSemanticsCommand(ProgramState programState) {
+		
+		if (method != null && method.getBody() != null) {
+			return method.getBody().getStatement(programState.getProgramCounter());
+		} else {
+			throw new IllegalStateException("Method not initialized for component state machine.");
+		}
+	}
+
 	public boolean modelCheckingSuccessful(ProgramState state, SemanticsCommand statement, Set<Node> formulae) {
 		
 		HeapConfiguration heap = getHeapInScope(state, statement);
@@ -259,6 +251,11 @@ public class ComponentStateMachine {
 		return null;
 	}
 	
+	public Method getMethod() {
+		
+		return this.method;
+	}
+
 	public Map<ProgramState, ComponentStateMachine> getBoxes() {
 		
 		return boxes;

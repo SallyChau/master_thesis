@@ -82,7 +82,7 @@ public class OnTheFlyProcedureCallTest {
 		
 		verify(registry).registerStateSpace(call, fakeResult);
 		verify(registry).registerProofStructure(call, proofStructure);
-		verify(registry).registerReturnFormulae(any(OnTheFlyProcedureCall.class), any(Set.class));
+		verify(registry).registerResultFormulae(any(OnTheFlyProcedureCall.class), any(Set.class));
 		verify(registry).getMethodsToSkip();
 		verifyNoMoreInteractions(registry);
 		
@@ -131,7 +131,7 @@ public class OnTheFlyProcedureCallTest {
 		
 		verify(registry).registerStateSpace(call, fakeResult);
 		verify(registry).registerProofStructure(call, proofStructure);
-		verify(registry).registerReturnFormulae(any(OnTheFlyProcedureCall.class), any(Set.class));
+		verify(registry).registerResultFormulae(any(OnTheFlyProcedureCall.class), any(Set.class));
 		verify(registry).getMethodsToSkip();
 		verifyNoMoreInteractions(registry);
 		

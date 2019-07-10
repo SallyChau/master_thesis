@@ -59,19 +59,15 @@ public abstract class AbstractModelCheckingMethodExecutor extends AbstractMethod
 		
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
 	    if( contractMatch.hasMatch() ) {
-		    System.out.println("AbstractModelCheckingMethodExecutor: getPostconditions(): found contractMatch for method " + method.getSignature());
 	    	heapInScope = contractMatch.getPrecondition();
 	    }
 	    
 	    OnTheFlyProcedureCall call = (OnTheFlyProcedureCall) procedureRegistry.getProcedureCall( method, heapInScope, scopeHierarchy);
 	    call.setModelCheckingFormulae(modelCheckingFormulae);
 	    procedureRegistry.registerDependency( callingState, call );
-	    System.out.println("AbstractModelCheckingMethodExecutor: getPostconditions(): Created procedure call " + call + " for method " + method.getSignature());
 	    
 	    if(!contractMatch.hasMatch()) {
-	    	
-		    System.out.println("AbstractModelCheckingMethodExecutor: getPostconditions(): no contract match for method " + method.getSignature());
-	        
+	    		        
 	        ContractCollection contractCollection = getContractCollection();
 	        generateAndAddContract(call);
 	        contractMatch = contractCollection.matchContract(heapInScope);
@@ -115,22 +111,19 @@ public abstract class AbstractModelCheckingMethodExecutor extends AbstractMethod
     	
         ModelCheckingContract modelCheckingContract = getModelCheckingContract(callingState, scopedHeap, formulae, scopeHierarchy);
         if (modelCheckingContract != null) {
-        	return modelCheckingContract.modelCheckingIsSuccessful();
+        	return modelCheckingContract.isModelCheckingSuccessful();
         }
         
         return true;
     }
 
 	private ModelCheckingContract getModelCheckingContract(ProgramState callingState, ScopedHeap scopedHeap, Set<Node> formulae, ScopedHeapHierarchy scopeHierarchy) {
-		
-		System.out.println("AbstractModelCheckingMethodExecutor: getModelCheckingContract: Checking MC contracts for " + method.getSignature());
-		
+				
 		HeapConfiguration heapInScope = scopedHeap.getHeapInScope(); 
 	    ContractMatch contractMatch = getContractCollection().matchContract(heapInScope);
 	    
 	    if(contractMatch.hasMatch()) {
 	    	
-	    	System.out.println("AbstractModelCheckingMethodExecutor: getModelCheckingContract: found matching contract for " + method.getSignature());
 	    	heapInScope = contractMatch.getPrecondition();
 	    	scopeHierarchy.addExternalReordering(scopedHeap, contractMatch.getExternalReordering());
 	    }
@@ -140,8 +133,8 @@ public abstract class AbstractModelCheckingMethodExecutor extends AbstractMethod
 	    procedureRegistry.registerDependency(callingState, call);
 	    
 	    if(!contractMatch.hasModelCheckingContractMatch(formulae)) {
-	    	System.out.println("AbstractModelCheckingMethodExecutor: getModelCheckingContract: no matching model checking contract for " + method.getSignature());
-	        ContractCollection contractCollection = getContractCollection();
+
+	    	ContractCollection contractCollection = getContractCollection();
 	        generateAndAddContract(call);
 	        contractMatch = contractCollection.matchContract(heapInScope);
 	    } 

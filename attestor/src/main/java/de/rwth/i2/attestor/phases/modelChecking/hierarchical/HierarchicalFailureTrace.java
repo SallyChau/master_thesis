@@ -19,12 +19,14 @@ public class HierarchicalFailureTrace implements ModelCheckingTrace {
 	private FailureTrace currentFailureTrace;
 	
 	public void addHierarchicalFailureTrace(HierarchicalFailureTrace trace) {
+		
 		globalStateTrace.addAll(trace.getStateTrace());
 		globalStateIdTrace.add(trace.getStateIdTrace());
 		failureTraceIterator = globalStateTrace.iterator();
 	}
 	
 	public void addFailureTrace(FailureTrace trace) {
+
 		globalStateTrace.addFirst(trace);
 		globalStateIdTrace.addFirst(trace.getStateIdTrace());
 		currentFailureTrace = trace;

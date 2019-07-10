@@ -17,13 +17,13 @@ import de.rwth.i2.attestor.main.scene.ElementNotPresentException;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.InputSettings;
 import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
+import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.ModelCheckingInterproceduralAnalysis;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.NonRecursiveModelCheckingMethodExecutor;
 import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.interproceduralAnalysis.RecursiveModelCheckingMethodExecutor;
-import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.modelChecking.OnTheFlyProofStructure;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContractCollection;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateSpaceGeneratorFactory;
@@ -107,20 +107,22 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
 
     	ModelCheckingSettings settings = getPhase(MCSettingsTransformer.class).getMcSettings();
         
-        List<String> methodsToSkip = settings.getMethodsToSkip();    	
-    	for(Method method : scene ().getRegisteredMethods()) {
-    		if (methodsToSkip.contains(method.getName())) {
-    			System.out.println("Phase: Skipping method " + method.getSignature() + " for model checking.");
-    			interproceduralAnalysis.registerMethodToSkip(method);
-    		}
-    	}
+        List<String> methodsToSkip = settings.getMethodsToSkip(); 
+        
+        if (!methodsToSkip.isEmpty()) {
+	    	for (Method method : scene().getRegisteredMethods()) {
+	    		if (methodsToSkip.contains(method.getName())) {
+	    			interproceduralAnalysis.registerMethodToSkip(method);
+	    		}
+	    	}
+        }  
     }
     
     private void loadInitialStates() {
 
         List<HeapConfiguration> inputs = getPhase(InputTransformer.class).getInputs();
         initialStates = new ArrayList<>(inputs.size());
-        for(HeapConfiguration hc : inputs) {
+        for (HeapConfiguration hc : inputs) {
         	initialStates.add(scene().createProgramState(hc));
         }
     }
@@ -192,14 +194,12 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
         OnTheFlyStateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(mainMethod.getBody(), initialStates, formulae);
     	
     	try {
-    		System.out.println("Phase: Generate main state space " + mainMethod.getName());
 			mainStateSpace = stateSpaceGenerator.generateAndCheck();
 		} catch (StateSpaceGenerationAbortedException e) {	
 			e.printStackTrace();
 		}
     	
-    	proofStructure = stateSpaceGenerator.getProofStructure();
-    	System.err.println("Phase: ProofStructure from main state space " + proofStructure);			
+    	proofStructure = stateSpaceGenerator.getProofStructure();			
     }
     
     /**
@@ -217,10 +217,6 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
     }    
     
     private void processModelCheckingResults(LTLFormula formula) {
-   
-        System.out.println("Main state space: " + mainStateSpace);
-        System.out.println("Main Proof Structure successful? " + proofStructure.isSuccessful());
-    	System.out.println("Model Checking: Proof Structure checked " + proofStructure.getNumberOfCheckedAssertions() + " assertions.");
     	
     	if (proofStructure.isSuccessful()) {
             if(mainStateSpace.containsAbortedStates()) {
@@ -250,7 +246,7 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
             	}            	
             	traces.put(formula, failureTrace); 
             	
-            	System.err.println("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
+            	logger.info("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
             }
         }    	
     }

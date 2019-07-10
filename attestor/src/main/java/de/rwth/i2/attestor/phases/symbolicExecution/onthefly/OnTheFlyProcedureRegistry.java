@@ -19,7 +19,7 @@ public class OnTheFlyProcedureRegistry implements ProcedureRegistry {
     private final OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory;
 
     public OnTheFlyProcedureRegistry(ModelCheckingInterproceduralAnalysis analysis,
-                                     OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory) {
+    		OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory) {
 
         this.analysis = analysis;
         this.stateSpaceGeneratorFactory = stateSpaceGeneratorFactory;
@@ -41,7 +41,7 @@ public class OnTheFlyProcedureRegistry implements ProcedureRegistry {
 	public void registerDependency(ProgramState callingState, ProcedureCall call) {
 		
 		OnTheFlyPartialStateSpace partialStateSpace = new OnTheFlyPartialStateSpace(callingState, stateSpaceGeneratorFactory);
-        analysis.registerDependency(call, partialStateSpace);
+        analysis.registerDependency(call, partialStateSpace);		
 	}
 
 	@Override
@@ -60,9 +60,9 @@ public class OnTheFlyProcedureRegistry implements ProcedureRegistry {
 		analysis.registerFormulae(call, formulae);				
 	}
 
-	public void registerReturnFormulae(ProcedureCall call, Set<Node> returnFormulae) {
+	public void registerResultFormulae(ProcedureCall call, Set<Node> resultFormulae) {
 		
-		analysis.registerReturnFormulae(call, returnFormulae);				
+		analysis.registerResultFormulae(call, resultFormulae);				
 	}
 
 	public void addFailureTrace(FailureTrace failureTrace) {

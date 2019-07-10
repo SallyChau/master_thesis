@@ -22,7 +22,6 @@ public class NonRecursiveModelCheckingMethodExecutor extends AbstractModelChecki
 	@Override
 	protected void generateAndAddContract(OnTheFlyProcedureCall call) {
 		
-		System.out.println("NonRecursiveModelCheckingMethodExecutor: Executing procedure call " + call.getMethod().getSignature());
 		call.execute();
 	}
 }

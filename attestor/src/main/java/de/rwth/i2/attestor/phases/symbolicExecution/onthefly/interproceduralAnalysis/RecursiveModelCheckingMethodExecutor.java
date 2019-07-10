@@ -28,9 +28,7 @@ public class RecursiveModelCheckingMethodExecutor extends AbstractModelCheckingM
      */
 	@Override
 	protected void generateAndAddContract(OnTheFlyProcedureCall call) {
-		
-	    System.err.println("RecursiveModelCheckingMethodExecutor: register method " + call.getMethod().getSignature());
-	
+			
 		Collection<HeapConfiguration> postconditions = new LinkedHashSet<>();
 		getContractCollection().addContract(new InternalContract(call.getInput().getHeap(), postconditions));
 		

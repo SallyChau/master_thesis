@@ -10,8 +10,8 @@ import de.rwth.i2.attestor.phases.parser.ParseProgramPhase;
 import de.rwth.i2.attestor.phases.preprocessing.AbstractionPreprocessingPhase;
 import de.rwth.i2.attestor.phases.preprocessing.GrammarRefinementPhase;
 import de.rwth.i2.attestor.phases.preprocessing.MarkingGenerationPhase;
-import de.rwth.i2.attestor.phases.preprocessing.RSMGenerationPhase;
 import de.rwth.i2.attestor.phases.report.ReportGenerationPhase;
+import de.rwth.i2.attestor.phases.symbolicExecution.onthefly.OnTheFlyModelCheckingPhase;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.RecursiveStateSpaceGenerationPhase;
 
 
@@ -55,12 +55,11 @@ public class Attestor extends AbstractAttestor {
                 .addPhase(new MarkingGenerationPhase(scene))
                 .addPhase(new GrammarRefinementPhase(scene))
                 .addPhase(new AbstractionPreprocessingPhase(scene))                
-                .addPhase(new RSMGenerationPhase(scene)) // generate RSM from input program
-                //.addPhase(new HierarchicalStateSpaceGenerationPhase(scene)) //
+                .addPhase(new OnTheFlyModelCheckingPhase(scene)) 
                 .addPhase(new RecursiveStateSpaceGenerationPhase(scene))
-                .addPhase(new ModelCheckingPhase(scene)) //
+                .addPhase(new ModelCheckingPhase(scene))
                 .addPhase(new CounterexampleGenerationPhase(scene))
-                .addPhase( new ReportGenerationPhase(registry, scene) )
+                .addPhase(new ReportGenerationPhase(registry, scene))
                 .execute();
     }
 }

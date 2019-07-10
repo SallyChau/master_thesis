@@ -166,7 +166,7 @@ public class ModelCheckingInterproceduralAnalysisTest {
         } catch (Exception e) {
             fail("Formula should parse correctly. No Parser and Lexer exception expected!");
         } 
-		analysis.registerReturnFormulae(call, formulae);
+		analysis.registerResultFormulae(call, formulae);
 		
 		OnTheFlyProofStructure proofStructure = mock(OnTheFlyProofStructure.class);
 		analysis.callToProofStructure.put(call, proofStructure);

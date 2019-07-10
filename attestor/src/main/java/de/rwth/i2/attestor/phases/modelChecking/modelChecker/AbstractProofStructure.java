@@ -79,12 +79,10 @@ public abstract class AbstractProofStructure {
 	/**
 	 * Do one step in the tableau according to tableau rules.
 	 * 
-	 * @param node
-	 * 		assertion which holds the program state and the formula to be checked
-	 * @param formula
-	 * 		the formula to be checked
-	 * @return
-	 * 		list of successor nodes, possibly empty (successful path)
+	 * @param node assertion which holds the program state and the formula to be checked
+	 * @param formula the formula to be checked
+	 * 
+	 * @return list of successor nodes, possibly empty (successful path)
 	 */
 	@SuppressWarnings("unchecked")
 	protected HashSet<Assertion2> expand(Assertion2 node, Node formula) {
@@ -107,14 +105,13 @@ public abstract class AbstractProofStructure {
     }
     
     public int getNumberOfCheckedAssertions() {
+    	
 		return checkedAssertions;
 	}
     
     public abstract Set<Assertion2> getLeaves();
 
     public abstract Set<Assertion2> getVertices();
-    
-    public abstract FailureTrace getFailureTrace();
 
 	public abstract Integer size();
 }

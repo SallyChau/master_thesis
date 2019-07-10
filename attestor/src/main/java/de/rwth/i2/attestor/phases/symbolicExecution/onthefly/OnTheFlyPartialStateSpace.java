@@ -6,11 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingContract;
-import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContract;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.PartialStateSpace;
@@ -31,6 +29,8 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
     private OnTheFlyProofStructure proofStructure;
     private boolean modelCheck;
     
+    private Set<Node> modelCheckingResultFormulae;
+    
     
 
     public OnTheFlyPartialStateSpace(ProgramState callingState, OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory) {
@@ -40,6 +40,7 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
         this.stateSpaceGeneratorFactory = stateSpaceGeneratorFactory;
         
         this.modelCheckingFormulae = new HashSet<>();
+        this.modelCheckingResultFormulae = new HashSet<>();
         this.proofStructure = new OnTheFlyProofStructure();
         this.modelCheck = false;
     }
@@ -54,14 +55,12 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
 	    	OnTheFlyProcedureCall onTheFlyCall = (OnTheFlyProcedureCall) call;
 	        Method method = onTheFlyCall.getMethod();
 	        ProgramState preconditionState = onTheFlyCall.getInput();
-	        
-	        System.out.println("InternalPartialStateSpace: Continuing execution for " + onTheFlyCall.getMethod().getSignature() + " (" + onTheFlyCall + ")");
-	
+	        	
 	        if (partialStateSpace.containsAbortedStates()) {
 	            return;
 	        }
 	        
-	        stateToContinue.flagAsContinueState();
+	        stateToContinue.flagAsContinueState(); 
 	        
 	        OnTheFlyStateSpaceGenerator stateSpaceGenerator = stateSpaceGeneratorFactory.create(
 	        		onTheFlyCall.getMethod().getBody(),
@@ -73,49 +72,38 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
 	        );
 	
 	        StateSpace stateSpace = null;
-	        Set<Node> modelCheckingResultFormulae;
-	        ModelCheckingResult modelCheckingResult = null;
+	        boolean modelCheckingResult;
 	        
 	        if (modelCheck) {
-	        	stateSpace = stateSpaceGenerator.generateAndCheck();
-	        	
+	        	stateSpace = stateSpaceGenerator.generateAndCheck();	        	
 	        	modelCheckingResultFormulae = stateSpaceGenerator.getResultFormulae();
-	            
-	            if (proofStructure.isSuccessful() && modelCheckingResultFormulae == null) {
-	
-	                System.err.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was successful");
-	                LTLFormula ltlFormula = new LTLFormula("true");
-	                ltlFormula.toPNF();
-	                modelCheckingResultFormulae = new HashSet<>();
-	                modelCheckingResultFormulae.add(ltlFormula.getASTRoot().getPLtlform());
-	            } else if (!proofStructure.isSuccessful()) {
-	            	
-	            	System.out.println("InternalPartialStateSpace: Proofstructure for method: " + method.getName() + " was unsuccessful");  
-	            }
-	            
-	            modelCheckingResult = proofStructure.isSuccessful() ? ModelCheckingResult.SATISFIED : ModelCheckingResult.UNSATISFIED;
+	            modelCheckingResult = proofStructure.isSuccessful();
 	        } else {
-	        	System.err.println("InternalPartialStateSpace: SKIPPING MC for method: " + method.getName());
-	        	stateSpace = stateSpaceGenerator.generate();
-	        	
+	        	stateSpace = stateSpaceGenerator.generate();	        	
 	        	modelCheckingResultFormulae = modelCheckingFormulae;
-	        	modelCheckingResult = ModelCheckingResult.SATISFIED;
+	        	modelCheckingResult = true;
 	        }
 	        
 	        stateToContinue.unflagContinueState();
 	
+	        // set contract
 	        List<HeapConfiguration> finalHeaps = new ArrayList<>();
 	        stateSpace.getFinalStates().forEach( finalState -> finalHeaps.add(finalState.getHeap()) );            
-	        
 	        Contract contract = new InternalContract(preconditionState.getHeap(), finalHeaps);
 	        
-	        ModelCheckingContract modelCheckingContract = new ModelCheckingContract(preconditionState.getHeap(), modelCheckingFormulae, 
-	        		modelCheckingResultFormulae, modelCheckingResult, proofStructure.getFailureTrace());
+	        // add model checking contract
 	        Collection<ModelCheckingContract> modelCheckingContracts = new ArrayList<>();
-	        modelCheckingContracts.add(modelCheckingContract);
+	        ModelCheckingContract modelCheckingContract = 
+	        		new ModelCheckingContract(preconditionState.getHeap(), 
+	        				modelCheckingFormulae, modelCheckingResultFormulae, 
+	        				modelCheckingResult, proofStructure.getFailureTrace(stateSpace));
+	      
+	        modelCheckingContracts.add(modelCheckingContract);	    
+	        
 	        contract.addModelCheckingContracts(modelCheckingContracts);            
 	        method.addContract(contract);
 	    } catch (Exception e) {
+	    	
 	        throw new IllegalStateException("Failed to continue state space execution.");
 	    }
 	}
@@ -129,12 +117,25 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
     	
     	this.modelCheckingFormulae = formulae;
     }
+	
+	public Set<Node> getModelCheckingResultFormulae() {
+    	
+    	return this.modelCheckingResultFormulae;
+    }
     
 	public void setProofStructure(OnTheFlyProofStructure proofStructure) {
 	    	
 		this.proofStructure = proofStructure;
     }
 	
+	@Override
+	public StateSpace unfinishedStateSpace() {
+		
+		return this.partialStateSpace;
+	}
+
+
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -166,10 +167,5 @@ public class OnTheFlyPartialStateSpace implements PartialStateSpace {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public StateSpace unfinishedStateSpace() {
-		return this.partialStateSpace;
 	}
 }

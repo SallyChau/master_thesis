@@ -6,6 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.AbstractProofStructure;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.Assertion2;
@@ -18,43 +21,37 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 
 public class OnTheFlyProofStructure extends AbstractProofStructure {
 	
+	private static final Logger logger = LogManager.getLogger("ontheflyProofStructure.java");
+	
 	private Assertion2 currentParent = null; // last checked assertion
+	private Assertion2 currentAssertion = null;
 	protected TIntObjectMap<Set<Assertion2>> stateIdToAssertions = new TIntObjectHashMap<>();
 	
-	private Assertion2 currentAssertion = null;
+	
 	
 	public Set<Node> buildAndGetNextFormulaeToCheck() {
 		
-		System.out.println("ProofStructure: Building proofstructure...");
+		logger.debug("Building on-the-fly proof structure");
 		
         while (!queue.isEmpty()) {
+        	
 			currentAssertion = queue.poll();
-			checkedAssertions++;			
-
-			System.out.println("ProofStructure: Checking assertion: " + currentAssertion.toString());
+			checkedAssertions++;	
 			
 			// tableau step for formulae without X operator
 			if (!currentAssertion.getFormulae().isEmpty()) {
 				
 				Node currentFormula = currentAssertion.getFirstFormula();
 				
-				System.out.println("ProofStructure: Checking formula: " + currentFormula);
-				
 				HashSet<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
 				
 				if (successorAssertions != null) {
-
-					System.out.println("ProofStructure: Successor assertions: " + successorAssertions.size());
-					for (Assertion2 successorAssertion : successorAssertions) {						
+					for (Assertion2 successorAssertion : successorAssertions) {	
 						addEdge(currentAssertion, successorAssertion);
 						addAssertionToState(successorAssertion);
 						queue.add(successorAssertion);
-						
-						System.out.println("ProofStructure: added assertion to queue: " + successorAssertion);
 					}
-				} else {
-					System.out.println("ProofStructure: no successor assertions");
-				}
+				} 
 			} 
 			// return formulae with X operator
 			else if (!currentAssertion.getNextFormulae().isEmpty()) {
@@ -67,9 +64,6 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 					result.add(formula);
 				}
 				
-				System.out.println("ProofStructure: returning formulae for assertion " + currentAssertion);
-				System.out.println("ProofStructure: returning formulae " + result);
-				
 				return result;
 			} 
 			// assertion does not contain any formulae to check (unsuccessful)
@@ -79,14 +73,12 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 				
                 // abort proof structure generation, as we already know that it is not successful!
                 if (!buildFullStructure) {
-                	System.out.println("Proofstructure: abort since assertion does not contain formulae to check");
                 	return Collections.emptySet();                
                 }
 			}
 		}
         
-        System.out.println("Proofstructure: queue is completely done.");
-		return Collections.emptySet();		// TODO how to handle successful proofstructures?
+		return Collections.emptySet();
 	}
 	
 	/**
@@ -160,15 +152,12 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
         
         // Process the assertion further only in case it is not one, that was already processed.                       
         if (!assertionPresent) {
-        	System.out.println("ProofStructure: Added assertion " + assertion.toString());
             queue.add(assertion);
         } // Otherwise, check whether the assertion is part of a real and harmful cycle (if it does not contain an R operator)
         else if (isRealCycle(assertion) && !containsReleaseOperator(assertion)) {                         
-            this.successful = false;                                    
+            this.successful = false;      
             setOriginOfFailure(assertion);
         }        
-        
-        System.out.println("ProofStructure: Queue contains " + queue.size() + " elements.");
 	}
     
 	/**
@@ -252,10 +241,4 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
         
         return new FailureTrace(this.originOfFailure, stateSpace);
     }
-
-	@Override
-	public FailureTrace getFailureTrace() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

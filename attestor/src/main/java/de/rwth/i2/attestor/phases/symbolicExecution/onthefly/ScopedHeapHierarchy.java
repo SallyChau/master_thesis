@@ -28,8 +28,10 @@ public class ScopedHeapHierarchy {
 	
 	public ScopedHeapHierarchy(ScopedHeapHierarchy hierarchicalScopedHeap) {
 	
-		this.scopedHeapToExternalReordering = hierarchicalScopedHeap.scopedHeapToExternalReordering;
-		this.scopedHeaps = hierarchicalScopedHeap.getScopedHeaps();	
+		if (hierarchicalScopedHeap != null) {
+			this.scopedHeapToExternalReordering = hierarchicalScopedHeap.scopedHeapToExternalReordering;
+			this.scopedHeaps = hierarchicalScopedHeap.getScopedHeaps();	
+		}
 	}
 
 	

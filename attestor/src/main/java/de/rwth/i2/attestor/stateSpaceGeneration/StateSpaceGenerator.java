@@ -311,9 +311,7 @@ public class StateSpaceGenerator {
         if(state.isFromTopLevelStateSpace()) {
             stateLabelingStrategy.computeAtomicPropositions(state);
         } else {
-        	// comment out this part if no APs should be computed for procedure state spaces
 	    	if (stateLabelingStrategy instanceof AutomatonStateLabelingStrategy) {        
-	        	System.out.println("StateSpaceGenerator: adding APs for state in statespace " + stateSpace);
 	        	AutomatonStateLabelingStrategy labelingStrategy = (AutomatonStateLabelingStrategy) stateLabelingStrategy;
 	        	labelingStrategy.computeAtomicPropositionsFromGlobalHeap(state, scopeHierarchy);
 	    	}

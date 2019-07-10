@@ -110,13 +110,13 @@ public class RecursiveStateMachine {
 		ModelCheckingContract contract = csm.getModelCheckingContract(call, formula);		
 		addModelCheckingContract(call, contract);
 		
-		return contract.modelCheckingIsSuccessful();
+		return contract.isModelCheckingSuccessful();
 	}
 	
 	public boolean modelCheckingSuccessful(ProcedureCall call, LTLFormula formula) {
 		
 		ModelCheckingContract contract = getModelCheckingContract(call, formula);
-		return (contract != null) ? contract.modelCheckingIsSuccessful() : null;
+		return (contract != null) ? contract.isModelCheckingSuccessful() : null;
 	}
 	
 	public HierarchicalFailureTrace getHierarchicalFailureTrace(ProcedureCall call, LTLFormula formula) {

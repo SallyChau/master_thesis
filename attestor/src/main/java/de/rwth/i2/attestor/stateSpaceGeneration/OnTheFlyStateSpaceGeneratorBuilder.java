@@ -152,7 +152,7 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
           
             generator.stateExplorationStrategy.addUnexploredState(state, false);            
             
-            // for model checking 
+            // for on-the-fly model checking 
             if(state.isContinueState()) {            	
             	try {
                 	Collection<ProgramState> successors = generator.computeControlFlowSuccessors(state, modelCheckingFormulae); 
@@ -163,7 +163,6 @@ public class OnTheFlyStateSpaceGeneratorBuilder {
 					e.printStackTrace();
 				}
             } else {                
-            	System.out.println("StateSpaceGeneratorBuilder: adding initial assertions to proof structure");                
             	generator.proofStructure.addAssertion(state, modelCheckingFormulae);
             }
         }        

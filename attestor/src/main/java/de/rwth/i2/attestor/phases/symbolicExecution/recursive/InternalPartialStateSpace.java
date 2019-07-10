@@ -33,8 +33,6 @@ public class InternalPartialStateSpace implements PartialStateSpace {
 
         try {
         	
-        	System.out.println("Continuing execution for " + call.getMethod().getSignature() + " (" + call + ")");
-
             Method method = call.getMethod();
             
             ProgramState preconditionState = call.getInput();
