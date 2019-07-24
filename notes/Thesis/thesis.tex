@@ -23,6 +23,19 @@
 \usepackage{blindtext}
 \usepackage{listings}
 \usepackage{pdflscape}
+\usepackage{pgfplots}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{booktabs} % For \toprule, \midrule and \bottomrule
+\usepackage{colortbl}
+%\usepackage{siunitx} % Formats the units and values
+\usepackage{pgfplotstable} % Generates table from .csv
+
+% Setup siunitx:
+%\sisetup{
+%	round-mode          = places, % Rounds numbers
+%	round-precision     = 2, % to 2 places
+%}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
@@ -164,7 +177,8 @@
 	- introduce current status of model checking in attestor: after state space generation, only checking top level state space\\
 	- goal: model check procedure state spaces \\
 	- present possible algorithms: automata-based and on-the-fly tableau\\
-	- always keep goal of hierarchical model checking in mind
+	- always keep goal of hierarchical model checking in mind\\
+	- introduce example for model checking (reverse from tableaux or faulty one from benchmarks?) --> roter Faden
 	
 	
 	\section{\textsc{Attestor}}\label{sec:attestor}
@@ -320,6 +334,13 @@
 	In case an LTL formula is found to be violated, the model checking phase returns a failure trace. Together with the violated formula a counterexample is generated in this phase in order to provide an instance for debugging purposes.
 
 	\section{Related Work}
+	Several algorithms on model checking possibly recursive software programs have been developed in the research of LTL model checking. In \cite{esparza2000}, Esparza et al. propose an automata-theoretic approach that reduces the model checking problem to the accepting runs problem of a Büchi pushdown system. A Büchi pushdown system is the product of a pushdown system that represents the underlying input program and a Büchi automaton that corresponds to the negation of the LTL formula to be verified. Thus, an empty set of configurations that have an accepting run in the Büchi pushdown system denotes that no run in the pushdown system satisfies the negated input formula, i.e., the formula is satisfied. The algorithm runs in $\mathcal{O}(|\mathcal{P}^3||\mathcal{B}^3|)$ time and $\mathcal{O}(|\mathcal{P}^2||\mathcal{B}^2|)$ space, where $|\mathcal{P}|$ and $|\mathcal{B}|$ denote the size of the pushdown system and the size of a Büchi automaton for the negation of the LTL formula, respectively. Hence, Esparza et al. show that the model checking problem for linear temporal logics can be solved in ploynomial time.\\
+	
+	In \cite{schwoon2001}, Esparza et al. further extend the automata-theoretic approach for boolean programs with possibly recursive procedures by representing the underlying input program as a symbolic pushdown system. A symbolic pushdown system is a compact representation of a pushdown system where a symbolic rule denotes a set of transition rules in the corresponding pushdown system. Thus, symbolic pushdown systems finitely capture possibly infinite states. Furthermore, they use BDDs to encode the values of Boolean variables.\\
+	
+	Alur et al. further address the problem of model checking recursive input programs that induce possibly infinite hierarchies in state spaces by introducing recursive state machines in \cite{alur2001analysis}. Closely related to pushdown systems, recursive state machines model the control flow of input programs with recursive procedure calls. Every procedure is represented by a component within the state machine. A state in a recursive state machine is either a state in a component or a box that represents a procedure call. Alur et al. adapt the automata-theoretic approach for model checking recursive state machines.\\
+	
+	We base our work on the previously introduced results and employ the notion of recursive state machines for model checking LTL formula. However, we will refrain from an automata-theoretic approach and focus more on an on-the-fly model checking algorithm as introduced in \cite{bhat1995efficient} that constructs a proof structure for the underlying state space in order to verify a linear time property. By combining the compact representation of recursive programs in recursive state machines and the efficient on-the-fly model checking algorithm, we introduce algorithms that do not require the construction of several automata, but rather operate on the underlying state space itself. Therefore, we will first introduce the required definitions and notations in order to set the foundations for this thesis. Followed by a closer look on the tableaux construction for the on-the-fly model checking algorithm, we will introduce two algorithms for hierarchical model checking. First, we present and implement an approach that works completely on-the-fly, i.e., state space generation is executed on demand if the tableaux construction requires so. This approach is promising in detecting property violations at an early stage avoiding the need to generate an entire state space. The second algorithm, we introduce in this thesis, executes the tableaux construction on recursive state machines. This approach offers an efficient way to verify a set of linear time properties for a (hierarchical) state space once computed. Finally, the thesis concludes with an evaluation of the introduced algorithms and compares them to \textsc{Attestor}'s model checking algorithm. 
 	
 	\chapter{Preliminaries}
 	
@@ -1220,7 +1241,7 @@
 		\equiv \quad &\text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \\&\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})). \qquad &(\text{duality of } \text{\textbf{U}} \text{  and } \text{\textbf{R}}) \\
 	\end{align*}	
 	
-	\chapter{Hierarchical Model Checking}
+	\chapter{Hierarchical Model Checking}\label{chp:tableaux}
 	
 	One of the main challenges in model checking programs with method calls is that we do not only need to consider the state space of the main method, but also the state spaces induced by method executions, denoted as \textit{procedure state spaces}. Here, we face two main difficulties:
 	\begin{itemize}
@@ -1590,7 +1611,30 @@
 		\end{center}
 	\end{figure}
 	
-	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc \texttt{SLList}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc \texttt{SLList}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space. We describe an implementation of the on-the-fly state space generation in the following chapter.
+	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc\;\texttt{SLList}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc\;\texttt{SLList}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space. We describe an implementation of the on-the-fly state space generation in the following chapter.
+	
+	
+	% TODO include example where this algo fails to detect error in proceudre (take example from benchmark chapter) --> include same example in 4+5 to show it works there
+	\begin{lstlisting}[language=Java,numbers=left,
+	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={Code with erroneous behaviour in called procedures.},captionpos=b,label={lst:modify}]	  
+	public static void traverseModifyList(SLList head) {
+	
+	SLList current = head;
+	
+	  while (current.next != null) {
+	    current = current.next;
+	    swap(head);
+	  }
+	}
+	
+	  public static void swap(SLList head) {
+	
+	    SLList list = head.next;
+	    head.next = null;
+	    head.next = list;
+	}
+	
+	\end{lstlisting}
 	
 %	\section{Automata-Based Model Checking}\label{sec:automataMC}
 %	
@@ -1657,7 +1701,7 @@
 %	As the automaton-construction of the NBA $\mathcal{L}(\mathcal{B}_{\neg \varphi})$ as well as the product construction are quite costly in practice, %TODO source?
 %	we approach automata-based model checking by combining the structures of recursive state machines and the procedures of the \textit{tableaux construction} for model checking LTL formulae. We depict the tableaux construction in the next section. The resulting algorithm from our combined approach is presented in Chapter~\ref{chp:hmc}.	
 	
-	\chapter{On-The-Fly Model Checking}\label{chp:otf}
+	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
 	
 	The tableaux construction is an on-the-fly approach to model checking transition systems for an LTL formula $\varphi$. In this chapter, we describe how we adapt the tableaux construction by Grumberg et al. describe in Section~\ref{sec:tableaux} to account for model checking of hierarchical structures including procedure state spaces. In a next step, we present the implementation of the algorithm within the \textsc{Attestor} framework and conclusively evaluate our proceedings.
 	
@@ -1861,7 +1905,7 @@
 	The correctness of the on-the-fly tableaux construction for hierarchical state spaces follows from the correctness of the tableaux construction \cite{bhat1995efficient} and the correctness of the state space generation algorithm defined in \cite{arndt2018let}.
 	
 	\section{Implementation}
-	%TODO add UML diagram / architecture?
+	
 	We implemented the on-the-fly tableaux construction for hierarchical state spaces within the \textsc{Attestor} framework written in \textsc{Java}. The code can be found at \url{https://github.com/SallyChau/master_thesis/tree/master/attestor}. As both state space generation and model checking are performed, the on-the-fly hierarchical model checking algorithm encompasses \textsc{Attestor}'s present state space generation and model checking phases. We refer to the new phase as the \textit{on-the-fly model checking phase}.\\
 	
 	The implementation of the on-the-fly model checking phase requires two main adaptations in the \textsc{Attestor} framework. First, we need to adapt the tableaux construction algorithm such that it does not work on a complete state space, but rather successively demands for new states as soon as they are required for building the proof structure. Second, we require a possibility to query for a list of successor states for a given state $s$. Figure~\ref{fig:otf_mc_uml} sketches the architecture our implementation.\\
@@ -1917,9 +1961,7 @@
 		\end{center}
 	\end{figure}
 	
-	%TODO implementation of model checking results?
-	
-	\section{Evaluation}
+	\section{Discussion}
 	
 	When model checking procedural programs with possibly recursive method invocations, procedure state spaces need to be taken into account. \textsc{Attestor}'s current model checking approach only verifies the top-level state space and thus disregards possible erroneous behavior within method executions. The on-the-fly approach on hierarchical model checking presented in this chapter solves this gap by model checking procedure state spaces during their generation. Thus, the algorithm successfully interweaves state space generation and state space model checking. Violations can also be tracked on procedure state space level and hence offer more precise debugging instances. In order to avoid repetitive model checking of model checking instances, the algorithm applies model checking contracts for procedure state spaces in order to reuse model checking results that have been computed beforehand. Furthermore, the on-the-fly state space construction allows for early termination of the model checking procedure such that time and memory can be saved as not states need to be determined. \\
 	
@@ -1932,7 +1974,7 @@
 	
 	%TODO example from introduction
 	
-	\chapter{Hierarchical Model Checking with Recursive State Machines}\label{chp:hmc}
+	\chapter{RSM-based Hierarchical Model Checking}\label{chp:hmc}
 
 	Recursive state machines model the control flow of sequential imperative programs containing possibly recursive method calls \cite{alur2001analysis}. In the concept of RSMs two kinds of states are differentiated: ordinary states that constitute a statement that is executed in place, and states that invoke method executions. This differentiation is helpful in modeling the hierarchical structure of procedural programs. Thus, we modify the previously presented on-the-fly model checking approach for procedure state spaces by model checking recursive state machines. However, instead of applying the automata-based approach by Vardi and Wolper presented in Chapter~\ref{sec:automataMC}, we propose an algorithm that constructs a tableaux for a component $A_i$ of an RSM $\mathcal{A}$ that stores the pre-generated procedure state space of the method $i$. By this means, model checking of procedure state spaces draws on stored procedure state spaces such that state spaces are not repeatedly generated. In the sequel of this chapter, we introduce the RSM-based algorithm in detail and describe its implementation within the \textsc{Attestor} framework. Finally, we evaluate this approach in terms of time and space efficiency.
 
@@ -2055,7 +2097,10 @@
 		\end{center}
 	\end{figure}
 	
-	\section{Evaluation}
+	%TODO
+	By setting the option \texttt{--hierarchical-model-checking}, the RSM-based hierarchical model checking algorithm is executed instead of top level model checking algorithm.
+	
+	\section{Discussion}
 	
 	
 	% summarize algorithm shortly
@@ -2076,26 +2121,747 @@
 	
 	\chapter{Benchmarks}\label{chp:benchmarks}	
 	
+	We presented two algorithms for model checking hierarchical state spaces that result from analyzing input programs with procedure calls. The on-the-fly hierarchical model checking algorithm uses the tableaux construction by Grumberg et al. \cite{bhat1995efficient} to build a proof structure for checking a property while generating the underlying state space on-the-fly. The RSM-based hierarchical model checking algorithm models the hierarchical state space as a recursive state machine such that procedure state spaces are depicted. Based on the collection of state spaces, the tableaux construction is used to verify the property under consideration. In this chapter we compare the performances of the algorithms with the model checking algorithm implemented in \textsc{Attestor} that uses the tableaux construction to check the top level state space. Therefore, we evaluate the execution time and the number of generated states of the individual algorithms on 79 model checking instances. 
+	
 	\section{Experimental Setup}
-	Describe Technical details here
+	
+	The benchmarks are performed on an Intel Core i7-8650U CPU @ 1.90 GHz with the Java virtual machine (OpenJDK version 1.80\_112). The benchmark instances are executed by the \textsc{Attestor} tool with the help of a benchmark helper class, that is based on the \textsc{Attestor Benchmark Helper}. For each model checking algorithm, i.e.
+	\begin{itemize}
+		\item \textsc{Attestor}'s top level model checking,
+		\item on-the-fly hierarchical model checking, and
+		\item RSM-based hierarchical model checking,
+	\end{itemize}
+	we the determine the following statistics:
+	\begin{itemize}
+		\item the number of generated states of the main state space and the total number of generated states,
+		\item the execution time of the individual algorithm consisting of the time needed for state space generation and model checking in seconds. 
+	\end{itemize}  
+
+	A settings file specifies the options for the execution of a benchmark instance. Generally, the options include but are not limited to
+	
+	\begin{itemize}
+		\item \texttt{--description} a description of the performed model checking task,
+		\item \texttt{--classpath} the path to the \texttt{.java} file that contains the input program,
+		\item \texttt{--class} the class to be analyzed,
+		\item \texttt{--method} the method to be analyzed,
+		\item \texttt{--predefined-grammar} the grammar to be employed during the analysis specifying which data structure is analyzed,
+		\item \texttt{--initial} a file that specifies the heap of the initial state. If none is specified the heap is assumed to be initially empty.
+		\item \texttt{--model-checking} the LTL formula to be checked,
+		\item \texttt{--hierarchical-model-checking} an option that indicates that the RSM-based hierarchical model checking algorithm is executed instead of the top level model checking algorithm. The on-the-fly hierarchical model checking algorithm involves an own phase in \textsc{Attestor} such that it is executed next to the tool's standard state space generation and model checking. 
+	\end{itemize} 
 	
 	\section{Instances}
-	Describe code examples and properties here
 	
-	\section{Result}
-	Table of values
-	Comparison regarding different topics: time, memory, ...
-	
-	\chapter{Conclusion}
-	
-	\section{Discussion}
+	We compare the hierarchical model checking algorithms and \textsc{Attestor}'s top level model checking based on 79 benchmark instances. Each instance is a model checking task that verifies a property given as an LTL formula for an input program that operates on a specified data structure.\\	
 		
-	\section{Outlook}
+	The input program contains methods working on data structures whose grammar is predefined in the \textsc{Attestor} tool, i.e., singly-linked lists (\texttt{SLList}), doubly-linked lists (\texttt{DLList}), and trees (\texttt{Tree}). For each data structure, we implement several operations in \textsc{Java} code such as \texttt{SLList.traverse} or \texttt{DLList.reverse} that run through all elements of a singly-linked list or reverse the order of the contained elements in a doubly-linked list, respectively.\\
 	
-		- hierarchical failure trace and counter example generation, spuriosity
-	- hybrid method between on-the-fly and RSM
+	Each operation is verified for a number of properties specified as LTL formulae. We analyze the following properties during the model checking procedures:
+	
+	\begin{itemize}
+		\item \textit{Memory Safety} (M) is checked during state space generation. In this context, we analyze the LTL formula $\square\; \texttt{true}$ such that the on-the-fly hierarchical model checking generates the entire states space. Without a specified formula, the on-the-fly approach would not be executed as there is no specified formula to be verified.
+		\item The \textit{completeness property} (C) verifies whether all elements of the input are visited by a specific variable. For example, the formula \[\square \lozenge\; \texttt{terminated} \rightarrow \lozenge\; \texttt{visited(current)}\] describes that all elements of the input are eventually visited by the variable \texttt{current} upon termination of the program. 
+		\item The \textit{correctness property} (Co) summarizes properties that verify that an input program delivers correct results. Therefore, we consider formulae such as \[\square \lozenge\; \texttt{terminated} \rightarrow \lozenge\; \texttt{(return == null) \& (terminated)}\] stating that the return value is \texttt{null} upon termination of the program. The converse property can be verified by using this formula if the model checking algorithm outputs that the property is violated.
+		\item The \textit{neighborhood preservance property} (N) proves whether the input data structure corresponds to the data structure upon termination of the program. An LTL formula to specify this property is \[\square \lozenge\; \texttt{terminated} \rightarrow \lozenge\; \texttt{terminated \& identicNeighbours}.\]
+		\item The \textit{reachability property} (R) verifies whether a variable is reachable from another one via specified pointers upon termination. An example for an LTL formula specifying a reachability property is given by \[\lozenge\texttt{(}\bigcirc\texttt{terminated} \rightarrow \texttt{isReachable(head, tail, [next])}\texttt{)}\] which states that the variable \texttt{tail} is reachable from the variable \texttt{head} via \texttt{next} pointers.
+		\item The \textit{shape property} (S) checks whether the heap is of a certain shape. For example, the formula \[\square\lozenge\;\texttt{terminated} \rightarrow \square\lozenge\;\texttt{SLList}\] defines that the heap is of the shape of a singly-linked list.
+	\end{itemize}
+	
+	For the completeness and neighborhood preservance properties it is required to track object identities during program execution. This is done by marking objects such that they are identified across different states in the state space \cite{arndt2018let, heinen2015verifyingPhd}.\\
+	
+	In order to analyze the effectiveness and efficiency of the algorithms in terms of hierarchical model checking, the instances include input programs with and without procedure calls as well as recursive methods. Furthermore, we introduced erroneous code snippets such that property violation (on procedure level) is examined.\\
+	
+	An overview of all implemented methods and the verified properties is depicted in Table~\ref{table:benchmarks}. The table also shows the experimental results for executing each introduced model checking algorithm in this thesis for every instance. \\
+	
+	\section{Results}
+	
+	The executed benchmark instances give us a basis to compare the three model checking algorithms in terms of their \textit{effectiveness} and \textit{efficiency} in model checking hierarchical state spaces. We base the effectiveness of an algorithm on the correctness of the model checking result and its efficiency on the required number of generated states and time in order to perform a verification task.
+	
+	\subsection{Effectiveness}
+	
+	We executed 79 benchmark instances both on the hierarchical model checking algorithms and \textsc{Attestor}'s top level model checking algorithm. The model checking results for each algorithm is displayed in Table~\ref{table:benchmarks}. For most instances, the three algorithms yields the same result. However, within the benchmark instances six instances include code that introduce manipulations to the heap within a procedure call such that the property under consideration is violated within a procedure state space. Executing these examples shows that the top level model checking algorithm is not able to spot the violations within procedure state spaces, thus returns that the property is satisfied. However, the hierarchical model checking algorithms find failure traces within procedure states and output that the property under consideration is violated. Consider the example in Listing~\ref{lst:modify} from Chapter~\ref{chp:tableaux},  where the method \texttt{SLList.traverseModifyList} implements a list traversal equipped with a \texttt{swap}-method that swaps out the current list with the \texttt{null} value back and forth, so that the \texttt{swap}-method has no lasting effect on the original list. Verifying the property that the initial list is never mutated, the top level model checking algorithm outputs that the property is verified. However, both hierarchical model checking algorithms indicate that the propery is violated within a procedure state space.\\
+		
+	Consequently, in contrast to the top level model checking algorithm the hierarchical approaches verify hierarchical state spaces for each level such that erroneous behavior within procedure calls are detected.
+	
+	\subsection{Efficiency}
+
+	The efficiency of the hierarchical model checking algorithms is evaluated based on the determined number of generated states required for model checking and the execution time. We compare these figures with the ones of the top level model checking algorithm that includes a preceding state space generation phase. We compare the algorithms' performances by computing the differences in percent. Grouped by different categories of benchmark instances, the differences in the number of generated states and execution times are depicted in Figures~\ref{fig:state_otf}, ~\ref{fig:time_otf}, and ~\ref{fig:time_hmc}, respectively.\\
+	
+	Figure~\ref{fig:state_otf} displays the difference in the number of generated states between the on-the-fly hierarchical model checking algorithm and the top level model checking algorithm. The overall average difference of 12\% states that the on-the-fly hierarchical approach generally generates 12\% more states than the top level approach. This is due to the fact that (procedure) state spaces are not stored such that states are possibly computed multiple times. However, there are also cases in which the on-the-fly hierarchical approach requires less states in order to conduct model checking. These include instances where properties are found to be violated as displayed in Figures~\ref{fig:bar_states_otf_sat} and~\ref{fig:bar_states_otf_hier} where up to 50\% less states are generated compared to the top level model checking algorithm. This is due to the fact that violating states are found at a stage where not the complete state space has been generated yet, so that the state space generation is terminated. The RSM-based model checking algorithm employs \textsc{Attestor}'s state space generation such that there are no differences in the number of generated states compared to \textsc{Attestor}'s verification procedure.\\
+	
+	\begin{figure}
+		\begin{center}
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_datastructure.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.3,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by datastructure.}\label{fig:bar_states_otf_ds}
+			\end{center}
+		\end{subfigure}	
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_properties.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.15,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by properties.}\label{fig:bar_states_otf_prop}
+			\end{center}
+		\end{subfigure}	
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_satisfied.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.3,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by model checking results.}\label{fig:bar_states_otf_sat}
+			\end{center}
+		\end{subfigure}	
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_calls.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.3,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by procedure calls.}\label{fig:bar_states_otf_calls}
+			\end{center}
+		\end{subfigure}	
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_recursive.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.4,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by recursion.}\label{fig:bar_states_otf_rec}
+			\end{center}
+		\end{subfigure}	
+		\begin{subfigure}{0.45\textwidth}
+			\begin{center}
+				\begin{tikzpicture} 
+				\pgfplotstableread[col sep=semicolon]{benchmarks_hier.csv}{\loadedtable}
+				\begin{axis} [
+				grid=major,
+				grid style={dashed,gray!30},
+				ylabel=\%,
+				every axis y label/.style={
+					at={(ticklabel* cs:1.05)},
+					anchor=south,
+				},
+				xticklabels from table={\loadedtable}{Category},
+				xtick=data,
+				scale only axis,
+				width = 0.8\textwidth,
+				extra y ticks = 12,
+				extra tick style={blue},
+				ymin=-90,ymax=90,
+				enlarge x limits=0.3,
+				bar width= 15pt
+				]
+				
+				\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg States Diff}] {\loadedtable}; 
+				\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg States}] {\loadedtable}; 
+				\end{axis} 
+				\end{tikzpicture} 
+				\caption{Grouped by differing results.}\label{fig:bar_states_otf_hier}
+			\end{center}
+		\end{subfigure}	
+	\caption{Difference in the number of generated states in \% between the on-the-fly hierarchical model checking algorithm and the top level model checking grouped by different categories.}\label{fig:state_otf}
+	\end{center}
+	\end{figure}
+
+	Next to the number of generated states, the execution time of the model checking algorithms is an important factor to consider in evaluating their efficiency. Figures~\ref{fig:time_otf} and~\ref{fig:time_hmc} show the difference in percent in the execution times compared to \textsc{Attestor}'s model checking algorithm including the state space generation for the on-the-fly hierarchical algorithm and the RSM-based hierarchical algorithm, respectively. Both algorithms require around 108\% or 77\% more time than the top level approach. This is due to the fact that the hierarchical algorithms generally verify more states than the top level algorithm as they also consider procedure states in the model checking procedure. It is striking that especially the on-the-fly hierarchical model checking algorithm requires considerably more time than the top level approach. This coincides with the greater amount of states generated during the on-the-fly state space generation. In this context, the only bars indicating that the on-the-fly approach is faster than \textsc{Attestor}'s implementation are the bars for instances that verify reachability properties in Figure~\ref{fig:bar_time_otf_prop} and the instances for which the top level and the hierarchical algorithms deliver differing model checking results, which are also the categories for which the on-the-fly approach generates less states than \textsc{Attestor}'s state space generation. \\
+	
+	Comparing the on-the-fly and the RSM-based hierarchical model checking algorithms with each other, it becomes visible that the RSM-based algorithm is faster in average. As the number of generated states coincide with the figures of the top level algorithm, the RSM-based approach also generates less states in average than the on-the-fly procedure. Although the RSM-based approach is generally slower than the top level model checking algorithm, it comes with the advantage that procedure state spaces are also verified during model checking.
+	
+	\begin{figure}
+		\begin{center}
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_datastructure.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					yticklabels={0,0},
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by datastructure.}\label{fig:bar_time_otf_ds}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_properties.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					yticklabels={0,0},
+					enlarge x limits=0.15,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by properties.}\label{fig:bar_time_otf_prop}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_satisfied.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					yticklabels={0,0},
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by model checking results.}\label{fig:bar_time_otf_sat}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_calls.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					yticklabels={0,0},
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by procedure calls.}\label{fig:bar_time_otf_calls}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_recursive.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					yticklabels={0,0},
+					enlarge x limits=0.4,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by recursion.}\label{fig:bar_time_otf_rec}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_hier.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					yticklabels={0,0},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 108,
+					extra tick style={blue},
+					ymin=-70,ymax=199,
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {OTF Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {OTF Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by differing results.}\label{fig:bar_time_otf_hier}
+				\end{center}
+			\end{subfigure}	
+			\caption{Difference in the execution time in \% between the on-the-fly hierarchical model checking algorithm and the top level model checking grouped by different categories.}\label{fig:time_otf}
+		\end{center}
+	\end{figure}
+	
+	
+	\begin{figure}
+		\begin{center}
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_datastructure.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by datastructure.}\label{fig:bar_time_hmc_ds}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_properties.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.15,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by properties.}\label{fig:bar_time_hmc_prop}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_satisfied.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by model checking results.}\label{fig:bar_time_hmc_sat}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_calls.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by procedure calls.}\label{fig:bar_time_hmc_calls}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_recursive.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.4,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by recursion.}\label{fig:bar_time_hmc_rec}
+				\end{center}
+			\end{subfigure}	
+			\begin{subfigure}{0.45\textwidth}
+				\begin{center}
+					\begin{tikzpicture} 
+					\pgfplotstableread[col sep=semicolon]{benchmarks_hier.csv}{\loadedtable}
+					\begin{axis} [
+					grid=major,
+					grid style={dashed,gray!30},
+					ylabel=\%,
+					every axis y label/.style={
+						at={(ticklabel* cs:1.05)},
+						anchor=south,
+					},
+					xticklabels from table={\loadedtable}{Category},
+					xtick=data,
+					scale only axis,
+					width = 0.8\textwidth,
+					extra y ticks = 77,
+					extra tick style={blue},
+					ymin=0,ymax=190,
+					enlarge x limits=0.3,
+					bar width= 15pt
+					]
+					
+					\addplot[ybar,nodes near coords, fill=blue!10] table [x expr=\coordindex, y = {HMC Avg Time Diff}] {\loadedtable}; 
+					\addplot[draw=blue,ultra thick,smooth] table [x expr=\coordindex, y = {HMC Overall Avg Time}] {\loadedtable}; 
+					\end{axis} 
+					\end{tikzpicture} 
+					\caption{Grouped by differing results.}\label{fig:bar_time_hmc_hier}
+				\end{center}
+			\end{subfigure}	
+			\caption{Difference in the execution time in \% between the RSM-based hierarchical model checking algorithm and the top level model checking grouped by different categories.}\label{fig:time_hmc}
+		\end{center}
+	\end{figure}
+	
+	
+	
+	\chapter{Conclusion and Future Work}
+	
+	We introduced two hierarchical model checking algorithms, i.e., the on-the-fly and the RSM-based hierarchical model checking algorithms. We implemented the algorithms within the \textsc{Attestor} tool in \textsc{Java} code and executed the algorithms on a set of 79 model checking tasks. Based on the performed benchmarks, we compared the two hierarchical model checking algorithms with \textsc{Attestor}'s model checking procedure that verifies a property under consideration for the main state space of an input program.\\
+	
+	Although all three model checking algorithms presented in this thesis employ the tableaux construction Grumberg et al. \cite{bhat1995efficient}, the algorithms demonstrate differing performance results in terms of effectiveness and efficiency. The differences are traced back to the underlying state space of the model checking task. While the state space is constructed on-the-fly (and terminates as soon as a statement can be made about the validity of the input formula) in the on-the-fly hierarchical model checking approach, \textsc{Attestor}'s top level analysis accesses an entirely generated the state space resulting from the preceding state space generation phase. As the tableaux construction does not always require the complete state space, the on-the-fly hierarchical model checking approach generates the states on demand during the tableaux construction. Furthermore, states in procedure state spaces are directly model checked, so that not only the top level state space is considered for model checking. Thus, verifying properties that are expected to not require a completely generated state space, i.e., properties that are expected to be violated, or properties referring to a limited set of states, is performed efficiently by the on-the-fly hierarchical model checking algorithm. The on-the-fly nature of the algorith, however, also entails the disadvantage that states might be generated multiple times as procedure state spaces are not stored. Model checking multiple LTL formulae for the same state space thus requires recomputation of the state space for every verification task. This problem is approached by the RSM-based model checking algorithm that stores all state spaces generated during \textsc{Attestor}'s state space generation phase such that procedure state spaces are available during model checking. The RSM-based approach then structures the collection of state spaces within a recursive state machine and performs the tableaux construction for model checking based on the RSM. This approach has the advantage that states are only computed once and procedure state spaces can be checked. This is especially beneficial in cases where a hierarchical state space is checked for multiple different LTL formulae. However, storing all procedure state spaces infers a high demand of storage.\\
+	
+	Consequently, the introduced hierarchical model checking algorithms show that top level model checking is not sufficient to trace failures that are introduced within procedure calls. Thus, including procedure state spaces in model checking reveals possibly erroneous behavior that is not visible from the context of the main program. Based on the handling of state space generation, different goals in model checking are approached; a combination of an on-the-fly state space generation with an on-the-fly tableaux construction delivers fast results for verifying possibly violated LTL formulae while RSM-based model checking is suitable to verify a set of properties on different levels of a method stack.\\
+		
+	Further extensions in the area of hierarchical model checking include the generation of a counter example such that the input program can be tested and improved. In this context, the implemented hierarchical model checking algorithms introduced in this thesis deliver a failure trace that indicates a path within the state space that violates the property under consideration. It is left to implement the procedure of translating the failure trace into a counter example.\\
+	
+	Furthermore, as both the on-the-fly and the RSM-based hierarchical model checking algorithm include advantages and disadvantages in model checking procedure state spaces, a possible solution is to create a hybrid method that generates procedure state spaces on-the-fly and storing them as an RSM. This approach allows us to benefit from the on-the-fly approach as well as from the RSM-based procedure. On the one hande, in case a model checking result is determined without requiring the entirely generated state space, we benefit from the early termination property of the on-the-fly approach. On the other hand, the RSM allows us to access previously (partly) generated state spaces. Hence, the disadvantages of both algorithms are mitigated by combining their advantages. \\
+	
+	In a next step, our benchmark results are to be refined by including instances for additional datastructures and properties such that the algorithms are tested on a greater and more varied number of instances.	
 	
 	\bibliographystyle{gerplain}
 	\bibliography{lit}{}
 	
+	\begin{landscape}
+	\appendix
+	\chapter{Benchmark results}
+		\pagestyle{plain}
+			
+		\pgfplotstableset{
+			begin table=\begin{longtable},
+			end table=\end{longtable},
+		}
+	
+		\pgfplotstabletypeset[
+			font={\tiny},
+			string type,
+			multicolumn names, % allows to have multicolumn names
+			col sep=semicolon,
+			every head row/.style = {
+				before row={
+					\toprule	
+					& & \multicolumn{6}{c}{Top Level MC}&\multicolumn{4}{c}{On-The-Fly HMC}&\multicolumn{6}{c}{RSM-based HMC}\\
+					\cmidrule(lr){3-8}\cmidrule(lr){9-12}\cmidrule(lr){13-18}	
+					Method & P & & \multicolumn{2}{c}{States}&\multicolumn{3}{c}{Time in \textit{s}}&&\multicolumn{2}{c}{States}&\multicolumn{1}{c}{Time in \textit{s}}&&\multicolumn{2}{c}{States}&\multicolumn{3}{c}{Time in \textit{s}}\\
+					\cmidrule(lr){4-5}\cmidrule(lr){6-8}\cmidrule(lr){10-11}\cmidrule(lr){12-12}\cmidrule(lr){14-15}\cmidrule(lr){16-18}						
+				},
+				after row=\midrule
+			},
+			every even row/.style={
+				before row={\rowcolor[gray]{0.93}}},
+			display columns/0/.style={
+				column type={l},
+				column name={}},  
+			display columns/1/.style={
+				column type=c,
+				column name={}},
+			display columns/2/.style={
+				column type=c,
+				column name={\texttt{t/f}}},
+			display columns/3/.style={
+				column type=r,
+				column name={Main}},
+			display columns/4/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			display columns/5/.style={
+				column type=r,
+				column name={SSG}},
+			display columns/6/.style={
+				column type=r,
+				column name={MC}},
+			display columns/7/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			display columns/8/.style={
+				column type=c,
+				column name={\texttt{t/f}}},
+			display columns/9/.style={
+				column type=r,
+				column name={Main}},
+			display columns/10/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			display columns/11/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			display columns/12/.style={
+				column type=r,
+				column name={\texttt{t/f}}},
+			display columns/13/.style={
+				column type=r,
+				column name={Main}},
+			display columns/14/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			display columns/15/.style={
+				column type=r,
+				column name={SSG}},
+			display columns/16/.style={
+				column type=r,
+				column name={MC}},
+			display columns/17/.style={
+				column type=r,
+				column name={$\Sigma$}},
+			every last row/.style={
+				after row={\bottomrule\caption{Benchmark results comparing model checking (MC) and hierarchical model checking (HMC) algorithms on the generated number of states during state space generation (SSG) and the execution times in seconds.}\label{table:benchmarks}}}
+		]{benchmarks.csv} 
+
+	\end{landscape}
+
 \end{document}
