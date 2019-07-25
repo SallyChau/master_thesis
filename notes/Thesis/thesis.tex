@@ -174,21 +174,102 @@
 	
 	
 	\chapter{Introduction}
-	- introduce current status of model checking in attestor: after state space generation, only checking top level state space\\
-	- goal: model check procedure state spaces \\
-	- present possible algorithms: automata-based and on-the-fly tableau\\
-	- always keep goal of hierarchical model checking in mind\\
-	- introduce example for model checking (reverse from tableaux or faulty one from benchmarks?) --> roter Faden
 	
+	Nowadays software systems are to be found in every corner of our everyday lives and their impact is rather increasing. Smart devices, automated processes, and digital support in economy and industry are indispensable. Therefore, their reliability is of outmost importance in order to allow for bug-free behavior. Just think of onboard computers for vehicles, like cars and planes, that monitor the characteristics of the vehicle. The system helps to communicate information of the vehicle between the conductor, the vehicle's components, and possibly a third instance, such as a control station. An error within this software system might cause substantial damage. Imagine a faulty distance value that is displayed to a pilot. Therefore, it is important to ensure that a system does not contain any errors. \\
+	
+	In order to ensure the absence of errors in a software system, software verification  checks that a specified property is satisfied. In contrast to testing, software verification does not only discover errors, but also ensures their absence. Examples for properties checked during verification are reachability properties, i.e., a certain point in the program can be reached, memory leaks, or cycle detection.\\
+	
+	A formal verification technique that examines whether the system under consideration satisfies a specified property is \textit{model checking}. The analysis yields three possible outcomes:
+	
+	\begin{enumerate}
+		\item The program \textit{satisfies} the property.
+		\item The program \textit{violates} the property. The analysis returns a counterexample indicating at which state of the program the property is violated. 		
+		\item It is \textit{unknown} whether the program satisfies the property. This answer is returned if the analysis terminates as computational resources are exceeded, e.g., the computation runs out of memory.
+	\end{enumerate}   
+
+	In order to apply model checking for system verification, two ingredients are required: a suitable \textit{model} of the system and the formal description of the \textit{properties} which are checked. This thesis is based on the \textsc{Attestor} framework by Heinen et al. \cite{heinen2015juggrnaut}, a model checking tool for \textsc{Java} pointer programs. Here, the system (or program) under consideration is modeled as a graph, called \textit{state space} or \textit{transition system}, where vertices represent states of the system and edges between two states model a change in a state. Based on the generated state space, model checking is performed for a specified property and returns whether the property is satisfied, violated or that the result is unknown. We focus on linear-time properties specified by formulae in \textit{linear temporal logics} (LTL), a logic that formulates properties for paths with respect to modalities of time, e.g., a property is eventually fulfilled, a property is always satisfied, or a property holds until another one becomes true. Figure~\ref{fig:intro_ltl} illustrates the according modalities of time. \\
+	
+	\begin{figure}
+		\begin{center}		
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, font=\sffamily\Large\bfseries}]
+			
+			\node (1) at (2,-12) [normal, label=90:$1$,label=-90:$\neg\varphi$] {};
+			\node (2) at (3.5,-12) [normal, label=90:$i-1$,label=-90:$\neg\varphi$] {};
+			\node (3) at (5,-12) [normal, label=90:$i$,label=-90:$\varphi$] {};
+			\node (4) at (6.5,-12) [normal, label=90:$i+1$] {};
+			\node (5) at (8,-12) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
+			
+			\node () at (-3,-12)[align=left,text width=6cm] {The property $\varphi$ is eventually fulfilled.};
+			
+			\node (1) at (2,-14) [normal, label=90:$1$,label=-90:$\varphi$] {};
+			\node (2) at (3.5,-14) [normal, label=90:$2$,label=-90:$\varphi$] {};
+			\node (3) at (5,-14) [normal, label=90:$3$,label=-90:$\varphi$] {};
+			\node (4) at (6.5,-14) [normal, label=90:$4$,label=-90:$\varphi$] {};
+			\node (5) at (8,-14) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);	
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);	
+			
+			\node () at (-3,-14)[align=left,text width=6cm] {The property $\varphi$ is always fulfilled.};
+			
+			\node (1) at (2,-16) [normal, label=90:$1$, label=-90:$\varphi_2$] {};
+			\node (2) at (3.5,-16) [normal, label=90:$i-1$,label=-90:{$\varphi_2$}] {};
+			\node (3) at (5,-16) [normal, label=90:$i$,label=-90:{$\varphi_2,\varphi_1$}] {};
+			\node (4) at (6.5,-16) [normal, label=90:$i+1$] {};
+			\node (5) at (8,-16) {};
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (1) to (2);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (2) to (3);	
+			\draw[->,shorten >=0.5pt,out=0,in=180] (3) to (4);
+			\draw[->,shorten >=0.5pt,out=0,in=180,dashed] (4) to (5);
+			
+			\node () at (-3,-16)[align=left,text width=6cm] {The property $\varphi_2$ holds until the property $\varphi_1$ holds.};
+			\end{tikzpicture}\caption{Examples for modalities of time in linear temporal logic.}\label{fig:intro_ltl}
+		\end{center}
+	\end{figure}	
+	
+	The model checking algorithm in \textsc{Attestor} implements the tableaux construction  that constructs a proof structure based on a set of tableaux rules in order to infer whether a property is satisfied by a state \cite{bhat1995efficient}. The approach thus successively divides a verification goal into subgoals until a statement can be made about the result of the verification goal.\\
+	
+	Often pointer programs contain calls to procedures. Procedures themselves induce (procedure) state spaces. In \textsc{Attestor}, effects of procedure calls are applied to the return state in the main state space of the main method of an input program. Thus, the state space resulting from state space generation in \textsc{Attestor} reflects the behavior of the main method of an input program for which model checking is performed in a next step. Hence, model checking is executed for the top level state space of an input program only. Now, consider a method that traverses a singly-linked list (SLL). We define that this method should satisfy the property that a list is not modified during the run of the program. In linear temporal logics, this property is specified by the formula \[\square\;\{\texttt{identicNeighbours}\}\] which states that for every state all neighbors stay the same during the execution of the program. Consider the \textsc{Java} code in Listing~\ref{lst:modify}. We added a procedure \texttt{swap} that takes a list as an input and dereferences the list's \texttt{next} pointer, but references the original value again at the end of the procedure. Thus, the original list is modified during the execution of the procedure \texttt{swap}, but not in the main procedure \texttt{traverse}. 
+	
+	\begin{lstlisting}[language=Java,numbers=left,
+	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} code for traversing a singly-linked list that contains erroneous behaviour in a called procedure.},captionpos=b,label={lst:modify}]	  
+	public static void traverse(SLList head) {
+	
+	  SLList current = head;	
+	  while (current.next != null) {
+	    current = current.next;
+	    swap(head);
+	  }
+	}
+	
+	public static void swap(SLList head) {
+	
+	  SLList list = head.next;
+	  head.next = null;
+	  head.next = list;
+	}	
+	\end{lstlisting}
+	
+	When performing top level model checking, as implemented in the \textsc{Attestor} tool, for the given input program in Listing~\ref{lst:modify} and the above LTL formula, the result is that the property, that the list is never mutated, is satisfied, although the list is modified during the procedure \texttt{swap}. As this modification has no effect on the top level state space, the failure cannot be detected by the currently implemented top level model checking algorithm. Therefore, in this thesis, we analyze two alorithms that do not only check the top level state space but also verify procedure state spaces. We refer to these algorithms as hierarchical model checking algorithms as they directly perform verification on the procedure state spaces induced by input programs with possibly recursive procedure calls. \\
+	
+	Hierarchical model checking includes three main challenges. One challenge is that procedure state spaces need to be computed and model checked. This induces an increase in time and space demands compared to top level model checking as several state spaces need to be considered. Moreover, reoccuring procedure calls need to be handled such that already generated state spaces or checked verification goals are not computed repeatedly. Another aspect to consider in hierarchical model checking is that the recursion depth of a procedure can be unbounded. Therefore, we have to account for possibly infinite procedure calls.\\
+	
+	The first algorithm introduced in this thesis is an on-the-fly hierarchical approach that combines an on-the-fly state space generation with the tableaux construction for model checking. This approach allows for efficient detection of errors in a program that does not require an entirely generated state space (including procedure state spaces). The second algorithm is based on the concept of recursive state machines (RSM) that capture the hierarchical structure of methods with (recursive) procedure calls in a compact manner. The tableaux construction is then performed on the RSM.\\	
+	
+	A detailed description of the \textsc{Attestor} tool is given in the next section while the theoretical foundations of this thesis are described in Chapter~\ref{chp:preliminaries} including the foundations of Heinen et al. \cite{heinen2015juggrnaut} and Alur et al. \cite{alur2001analysis}. Chapter~\ref{chp:tableaux} presents the tableaux construction for model checking LTL formulae by Grumberg et al. \cite{bhat1995efficient}. Thereupon, Chapters~\ref{chp:otf} and~\ref{chp:hmc} introduce the on-the-fly hierarchical and RSM-based model checking algorithms, respectively. The thesis concludes with experimental results on the effectiveness and efficiency of the introduced algorithms compared to the top level model checking procedure in Chapters~\ref{chp:benchmarks} and~\ref{chp:conclusion}. 
 	
 	\section{\textsc{Attestor}}\label{sec:attestor}
 	
-	%TODO explain attestor with simpler words: dont mention technical terms without definition
-	% Informally describe technical words (concrete, abstract, heap conf, properties, subgraph, hypergraph, state space, hyperedge, model checking)
+	\textsc{Attestor} is a verification tool that checks specified properties for a \textsc{Java} program. The tool models the program under consideration as a graph, called state space, where vertices represent states of a program and edges represent transitions between two states. Each state models a point during program execution. It contains a representation of the program heap which is depicted by a graph. Pointer programs contain dynamic data structures that induce potentially infinite state spaces as objects are created at runtime. Also arbitrary sizes of input to a program have to be considered. In order to finitely represent possibly infinite states, Heinen et al. introduce \textit{hypergraphs} that summarize data structures by replacing subgraphs with placeholders \cite{heinen2015juggrnaut}. These placeholders represent several subgraphs and offer a compact representation of possibly infinite data structures. Methods in the input program are summarized by procedure contracts that specify the heap prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap. After the state space has been generated, model checking is performed by checking the resulting state space against LTL specifications. Possible outcomes for the model checking procedure are that the input program either fulfills the property, violates the property, or the result is unknown. In case of a property violation, a counterexample is provided.\\
 	
-	\textsc{Attestor} is a verification tool that takes a \textsc{Java} program as an input and then generates an abstract state space. \textsc{Attestor} employs LTL model checking to verify specified properties. The state space generation is based on a finite representation of the program heap during execution by a (hyper)graph. Finiteness is achieved by employing abstraction based on graph grammars that specify the data structured maintained by the program and how subgraphs can be summarized in hyperedges. Methods in the input program are summarized by procedure contracts that specify the heap prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same heap. In a next step, model checking is performed by checking the resulting state space against the LTL specifications. Possible outcomes for the model checking procedure are that the input program either fulfills the property, violates the property, or the result is unknown. In case of a property violation, a counterexample is provided.\\
-	
-	\textsc{Attestor} divides up into input, back-end, front-end, and output as depicted in Figure~\ref{fig:attestor}. \textsc{Attestor} offers several options to specify a verification task. The user defines a \textsc{Java} program as the program to be analyzed. LTL formulae describe the properties that are checked for the program during model checking. \textsc{Attestor} requires graph grammars in order to account for state space abstraction and concretization. Next to the pre-defined grammars in the tool, the user has the option to define custom graph grammars that define the data structures present in the input program. Further options include the specification of initial heaps or properties to modify abstraction or garbage collection. \textsc{Attestor}'s core is the back-end which contains the program analysis. The front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
+	\textsc{Attestor} divides up into input, back-end, front-end, and output as depicted in Figure~\ref{fig:attestor}. \textsc{Attestor} offers several options to specify a verification task. The user defines a \textsc{Java} program as the program to be analyzed. LTL formulae describe the properties that are checked for the program during model checking. \textsc{Attestor} requires graph grammars that define data structures present in the input program. Next to the pre-defined grammars in the tool, the user has the option to define custom ones. Further options include the specification of initial heaps or properties. \textsc{Attestor}'s core is the back-end which contains the program analysis. The front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
 	
 	\begin{figure}
 		\begin{center}
@@ -340,34 +421,21 @@
 	
 	Alur et al. further address the problem of model checking recursive input programs that induce possibly infinite hierarchies in state spaces by introducing recursive state machines in \cite{alur2001analysis}. Closely related to pushdown systems, recursive state machines model the control flow of input programs with recursive procedure calls. Every procedure is represented by a component within the state machine. A state in a recursive state machine is either a state in a component or a box that represents a procedure call. Alur et al. adapt the automata-theoretic approach for model checking recursive state machines.\\
 	
-	We base our work on the previously introduced results and employ the notion of recursive state machines for model checking LTL formula. However, we will refrain from an automata-theoretic approach and focus more on an on-the-fly model checking algorithm as introduced in \cite{bhat1995efficient} that constructs a proof structure for the underlying state space in order to verify a linear time property. By combining the compact representation of recursive programs in recursive state machines and the efficient on-the-fly model checking algorithm, we introduce algorithms that do not require the construction of several automata, but rather operate on the underlying state space itself. Therefore, we will first introduce the required definitions and notations in order to set the foundations for this thesis. Followed by a closer look on the tableaux construction for the on-the-fly model checking algorithm, we will introduce two algorithms for hierarchical model checking. First, we present and implement an approach that works completely on-the-fly, i.e., state space generation is executed on demand if the tableaux construction requires so. This approach is promising in detecting property violations at an early stage avoiding the need to generate an entire state space. The second algorithm, we introduce in this thesis, executes the tableaux construction on recursive state machines. This approach offers an efficient way to verify a set of linear time properties for a (hierarchical) state space once computed. Finally, the thesis concludes with an evaluation of the introduced algorithms and compares them to \textsc{Attestor}'s model checking algorithm. 
+	We base our work on the previously introduced results and employ the notion of recursive state machines for model checking LTL formula. However, we will refrain from an automata-theoretic approach and focus more on an on-the-fly model checking algorithm as introduced in \cite{bhat1995efficient} that constructs a proof structure for the underlying state space in order to verify a linear time property. By combining the compact representation of recursive programs in recursive state machines and the efficient on-the-fly model checking algorithm, we introduce algorithms that do not require the construction of several automata, but rather operate on the underlying state space itself. We introduce two algorithms for hierarchical model checking. The first algorithm is an on-the-fly hierarchical model checking approach that works completely on-the-fly, i.e., state space generation is executed on demand if the tableaux construction requires so. This approach is promising in detecting property violations at an early stage avoiding the need to generate an entire state space. The second algorithm, we introduce in this thesis, executes the tableaux construction on recursive state machines. This approach offers an efficient way to verify a set of linear time properties for a (hierarchical) state space once computed. Finally, the thesis concludes with an evaluation of the introduced algorithms and compares them to \textsc{Attestor}'s model checking algorithm. 
 	
-	\chapter{Preliminaries}
+	\chapter{Preliminaries}\label{chp:preliminaries}
 	
-	Model checking is a formal verification technique that systematically analyses whether the program under consideration satisfies a specified property. The analysis yields three possible outcomes:
-	\begin{enumerate}
-		\item The program satisfies the property.
-		\item The program violates the property. The analysis returns a counterexample indicating at which state of the program the property is violated. 		
-		\item It is unknown whether the program satisfies the property. This answer is returned if the analysis terminates as computational resources are exceeded, e.g., the computation runs out of memory.
-	\end{enumerate}  
-
-	Two parameters are crucial for model checking in order to obtain an expressive and valuable outcome: the model of the program under consideration and the formal description of the properties which are checked. The following sections introduce how we model input programs for model checking. Sections~\ref{sec:heap} and~\ref{sec:transition_system} describe how states and transitions of pointer-manipulating programs are represented by graphs and transitions between them, respectively. In order to describe hierarchical structures relevant to modeling programs with procedure calls, we focus on recursive state machines in Section~\ref{sec:rsm}. This chapter concludes by presenting linear temporal logic that formalizes properties that are checked for a program.
+	This chapter introduces the foundations of this thesis. Sections~\ref{sec:heap} and~\ref{sec:transition_system} describe how an input program is modeled by a state space including hypergraphs that represent heaps for each state according to Heinen et al. \cite{heinen2015juggrnaut}. In order to describe hierarchical structures relevant to modeling programs with procedure calls, we focus on recursive state machines in Section~\ref{sec:rsm} based on the work of Alur et al. \cite{alur2001analysis}. This chapter concludes by presenting linear temporal logic that formalizes properties with temporal modalities in order to verify the input program under consideration.
 	
-	\section{Heap Representation}\label{sec:heap}
+	\section{Heap Representation}\label{sec:heap}	
 	
-	Our focus in model checking lies on pointer-manipulating programs. Therefore, we consider the heap of the program under consideration at every state. The heap encompasses a set of locations with variables and pointers, i.e., references to locations. It is represented by a graph where vertices represent heap objects, directed edges depict selectors and labeled edges depict the mapping of program variables to heap objects. Selectors are pointer variables that are connected to two vertices, i.e., a selector points from its source node to its target node.\\
-	
-	Consider the class definition of a doubly-linked list (DLL) in \textsc{Java} code in Listing~\ref{lst:dll}. The class defines a doubly-linked list to have the selectors \texttt{next} and \texttt{prev} to point to the successor and predecessor node, respectively. 
+	Our focus in model checking lies on pointer-manipulating programs. Therefore, we consider the heap of the program under consideration at every state. During \textsc{Attestor}'s state space generation phase (see Figure~\ref{fig:attestor}), the states including the according heap are generated. The heap encompasses a set of locations with variables and pointers, i.e., references to locations. It is represented by a graph where vertices represent heap objects, directed edges depict selectors, and labeled edges depict the mapping of program variables to heap objects. Selectors are pointer variables that are connected to two vertices, i.e., a selector points from its source to its target node.
 	
 	\begin{lstlisting}[language=Java,numbers=left,
 	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} class definition for doubly-linked lists.},captionpos=b,label={lst:dll}]
-	public class DLList {
-	
-	  private DLList next;
-	  private DLList prev;
-	
-	  public DLList(DLList list) {
-	
+	public class DLList {	
+	  private DLList next, prev;	  	
+	  public DLList(DLList list) {	
 	    this.next = list;
 	    this.prev = null;
 	    list.prev = this;
@@ -375,7 +443,8 @@
 	}
 	\end{lstlisting}
 	
-	Figure~\ref{fig:dll} illustrates a heap for a doubly-linked list. The list consists of five elements represented by circles. The selectors \texttt{next} and \texttt{prev} are represented by directed edges of the graph. Furthermore, the program variables \texttt{head} and \texttt{tail} are attached to the first and the last vertex of the list, respectively.\\
+	Consider the class definition of a doubly-linked list (DLL) in \textsc{Java} code in Listing~\ref{lst:dll}. It defines a doubly-linked list with two selectors \texttt{next} and \texttt{prev} that point to successor and predecessor nodes, respectively.
+	Figure~\ref{fig:dll} illustrates a heap for a doubly-linked list. The list consists of five elements represented by circles. The selectors \texttt{next} and \texttt{prev} are represented by directed edges of the graph. Furthermore, the program variables \texttt{head} and \texttt{tail} are attached to the first and the last vertex of the list, respectively.\\			
 
 	\begin{figure}
 		\begin{center}
@@ -409,7 +478,7 @@
 				\end{tikzpicture}}
 			\caption{Heap for a doubly-linked list. Adapted from \cite{heinen2015verifying}.}\label{fig:dll}
 		\end{center}
-	\end{figure}
+	\end{figure}	
 	
 	Pointer-manipulating operations are represented by graph transformations. For instance, executing the operation \texttt{head := tail.prev} on the heap given in Figure~\ref{fig:dll} attaches the variable \texttt{head} to the vertex pointed to by the \texttt{prev} selector of the last vertex. The resulting heap is shown in Figure~\ref{fig:dll_op}.\\ 
 	
@@ -694,7 +763,7 @@
 	
 	\section{Transition Systems}\label{sec:transition_system}
 	
-	Hypergraphs model the heap of a program at a certain moment. In order to describe the overall behavior of a program, we use the notion of a \textit{transition system}. A transition system is a graph where nodes represent \textit{states} reachable by a program and edges indicate \textit{transitions} between states. A transition reflects how a state of the system changes, e.g., due to a statement execution.
+	Hypergraphs model the heap of a program at a certain moment., i.e., a single state during program execution. In order to describe the overall behavior of a program, we use the notion of a \textit{transition system}. A transition system is a graph where nodes represent \textit{states} reachable by a program and edges indicate \textit{transitions} between states. A transition reflects how a state of the system changes, e.g., due to a statement execution. Therefore, the state space resulting from \textsc{Attestor}'s state space generation phase (see Figure~\ref{fig:attestor}) is a transition system, where the states compose of hypergraphs.
 	
 	\begin{definition}[Transition System \cite{baier2008principles}]{def:transition system}
 		A \textit{transition system} $T$ is a tuple $(S, I, \rightarrow, AP, L)$ where
@@ -1243,16 +1312,14 @@
 	
 	\chapter{Hierarchical Model Checking}\label{chp:tableaux}
 	
-	One of the main challenges in model checking programs with method calls is that we do not only need to consider the state space of the main method, but also the state spaces induced by method executions, denoted as \textit{procedure state spaces}. Here, we face two main difficulties:
+	One of the main challenges in model checking programs with method calls is that we do not only need to consider the state space of the main method, but also the state spaces induced by method executions, denoted as \textit{procedure state spaces}. Here, we face three main difficulties:
 	\begin{itemize}
 		\item How can we finitely represent the state space of a program with recursive method calls, at best avoiding repetitions in the state space?
 		\item How can we efficiently model check procedure state spaces, at best avoiding checking a procedure state space multiple times? 
+		\item How do we deal with unbounded recursion depth?
 	\end{itemize}
 	
-	In this chapter, we introduce two approaches to model checking LTL properties for pointer-manipulating programs with method calls. The underlying state space of procedural programs is a hierarchical one where each procedure contributes an own state space that is connected to nodes of other state spaces reflecting method invocation. In a flat setting, where hierarchy is not actively considered, this corresponds to an edge connecting the calling state with the "entry" state of the procedure state space. For the flat setting, the first section of this chapter presents an on-the-fly LTL model checking approach that constructs a proof structure based on a set of tableaux rules that reflect the semantics of LTL \cite{bhat1995efficient}. \\
-	
-	
-	Based on the presented algorithms, we introduce our modified approaches to hierarchical model checking in the sequel of this thesis.
+	The underlying state space of procedural programs is a hierarchical one where each procedure contributes an own state space that is connected to nodes of other state spaces reflecting method invocation. In a flat setting, where hierarchy is not actively considered, this corresponds to an edge connecting the calling state with the "entry" state of the procedure state space. For the flat setting, we introduce the tableaux construction to model checking LTL properties for pointer-manipulating programs with method calls by Grumberg et al. \cite{bhat1995efficient}. Based on this algorithm, we introduce our modified approaches to hierarchical model checking in Chapters~\ref{chp:otf} and~\ref{chp:hmc}.
 	
 	\section{Tableaux Construction}\label{sec:tableaux}
 	
@@ -1304,18 +1371,17 @@
 	
 	\begin{lstlisting}[language=Java,numbers=left,
 	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} method for reversing a singly-linked list.},captionpos=b,label={lst:sll_reverse}]
-	public static SLList reverse(SLList head) {
+	public static SLList reverse(SLList head) {	
 	
 	  SLList revList = null;
 	  SLList current = head;
-	
+	  	
 	  while (current != null) {
 	    SLList next = current.next;
 	    current.next = reversedList;
 	    revList = current;
 	    current = next;
-	  }
-	
+	  }	
 	  return reversedList;
 	}
 	\end{lstlisting}
@@ -1614,28 +1680,6 @@
 	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc\;\texttt{SLList}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc\;\texttt{SLList}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space. We describe an implementation of the on-the-fly state space generation in the following chapter.
 	
 	
-	% TODO include example where this algo fails to detect error in proceudre (take example from benchmark chapter) --> include same example in 4+5 to show it works there
-	\begin{lstlisting}[language=Java,numbers=left,
-	stepnumber=1,keywordstyle=\color{blue},frame=single,caption={Code with erroneous behaviour in called procedures.},captionpos=b,label={lst:modify}]	  
-	public static void traverseModifyList(SLList head) {
-	
-	SLList current = head;
-	
-	  while (current.next != null) {
-	    current = current.next;
-	    swap(head);
-	  }
-	}
-	
-	  public static void swap(SLList head) {
-	
-	    SLList list = head.next;
-	    head.next = null;
-	    head.next = list;
-	}
-	
-	\end{lstlisting}
-	
 %	\section{Automata-Based Model Checking}\label{sec:automataMC}
 %	
 %	Recursive programs can be modeled as recursive state machines that capture the hierarchical nature of the underlying state space. Based on RSMs, LTL model checking can be performed to check whether an RSM, and thus the represented system, satsfies a temporal property. This section presents the basic ideas of the automata-theoretic approach to model checking transition systems for LTL specifications as introduced in \cite{vardi1986automata} by Vardi and Wolper. The algorithm can be adapted for RSMs. For an LTL formula $\varphi$ and a transition system $T$ the algorithm by Vardi and Wolper either returns "yes" if $T \models \varphi$ or "no" and a failure trace of the path that violates the formula $\varphi$. \\
@@ -1922,7 +1966,7 @@
 			\begin{tikzpicture}
 			[node distance=2cm,thick,
 			normal/.style={circle, draw, fill=white, thick},
-			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=gray!10},
+			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=yellow!10},
 			phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white},
 			content/.style={anchor=west}]
 			
@@ -2057,7 +2101,7 @@
 			\begin{tikzpicture}
 			[node distance=2cm,thick,
 			normal/.style={circle, draw, fill=white, thick},
-			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=gray!10},
+			header/.style={draw, minimum width=11.5cm, minimum height=5cm, rounded corners=1.5pt, fill=yellow!10},
 			phase/.style={draw, minimum width=5cm, minimum height=1cm, rounded corners=1.5pt, fill=white},
 			content/.style={anchor=west}]
 			
@@ -2104,20 +2148,13 @@
 	
 	
 	% summarize algorithm shortly
-	In this chapter, we presented an algorithm for model checking procedure state spaces represented as an RSM. The hierarchical structure of the state space is captured by the RSM as every method is represented by a component. The component stores corresponding procedure state spaces, boxes that represent method invocations, and model checking results. Model checking of a procedure state space is controlled by the corresponding component, such that model checking results can be easily communicated to the state that invoked the method execution. \\
+	In this chapter, we presented an algorithm for model checking procedure state spaces represented as an RSM. The hierarchical structure of the state space is captured by the RSM as every method is represented by a component. The component stores corresponding procedure state spaces, boxes that represent method invocations, and model checking results. Model checking of a procedure state space is controlled by the corresponding component, such that model checking results are communicated to the state that invoked the method execution. \\
 	
-	% advantages
+	RSM-based hierarchical model checking has the advantage that procedure state spaces are stored within the component state machine of a method. Thus, procedure state spaces only need to be computed once during the state space generation phase and are reused in future model checking tasks. Similarly, model checking of a formula $\varphi$ can be skipped if the results are known due to previous model checking instances.\\	
 	
-	% procedure state spaces are model checked
-	% state spaces and model checking results stored --> no extra computation
-	% procedural structure mimicked by RSM --> model checking order follows control flow
-	As procedure state spaces are stored within the component state machine of a method, procedure state spaces only need to be computed once during the state space generation phase. Similarly, model checking of a formula $\varphi$ can be skipped if the results are known due to previous model checking instances.\\	
-	% disadvantages
-	% memory intensive: the more methods and distinct calling states, the more state spaces are stored
-	% complete generation of state spaces necessary although proof structure might not require to visit all states (early termination)
+	However, the advantage of reusing previously computed results induces the requirement to store the state spaces and the model checking results. Hence, the memory usage of the algorithm increases with the number of distinct procedures called during program execution. Furthermore, generation of the state spaces prior to model checking requires that the complete state space is generated. Therefore, early termination of state space generation in case a violation point is found such that not all states of the state space are visited, is not enabled.\\	
 	
-	
-	Chapter~\ref{chp:benchmarks} presents benchmarks on the RSM-based model checking algorithm described in this chapter.
+	In order to evaluate the algorithm in practice, Chapter~\ref{chp:benchmarks} presents benchmarks on the RSM-based model checking algorithm and compares the approach to the performance of the previously introduced on-the-fly hierarchical model checking and \textsc{Attestor}'s model checking procedure.
 	
 	\chapter{Benchmarks}\label{chp:benchmarks}	
 	
@@ -2760,7 +2797,7 @@
 	
 	
 	
-	\chapter{Conclusion and Future Work}
+	\chapter{Conclusion and Future Work}\label{chp:conclusion}
 	
 	We introduced two hierarchical model checking algorithms, i.e., the on-the-fly and the RSM-based hierarchical model checking algorithms. We implemented the algorithms within the \textsc{Attestor} tool in \textsc{Java} code and executed the algorithms on a set of 79 model checking tasks. Based on the performed benchmarks, we compared the two hierarchical model checking algorithms with \textsc{Attestor}'s model checking procedure that verifies a property under consideration for the main state space of an input program.\\
 	
