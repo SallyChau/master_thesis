@@ -762,7 +762,7 @@
 
 	\begin{figure}
 		\begin{center}
-			\resizebox{\textwidth}{!}{
+			\resizebox{0.65\textwidth}{!}{
 				\begin{tikzpicture}
 				[node distance=2cm,thick,
 				normal/.style={circle, draw, fill=white, thick},
@@ -770,17 +770,17 @@
 				var/.style={draw, rounded corners=1.5pt, fill=white}]
 				
 				%state 1
-				\node (back1) at (0.5,0) [rectstyle] {};
-				\node (text) at (-1.5,1.25) {$s_0$};
-				\node (1) at (0.25,0) [normal] {};
-				\node (2) at (1.25,0) [normal] {};
-				\node (3) at (2.25,0) [normal,fill=gray] {};
-				\node (head) at (-0.85,0) [var] {\texttt{head}};
+				\node (back1) at (-0.5,0) [rectstyle] {};
+				\node (text) at (-2.5,1.25) {$s_0$};
+				\node (1) at (-0.75,0) [normal] {};
+				\node (2) at (0.25,0) [normal] {};
+				\node (3) at (1.25,0) [normal,fill=gray] {};
+				\node (head) at (-1.85,0) [var] {\texttt{head}};
 				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
 				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
 				\draw (head) to (1);
 				
-				\node (AP) at (0.5,1.85) {$\{\texttt{identicNeighbors}\}$};
+				\node (AP) at (-2.25,1.85) {$\{\texttt{idN}\}$};
 				
 				%state 2
 				\node (back2) at (6,0) [rectstyle] {};
@@ -795,33 +795,111 @@
 				\draw (head) to (1);
 				\draw (current) to (1);
 				
-				\node (AP) at (6,1.85) {$\{\texttt{identicNeighbors}\}$};
+				\node (AP) at (4.25,1.85) {$\{\texttt{idN}\}$};
 				
 				%state 3
-				\node (back3) at (11.5,0) [rectstyle] {};
-				\node (text) at (9.5,1.25) {$s_2$};
-				\node (1) at (11.15,0) [normal] {};
-				\node (2) at (12.15,0) [normal] {};
-				\node (3) at (13.15,0) [normal,fill=gray] {};
-				\node (head) at (10.15,0) [var] {\texttt{head}};
-				\node (current) at (12.15,1) [var] {\texttt{current}};
+				\node (back3) at (6,-5) [rectstyle] {};
+				\node (text) at (4,-3.75) {$s_2$};
+				\node (1) at (5.75,-5) [normal] {};
+				\node (2) at (6.75,-5) [normal] {};
+				\node (3) at (7.75,-5) [normal,fill=gray] {};
+				\node (head) at (4.65,-5) [var] {\texttt{head}};
+				\node (current) at (6.75,-4) [var] {\texttt{current}};
 				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
 				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
 				\draw (head) to (1);
 				\draw (current) to (2);
 				
-				\node (AP) at (11.5,1.85) {$\{\texttt{identicNeighbors}\}$};				
+				\node (AP) at (4.25,-3.15) {$\{\texttt{idN}\}$};				
 				
-				\draw[->,shorten >=0.5pt] (-2.25,0) to (-1.75,0);
-				\draw[->,shorten >=0.5pt] (back1) to (back2);
-				\draw[->,shorten >=0.5pt] (back2) to (back3);
+				\draw[->,shorten >=0.5pt] (-3.25,0) to (-2.75,0);
+				\draw[->,shorten >=0.5pt] (back1) -- node[above,align=center] {\texttt{current=}\\\texttt{head}} (back2);
+				\draw[->,shorten >=0.5pt] (back2) -- node[right,align=left] {\texttt{current=}\\\texttt{current.n}} (back3);
 				\draw[->,shorten >=0.5pt] (back3) edge [loop below] (back3);
 				\end{tikzpicture}}
 			\caption{State space for method \texttt{SLList.traverse}.}\label{fig:example_statespace}
 		\end{center}
 	\end{figure}
 
-	Figure~\ref{fig:example_statespace} depicts an example of a transition system $T=(S, I, \delta, AP, L)$ for the method \texttt{traverse} in the program given in Listing~\ref{lst:modify}. Every state encompasses a hypergraph that represents the heap at the current position in the analyzed program. The initial state $s_0 \in I$ is marked with a short incoming arrow. It consists of a singly-linked list with two elements. The variable \texttt{head} is attached to the first node of the list. $s_0$ is succeeded by state $s_1$ which contains a further variable \texttt{current} that points to the same node as the variable \texttt{head}. The succeeding state $s_2$ of $s_1$ contains a self-loop, i.e., $s_2$ is its own successor. It also marks the final state of the transition system. The transition relation $\delta$ is represented by arrows connecting two states. For example, $(s_0, s_1) \in\; \delta$ and $(s_1, s_2) \in\; \delta$. The self-loop at state $s_2$ depicts the transition $(s_2,s_2) \in\; \delta$. The transition system does not have any terminal states as  all states have outgoing transitions. The states in $T$ are labeled with atomic propositions that they satisfy, i.e., all states satisfy the proposition \texttt{identicNeighbor} that indicates that the order of the elements in the list is not modified. Therefore, $L(s_0)=L(s_1)=L(s_2)=\{\texttt{identicNeighbor}\}$. From the stated propositions, the set $AP$ of atomic propositions is implicitly given as $AP=\{\texttt{identicNeighbor}\}$.\\
+	\begin{figure}
+		\begin{center}
+			\resizebox{0.65\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, minimum width=4.5cm, minimum height=3cm, rounded corners=1.5pt, fill=gray!10},
+				var/.style={draw, rounded corners=1.5pt, fill=white}]
+				
+				%state 1
+				\node (back1) at (-0.5,0) [rectstyle] {};
+				\node (text) at (-2.25,1.15) {$s_0^{\texttt{swap}}$};
+				\node (1) at (-0.75,0) [normal] {};
+				\node (2) at (0.25,0) [normal] {};
+				\node (3) at (1.25,0) [normal,fill=gray] {};
+				\node (head) at (-1.85,0) [var] {\texttt{head}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				
+				\node (AP) at (-2.25,1.85) {$\{\texttt{idN}\}$};
+				
+				%state 2
+				\node (back2) at (6,0) [rectstyle] {};
+				\node (text) at (4.25,1.15) {$s_1^{\texttt{swap}}$};
+				\node (1) at (5.75,0) [normal] {};
+				\node (2) at (6.75,0) [normal] {};
+				\node (3) at (7.75,0) [normal,fill=gray] {};
+				\node (head) at (4.65,0) [var] {\texttt{head}};
+				\node (dummy) at (6.75,1) [var] {\texttt{dummy}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (dummy) to (2);
+				
+				\node (AP) at (4.25,1.85) {$\{\texttt{idN}\}$};
+				
+				%state 3
+				\node (back3) at (6,-4) [rectstyle] {};
+				\node (text) at (4.25,-2.85) {$s_2^{\texttt{swap}}$};
+				\node (1) at (5.75,-4) [normal] {};
+				\node (2) at (6.75,-4) [normal] {};
+				\node (3) at (7.75,-4) [normal,fill=gray] {};
+				\node (head) at (4.65,-4) [var] {\texttt{head}};
+				\node (dummy) at (6.75,-3) [var] {\texttt{dummy}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend right] node[below] {\texttt{n}} (3);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (dummy) to (2);
+				
+				\node (AP) at (4.25,-2.15) {$\emptyset$};	
+				
+				%state 4
+				\node (back4) at (-0.5,-4) [rectstyle] {};
+				\node (text) at (-2.25,-2.85) {$s_3^{\texttt{swap}}$};
+				\node (1) at (-0.75,-4) [normal] {};
+				\node (2) at (0.25,-4) [normal] {};
+				\node (3) at (1.25,-4) [normal,fill=gray] {};
+				\node (head) at (-1.85,-4) [var] {\texttt{head}};
+				\node (dummy) at (0.25,-3) [var] {\texttt{dummy}};
+				\draw[->,shorten >=0.5pt] (1) edge[bend left] node[above] {\texttt{n}} (2);
+				\draw[->,shorten >=0.5pt] (2) edge[bend left] node[above] {\texttt{n}} (3);
+				\draw (head) to (1);
+				\draw (dummy) to (2);
+				
+				\node (AP) at (-2.25,-2.15) {$\{\texttt{idN}\}$};			
+				
+				\draw[->,shorten >=0.5pt] (-3.25,0) to (-2.75,0);
+				\draw[->,shorten >=0.5pt] (back1) -- node[above,align=center] {\texttt{dummy=}\\\texttt{head.n}} (back2);
+				\draw[->,shorten >=0.5pt] (back2) -- node[right,align=center] {\texttt{head.n=null}} (back3);
+				\draw[->,shorten >=0.5pt] (back3) -- node[above,align=center] {\texttt{head.n=}\\\texttt{dummy}} (back4);
+				\draw[->,shorten >=0.5pt] (back4) edge [loop below] (back4);
+				
+				\end{tikzpicture}}
+			\caption{State space for method \texttt{SLList.swap}.}\label{fig:example_statespace_swap}
+		\end{center}
+	\end{figure}
+
+	Figure~\ref{fig:example_statespace} and~\ref{fig:example_statespace_swap} depict transition systems for the methods \texttt{traverse} and \texttt{swap} given in Listing~\ref{lst:modify}, respectively. Let us exemplify the transition system $T=(S, I, \delta, AP, L)$ for the method \texttt{traverse}. Every state encompasses a hypergraph that represents the heap at the current position in the analyzed program. The initial state $s_0 \in I$ is marked with a short incoming arrow. It consists of a singly-linked list with two elements. The variable \texttt{head} is attached to the first node of the list. $s_0$ is succeeded by state $s_1$ which contains a further variable \texttt{current} that points to the same node as the variable \texttt{head}. The succeeding state $s_2$ of $s_1$ contains a self-loop, i.e., $s_2$ is its own successor. It also marks the final state of the transition system. The transition relation $\delta$ is represented by arrows connecting two states. For example, $(s_0, s_1) \in\; \delta$ and $(s_1, s_2) \in\; \delta$. The self-loop at state $s_2$ depicts the transition $(s_2,s_2) \in\; \delta$. The transition system does not have any terminal states as  all states have outgoing transitions. The states in $T$ are labeled with atomic propositions that they satisfy, i.e., all states satisfy the proposition \texttt{identicNeighbours}, abbreviated as \texttt{idN}, that indicates that the order of the elements in the list is not modified. Therefore, $L(s_0)=L(s_1)=L(s_2)=\{\texttt{identicNeighbours}\}$. From the stated propositions, the set $AP$ of atomic propositions is implicitly given as $AP=\{\texttt{identicNeighbours}\}$.\\
 	
 	A sequence of transitions starting in an initial state $s_0 \in I$ and either ending in a terminal state $s \in S$ or infinitely prolonging, is called a \textit{path} of transition system $T$.
 	 
@@ -850,9 +928,9 @@
 
 	The condition that a transition system does not have any terminal states is not a restriction since, for every transition system, it is possible to construct an equivalent one without terminal states. This is achieved by adding a new state $s_{stop}$ with a self-loop to the transition system to which all terminal states have a transition. Thus, the resulting system does not contain any terminal states. In the following we assume that a transition system does not have any terminal states.\\
 	
-	Consider the sample transition system $T$ in Figure~\ref{fig:example_statespace}. A path $\pi$ in $T$ is the finite sequence $s_0s_1s_2$. The corresponding trace of $\pi$ is given by \[L(s_0)L(s_1)L(s_2) = \{a\}\emptyset\{a,b\}.\] 
-	An infinite path $\pi'$ in $T$ is the sequence $s_0s_1s_1s_1\dots$ that infinitely loops around the state $s_1$. $\pi'$ implies the trace  
-	\[L(s_0)L(s_1)L(s_1)L(s_1)\dots = \{a\}\emptyset\emptyset\emptyset\dots.\]
+	Consider the sample transition system $T$ in Figure~\ref{fig:example_statespace}. A path $\pi$ in $T$ is the finite sequence $s_0s_1s_2$. The corresponding trace of $\pi$ is given by \[L(s_0)L(s_1)L(s_2) = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}.\] 
+	An infinite path $\pi'$ in $T$ is the sequence $s_0s_1s_2s_2\dots$ that infinitely loops around the state $s_2$. $\pi'$ implies the trace  
+	\[L(s_0)L(s_1)L(s_2)L(s_2)\dots = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\dots.\]
 
 	\section{Recursive State Machines}\label{sec:rsm}
 	
@@ -953,7 +1031,7 @@
 	\end{figure}
 	
 	In order to define the execution of an RSM $\mathcal{A}=(A_1, ..., A_k)$, we first describe the global relation between its component state machines $A_i, 1 \leq i \leq k$. A \textit{global state} of an RSM is a sequence of boxes ending in a node of a component.
-	\newpage
+
 	\begin{definition}[Global State \cite{alur2001analysis}]{def:rsm_semantics}
 		A \textit{global state} of an RSM $\mathcal{A}=(A_1, ..., A_k)$ is a tuple $(b_1, ..., b_r, u)$, where $b_1 \in B_1, ..., b_r \in B_r$ are boxes and $u$ is a node. The set $S$ of global states of $\mathcal{A}$ is $B^*N$, where $B=\bigcup_iB_i$ and $N=\bigcup_iN_i$. A state $(b_1, ..., b_r, u)$ with $b_i \in {B_j}_i$ for $1 \leq i \leq r$ and $u \in N_j$ is \textit{well-formed} if ${L_j}_i(b_i) = j_{i+1}$ for $1 \leq i < r$ and ${L_j}_r(b_r) = j$.
 	\end{definition}
@@ -1581,8 +1659,8 @@
 				\draw[->,shorten >=0.5pt] (0) -- node[above] {$R^{\textbf{R}}_1$} (1);
 				\draw[->,shorten >=0.5pt] (0) -- node[above] {$R^{\textbf{R}}_2$} (2);
 				
-				\node[rectstyle] (3) at (-9,-6) {$s_0 \vdash \{\texttt{true}, \texttt{SLList}\}$};
-				\node[rectstyle] (4) at (-2,-6) {$s_0 \vdash \{\texttt{SLList},\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$};
+				\node[rectstyle] (3) at (-9.25,-6) {$s_0 \vdash \{\texttt{true}, \{\texttt{SLList}\}\}$};
+				\node[rectstyle] (4) at (-2,-6) {$s_0 \vdash \{\{\texttt{SLList}\},\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$};
 				\node[rectstyle] (5) at (4,-6) {$s_0 \vdash \{\bigcirc\varphi\}$};
 				\draw[->,shorten >=0.5pt] (1) -- node[above] {$R^{\textbf{U}}_1$} (3);
 				\draw[->,shorten >=0.5pt] (1) -- node[above] {$R^{\textbf{U}}_2$} (4);
@@ -1605,17 +1683,17 @@
 				\node[rectstyle] (13) at (7.25,-15) {$s_{10} \vdash \{\varphi\}$};
 				\draw[->,shorten >=0.5pt] (12) -- node[left,fill=white,rotate=90,anchor=center,pos=0.5] {$\dots$} (13);
 				
-				\node[rectstyle] (14) at (2.5,-18) {$s_{10} \vdash \{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\}$};
-				\node[rectstyle] (15) at (12,-18) {$s_{10} \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\node[rectstyle] (14) at (2,-18) {$s_{10} \vdash \{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\}$};
+				\node[rectstyle] (15) at (12.5,-18) {$s_{10} \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
 				\draw[->,shorten >=0.5pt] (13) -- node[above] {$R^{\textbf{R}}_1$} (14);
 				\draw[->,shorten >=0.5pt] (13) -- node[above] {$R^{\textbf{R}}_2$} (15);
 				
-				\node[rectstyle] (16) at (-1,-21) {$s_{10} \vdash \{\texttt{true}, \texttt{SLList}\}$};
-				\node[rectstyle] (17) at (6,-21) {$s_{10} \vdash \{\texttt{SLList},\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$};
+				\node[rectstyle] (16) at (-2,-21) {$s_{10} \vdash \{\texttt{true}, \{\texttt{SLList}\}\}$};
+				\node[rectstyle] (17) at (6,-21) {$s_{10} \vdash \{\{\texttt{SLList}\},\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$};
 				\draw[->,shorten >=0.5pt] (14) -- node[above] {$R^{\textbf{U}}_1$} (16);
 				\draw[->,shorten >=0.5pt,line width=2pt,red] (14) -- node[above,black] {$R^{\textbf{U}}_2$} (17);
 				
-				\node[rectstyle] (18) at (12,-21) {$s_{10} \vdash \{\bigcirc\varphi\}$};
+				\node[rectstyle] (18) at (12.5,-21) {$s_{10} \vdash \{\bigcirc\varphi\}$};
 				\draw[->,shorten >=0.5pt] (15) -- node[right] {$R^{\nvDash}$} (18);
 				\draw[->,shorten >=0.5pt, out=0, in=0,looseness=1.65] (18) to node[right] {$R^{\bigcirc}$} (13);
 				
@@ -1623,14 +1701,124 @@
 				
 				\node[rectstyle] (20) at (6,-24) {$s_{10} \vdash \{\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$};
 				\draw[->,shorten >=0.5pt,line width=2pt,red] (17) -- node[right,black] {$R^{\vDash}$} (20);
-				\draw[->,shorten >=0.5pt, out=0, in=0,looseness=1.5,line width=2pt,red] (20) to node[above,pos=0.75,black] {$R^{\bigcirc}$} (14);
+				\draw[->,shorten >=0.5pt, out=0, in=0,looseness=1.7,line width=2pt,red] (20) to node[above,pos=0.75,black] {$R^{\bigcirc}$} (14);
 								
 				\end{tikzpicture}}
 			\caption{Proof structure for model checking method \texttt{reverse} for formula $\varphi=(\neg\texttt{true}\;\textbf{R}\;(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}))$.}\label{fig:tableaux_ps}
 		\end{center}
 	\end{figure}
 	
-	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc\{\texttt{SLList}\}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc\{\texttt{SLList}\}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space. We describe an implementation of the on-the-fly state space generation in Chapter~\ref{chp:otf}.
+	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc\{\texttt{SLList}\}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc\{\texttt{SLList}\}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space.\\	
+	
+	Considering our example introduced in Chapter~\ref{chp:intro} in Listing~\ref{lst:modify}, we construct the proof structure for the method \texttt{traverse} based on the state space given in Figure~\ref{fig:example_statespace} for the property $\square \{\texttt{identicNeighbours}\}$ according to \textsc{Attestor}'s top level model checking algorithm. Figure~\ref{fig:tableaux_traverse} shows the resulting proof structure, which is indeed successful as no violating path has been encountered. However, including the state space of the method \texttt{swap} from Figure~\ref{fig:example_statespace_swap} into the proof structure construction a violating point is identified. Figure~\ref{fig:tableaux_swap} shows the according proof structure. The violated assertion is marked as red. Therefore, top level model checking is not sufficient in order to detect property violations within procedure state spaces. We introduce two algorithms that aim at model checking procedure state spaces efficiently.\\
+	
+	\begin{figure}
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, rounded corners=1.5pt,font=\large},
+				var/.style={draw, rounded corners=1.5pt, fill=white}]
+				
+				\node[rectstyle] (0) at (-0.75,0) {$s_0 \vdash \{\underbrace{\neg\texttt{true}\;\textbf{R}\;\{\texttt{identicNeighbours}\}}_{\varphi}\}$};
+				\node[rectstyle] (1) at (-5.5,-3) {$s_0 \vdash \{\{\texttt{identicNeighbours}\}\}$};
+				\node[rectstyle] (2) at (4,-3) {$s_0 \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (0) -- node[above] {$R^{\textbf{R}}_1$} (1);
+				\draw[->,shorten >=0.5pt] (0) -- node[above] {$R^{\textbf{R}}_2$} (2);
+				
+				\node[rectstyle] (true) at (-5.5,-21) {\texttt{true}};
+				
+				\draw[->,shorten >=0.5pt] (1) edge[bend right=20] node[left] {$R^{\vDash}$} (true);
+					
+				\node[rectstyle] (5) at (4,-6) {$s_0 \vdash \{\bigcirc\varphi\}$};					
+				\draw[->,shorten >=0.5pt] (2) -- node[right] {$R^{\nvDash}$} (5);
+				
+				\node[rectstyle] (10) at (4,-9) {$s_1 \vdash \{\varphi\}$};
+				\draw[->,shorten >=0.5pt] (5) -- node[right] {$R^{\bigcirc}$} (10);
+				
+				\node[rectstyle] (11) at (0.75,-12) {$s_1 \vdash \{\{\texttt{identicNeighbours}\}\}$};
+				\node[rectstyle] (12) at (7.25,-12) {$s_1 \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (10) -- node[above] {$R^{\textbf{R}}_1$} (11);
+				\draw[->,shorten >=0.5pt] (10) -- node[above] {$R^{\textbf{R}}_2$} (12);
+				
+				\draw[->,shorten >=0.5pt] (11) edge[bend right=20] node[left] {$R^{\vDash}$} (true);
+				
+				\node[rectstyle] (13) at (7.25,-15) {$s_2 \vdash \{\varphi\}$};
+				\draw[->,shorten >=0.5pt] (12) -- node[right] {$R^{\nvDash}$} (13);
+				
+				\node[rectstyle] (14) at (4,-18) {$s_2 \vdash \{\{\texttt{identicNeighbours}\}\}$};				
+				\node[rectstyle] (15) at (10.5,-18) {$s_2 \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (13) -- node[above] {$R^{\textbf{R}}_1$} (14);
+				\draw[->,shorten >=0.5pt] (13) -- node[above] {$R^{\textbf{R}}_2$} (15);
+				
+				\draw[->,shorten >=0.5pt] (14) edge[in=0,out=-90] node[above] {$R^{\vDash}$} (true);
+				
+				\node[rectstyle] (18) at (10.5,-21) {$s_2 \vdash \{\bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt, out=0, in=0,looseness=1.65] (18) to node[right] {$R^{\bigcirc}$} (13);	
+				
+				\draw[->,shorten >=0.5pt] (15) -- node[right] {$R^{\nvDash}$} (18);			
+				\end{tikzpicture}}
+			\caption{Proof structure for model checking method \texttt{SLList.traverse} for formula $\varphi=\square\{\texttt{identicNeighbours}\}$.}\label{fig:tableaux_traverse}
+		\end{center}
+	\end{figure}
+
+	\begin{figure}
+		\begin{center}
+			\resizebox{\textwidth}{!}{
+				\begin{tikzpicture}
+				[node distance=2cm,thick,
+				normal/.style={circle, draw, fill=white, thick},
+				rectstyle/.style={draw, rounded corners=1.5pt,font=\large},
+				var/.style={draw, rounded corners=1.5pt, fill=white}]
+				
+				\node[rectstyle] (0) at (-0.75,0) {$s_2 \vdash \{\bigcirc \varphi\}$};
+				
+				\draw[->,shorten >=0.5pt] (-0.75,2) -- node[left,fill=white,rotate=90,anchor=center,pos=0] {$\dots$} (0);
+				
+				\node[rectstyle] (1) at (-0.75,-3) {$s_0^{\texttt{swap}} \vdash \{\varphi\}$};
+				\draw[->,shorten >=0.5pt] (0) -- node[right] {$R^{\bigcirc}$} (1);
+				
+				\node[rectstyle] (3) at (-5.5,-6) {$s_0^{\texttt{swap}} \vdash \{\{\texttt{identicNeighbours}\}\}$};
+				\node[rectstyle] (4) at (4,-6) {$s_0^{\texttt{swap}} \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (1) -- node[above] {$R^{\textbf{R}}_1$} (3);
+				\draw[->,shorten >=0.5pt] (1) -- node[above] {$R^{\textbf{R}}_2$} (4);
+				
+				\node[rectstyle] (true) at (-5.5,-27) {\texttt{true}};
+				\draw[->,shorten >=0.5pt] (3) edge[bend right=20] node[left] {$R^{\vDash}$} (true);
+				
+				\node[rectstyle] (5) at (4,-9) {$s_0^{\texttt{swap}} \vdash \{\bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (4) -- node[right] {$R^{\nvDash}$} (5);
+				
+				\node[rectstyle] (6) at (4,-12) {$s_1^{\texttt{swap}} \vdash \{\varphi\}$};
+				\draw[->,shorten >=0.5pt] (5) -- node[right] {$R^{\bigcirc}$} (6);
+				
+				\node[rectstyle] (7) at (0,-15) {$s_1^{\texttt{swap}} \vdash \{\{\texttt{identicNeighbours}\}\}$};
+				\node[rectstyle] (8) at (8,-15) {$s_1^{\texttt{swap}} \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (6) -- node[above] {$R^{\textbf{R}}_1$} (7);
+				\draw[->,shorten >=0.5pt] (6) -- node[above] {$R^{\textbf{R}}_2$} (8);
+				
+				\draw[->,shorten >=0.5pt] (7) edge[bend right=20] node[left] {$R^{\vDash}$} (true);
+				
+				\node[rectstyle] (9) at (8,-18) {$s_1^{\texttt{swap}} \vdash \{\bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (8) -- node[right] {$R^{\nvDash}$} (9);
+				
+				\node[rectstyle] (10) at (8,-21) {$s_2^{\texttt{swap}} \vdash \{\varphi\}$};
+				\draw[->,shorten >=0.5pt] (9) -- node[right] {$R^{\bigcirc}$} (10);
+				
+				\node[rectstyle] (11) at (4,-24) {$s_2^{\texttt{swap}} \vdash \{\{\texttt{identicNeighbours}\}\}$};
+				\node[rectstyle] (12) at (12,-24) {$s_2^{\texttt{swap}} \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$};
+				\draw[->,shorten >=0.5pt] (10) -- node[above] {$R^{\textbf{R}}_1$} (11);
+				\draw[->,shorten >=0.5pt] (10) -- node[above] {$R^{\textbf{R}}_2$} (12);
+				
+				\node[rectstyle,draw=red,line width=2pt] (12) at (4,-27) {$s_2^{\texttt{swap}} \vdash \emptyset$};
+				\draw[->,shorten >=0.5pt] (11) -- node[left] {$R^{\nvDash}$} (12);
+				
+				\end{tikzpicture}}
+			\caption{Proof structure for model checking method \texttt{SLList.swap} for formula $\varphi=\square\{\texttt{identicNeighbours}\}$.}\label{fig:tableaux_swap}
+		\end{center}
+	\end{figure}
+	
 	\newpage
 	
 %	\section{Automata-Based Model Checking}\label{sec:automataMC}
