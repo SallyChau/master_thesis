@@ -186,6 +186,11 @@
 
 	In order to apply model checking for analyzing a system, two ingredients are required: a suitable \textit{model} of the system and a formal description of the \textit{properties} that are checked. \\
 	
+	In this thesis, we focus on effectively and efficiently model checking \textsc{Java} pointer-programs with recursive method calls. We refer to this problem as \textit{hierarchical model checking} as the model induced by recursive programs is a hierarchical one due to different levels of method calls. Hierarchical model checking includes three main challenges. One challenge is that method calls induce sub-models that need to be computed and checked which leads to an increase in time and space demand compared to model checking single level models. Moreover, reoccuring procedure calls need to be handled such that already generated models or checked verification goals are not computed repeatedly. Another aspect to consider in hierarchical model checking is that the recursion depth of a procedure can be unbounded.\\ 	
+	
+	We base our work on the \textsc{Attestor} framework by Heinen et al. \cite{heinen2015juggrnaut}, a model checking tool for \textsc{Java} pointer programs. We model the system (or program) under consideration as a graph, called \textit{state space} or \textit{transition system}, where vertices represent states of the system and edges between two states model a transition from one state to another. A transition represents a change in a system's state. Each state models a point during program execution by representing the current program heap as a graph. Pointer programs contain dynamic data structures that induce potentially infinite state spaces as objects are created at runtime. Also arbitrary sizes of input to a program have to be considered. In order to finitely represent possibly infinite states, Heinen et al. employ \textit{hypergraphs} that summarize data structures by replacing subgraphs with placeholders (also called non-terminals) \cite{heinen2015juggrnaut}. Placeholders represent several subgraphs and offer a compact representation of possibly infinite data structures. A hypergraph containing placeholders is called abstract while a hypergraph without any placeholders is called concrete. The process of replacing subgraphs by placeholders is called abstraction while the reverse is called concretisation. The rules that define how abstraction and concretisation are performed are summarized in graph grammars.\\
+	
+	
 	\begin{figure}
 		\begin{center}		
 			\begin{tikzpicture}
@@ -231,21 +236,24 @@
 		\end{center}
 	\end{figure}
 	
-	In this thesis, we focus on effectively and efficiently model checking \textsc{Java} pointer-programs with recursive method calls. We refer to this problem as \textit{hierarchical model checking} as the model induced by recursive programs is a hierarchical one due to different levels of method calls. Hierarchical model checking includes three main challenges. One challenge is that method calls induce sub-models that need to be computed and checked which leads to an increase in time and space demand compared to model checking single level models. Moreover, reoccuring procedure calls need to be handled such that already generated models or checked verification goals are not computed repeatedly. Another aspect to consider in hierarchical model checking is that the recursion depth of a procedure can be unbounded.\\ 	
 	
-	We base our work on the \textsc{Attestor} framework by Heinen et al. \cite{heinen2015juggrnaut}, a model checking tool for \textsc{Java} pointer programs. We model the system (or program) under consideration as a graph, called \textit{state space} or \textit{transition system}, where vertices represent states of the system and edges between two states model a transition from one state to another. A transition represents a change in a system's state. Each state models a point during program execution by representing the current program heap as a graph. Model checking is performed for the generated state space and a property specified by formulae in \textit{linear temporal logics} (LTL). LTL is a logic that formulates properties for paths with respect to modalities of time. Here, time is understood as a linear sequence of moments where each moment is followed by a well-defined successor. Figure~\ref{fig:intro_ltl} illustrates examples for modalities of time in LTL, e.g., a property is eventually fulfilled, always satisfied, or holds until another one becomes true. In order to verify LTL formulae for a state space, \textsc{Attestor} implements the tableaux construction algorithm by Grumberg et al. \cite{bhat1995efficient} that constructs a proof structure based on a set of rules in order to infer whether a state satisfies a property. The approach thus successively divides a verification goal into subgoals until a statement can be made about the result of the initial verification goal.\\	
+	Model checking is performed for the generated state space and a property specified by formulae in \textit{linear temporal logics} (LTL). LTL is a logic that formulates properties for paths with respect to modalities of time. Here, time is understood as a linear sequence of moments where each moment is followed by a well-defined successor. Figure~\ref{fig:intro_ltl} illustrates examples for modalities of time in LTL, e.g., a property is eventually fulfilled, always satisfied, or holds until another one becomes true. In order to verify LTL formulae for a state space, \textsc{Attestor} implements the tableaux construction algorithm by Grumberg et al. \cite{bhat1995efficient} that constructs a proof structure based on a set of rules in order to infer whether a state satisfies a property. The approach thus successively divides a verification goal into subgoals until a statement can be made about the result of the initial verification goal.\\	
 	
-	Programs with procedure calls induce (procedure) state spaces. In \textsc{Attestor}, effects of procedure calls are applied to the return state in the state space of the main method of an input program. Therefore, the generated state space reflects the behavior of the main method. Hence, model checking is executed for the top level state space only while procedure state spaces are not directly included. The question arises whether solely verifying a program's top level state space is sufficient to conclude about the validity of the entire system with respect to a specified property.\\ 
+	Programs with procedure calls induce (procedure) state spaces. In \textsc{Attestor}, effects of procedure calls are applied to the return state in the state space of the main method of an input program. Therefore, the generated state space reflects the behavior of the main method. Hence, model checking is executed for the top level state space only while procedure state spaces are not directly included. The question arises whether solely verifying a program's top level state space is sufficient to conclude about the validity of the entire system with respect to a specified property.\\ 	
+	
+	Consider the \textsc{Java} class \texttt{SLList} specified in Listing~\ref{lst:sll} that defines a singly-linked list with a pointer \texttt{next} to the next element in a list. A method \texttt{traverse} that traverses a singly-linked list is given in Listing~\ref{lst:modify}. We added the procedure \texttt{noop} that takes a list as an input and dereferences the list's \texttt{next} pointer, but references the original value again upon return. Thus, the original list is modified during execution of the procedure \texttt{noop}, but not in the main procedure \texttt{traverse}. We verify whether the method \texttt{traverse} satisfies the LTL formula \[\square\;\{\texttt{identicNeighbours}\}\] which expresses that for every state all neighbors of a list element remain identical during execution of the program, e.g., the list is never modified.\\
+	
+	For the given input program in Listing~\ref{lst:modify} and the formula $\square\;\{\texttt{identicNeighbours}\}$, \textsc{Attestor}'s model checking procedure returns that the property, that the list is never mutated, is satisfied. However, the list is indeed modified within the procedure \texttt{noop}. As this modification has no effect on the top level state space, the failure cannot be detected by the currently implemented top level model checking algorithm. Therefore, in this thesis, we introduce two hierarchical model checking algorithms that do not only check the top level state space but also verify procedure state spaces. The first algorithm is an on-the-fly approach that combines an on-the-fly state space generation with the tableaux construction for model checking. This approach allows for efficient detection of errors in a program that does not require an entirely generated (procedure) state space. The second algorithm captures the hierarchical structure of programs with (recursive) procedure calls within recursive state machines (RSM) as introduced in \cite{alur2001analysis}. The tableaux construction is then performed for the RSM in order to verify given LTL specifications.\\	
 	
 	\begin{lstlisting}[language=Java,numbers=left,
 	stepnumber=1,autogobble=true,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} class definition for singly-linked lists.},captionpos=b,label={lst:sll}]
 	public class SLList {
-		
-	  public SLList next;
-	  	  	
-	  public SLList(SLList next) {	  	
-	    this.next = next;
-	  }
+	
+	public SLList next;
+	
+	public SLList(SLList next) {	  	
+	this.next = next;
+	}
 	}
 	\end{lstlisting}	
 	
@@ -253,28 +261,24 @@
 	stepnumber=1,autogobble=true,keywordstyle=\color{blue},frame=single,caption={\textsc{Java} code for traversing a singly-linked list that contains erroneous behaviour in a called procedure.},captionpos=b,label={lst:modify}]	  
 	public static void traverse(SLList head) {	
 	
-	  SLList current = head;	
-	  
-	  while (current.next != null) {
-	    current = current.next;
-	    head = noop(head);
-	  }
+	SLList current = head;	
+	
+	while (current.next != null) {
+	current = current.next;
+	head = noop(head);
+	}
 	}
 	
 	public static SLList noop(SLList head) {
-		
-	  SLList list = head.next;
-	  
-	  head.next = null;
-	  head.next = list;
-	  
-	  return head;
+	
+	SLList list = head.next;
+	
+	head.next = null;
+	head.next = list;
+	
+	return head;
 	}	
-	\end{lstlisting}	
-	
-	Consider the \textsc{Java} class \texttt{SLList} specified in Listing~\ref{lst:sll} that defines a singly-linked list with a pointer \texttt{next} to the next element in a list. A method \texttt{traverse} that traverses a singly-linked list is given in Listing~\ref{lst:modify}. We added the procedure \texttt{noop} that takes a list as an input and dereferences the list's \texttt{next} pointer, but references the original value again upon return. Thus, the original list is modified during execution of the procedure \texttt{noop}, but not in the main procedure \texttt{traverse}. We verify whether the method \texttt{traverse} satisfies the LTL formula \[\square\;\{\texttt{identicNeighbours}\}\] which expresses that for every state all neighbors of a list element remain identical during execution of the program, e.g., the list is never modified.\\
-	
-	For the given input program in Listing~\ref{lst:modify} and the formula $\square\;\{\texttt{identicNeighbours}\}$, \textsc{Attestor}'s model checking procedure returns that the property, that the list is never mutated, is satisfied. However, the list is indeed modified within the procedure \texttt{noop}. As this modification has no effect on the top level state space, the failure cannot be detected by the currently implemented top level model checking algorithm. Therefore, in this thesis, we introduce two hierarchical model checking algorithms that do not only check the top level state space but also verify procedure state spaces. The first algorithm is an on-the-fly approach that combines an on-the-fly state space generation with the tableaux construction for model checking. This approach allows for efficient detection of errors in a program that does not require an entirely generated state space (including procedure state spaces). The second algorithm captures the hierarchical structure of programs with (recursive) procedure calls within recursive state machines (RSM) as introduced in \cite{alur2001analysis}. After generating an RSM for an input program, the tableaux construction is performed for the RSM in order to verify given LTL specifications.\\	
+	\end{lstlisting}
 	
 	The theoretical foundations of this thesis are described in Chapter~\ref{chp:preliminaries} including a detailed description of the \textsc{Attestor} state space generation, the concepts of state spaces by Heinen et al. \cite{heinen2015juggrnaut}, recursive state machines by Alur et al. \cite{alur2001analysis}, and linear temporal logics. Chapter~\ref{chp:tableaux} presents the tableaux construction for model checking LTL formulae by Grumberg et al. \cite{bhat1995efficient}. Thereupon, Chapters~\ref{chp:otf} and~\ref{chp:hmc} introduce the on-the-fly hierarchical and RSM-based model checking algorithms, respectively. The thesis concludes with experimental results on the effectiveness and efficiency of the introduced algorithms compared to top level model checking in Chapters~\ref{chp:benchmarks} and~\ref{chp:conclusion}. 
 
@@ -289,13 +293,13 @@
 	
 	\chapter{Preliminaries}\label{chp:preliminaries}
 	
-	This chapter presents the foundations of this thesis starting with describing the \textsc{Attestor} framework in Section~\ref{sec:attestor}. Thereupon, we present the theoretical concepts relevant in our framework. Sections~\ref{sec:heap} and~\ref{sec:transition_system} describe how an input program is modeled by a state space including hypergraphs that represent heaps for each state according to Heinen et al. \cite{heinen2015juggrnaut}. In order to describe hierarchical structures relevant to modeling programs with procedure calls, we focus on recursive state machines in Section~\ref{sec:rsm} based on the work of Alur et al. \cite{alur2001analysis}. The chapter concludes by presenting linear temporal logic that formalizes properties with temporal modalities in order to verify the input program under consideration.
+	This chapter presents the foundations of this thesis starting with a description of the \textsc{Attestor} framework in Section~\ref{sec:attestor}. Thereupon, Sections~\ref{sec:heap} and~\ref{sec:transition_system} describe how an input program is modeled by a state space including hypergraphs that represent heaps for each state according to Heinen et al. \cite{heinen2015juggrnaut}. In order to describe hierarchical structures relevant to modeling programs with procedure calls, we focus on recursive state machines based on the work of Alur et al. \cite{alur2001analysis} in Section~\ref{sec:rsm}. The chapter concludes by presenting linear temporal logic that formalizes properties with temporal modalities in order to verify an input program.
 	
 	\section{\textsc{Attestor}}\label{sec:attestor}
 	
-	\textsc{Attestor} is a verification tool that checks properties given as LTL formulae for a \textsc{Java} program. The tool generates a state space for the program under consideration, where each state represents the current heap and transitions between states model changes in a state. Procedures of the input program are summarized by procedure contracts that specify the heap prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same input heap. After the state space has been generated, model checking is performed by checking the resulting state space against LTL specifications. Possible outcomes for the model checking procedure are that the input program either fulfills the property, violates the property, or the result is unknown. In case of property violation, a counterexample is provided.\\
+	\textsc{Attestor} is a verification tool that checks properties given as LTL formulae for a \textsc{Java} program. The tool generates a state space for an input program, where each state represents the current heap and transitions between states model changes in a state. Procedures of the input program are summarized by procedure contracts that specify the heap prior to and after their execution. Thus, procedure state spaces do not need to be computed repeatedly for the same input heap. After the state space has been generated, model checking is performed by checking the resulting state space against LTL specifications. Possible outcomes for the model checking procedure are that the input program either fulfills the property, violates the property, or the result is unknown. In case of property violation, a counterexample is provided.\\
 	
-	The \textsc{Attestor} architecture divides up into input, back-end, front-end, and output as depicted in Figure~\ref{fig:attestor}. The tool offers several options to specify a verification task including a \textsc{Java} program to be analyzed and LTL formulae that describe the properties verified during model checking. Moreover, \textsc{Attestor} requires graph grammars that define data structures present in the input program. Next to the pre-defined grammars in the tool (singly-linked lists, doubly-linked lists, trees), the user has the option to define custom ones. Further options include the specification of initial heaps or properties for state space generation. \textsc{Attestor}'s core is the back-end which contains the program analysis. The front-end communicates via the \textsc{Attestor} API with the back-end to visualize the output such as the generated state space.\\	
+	The \textsc{Attestor} architecture is depicted in Figure~\ref{fig:attestor}. The tool offers several options to specify a verification task including a \textsc{Java} program to be analyzed and LTL formulae that describe the properties verified during model checking. Moreover, \textsc{Attestor} requires graph grammars that define data structures present in the input program. Next to the pre-defined grammars in the tool (singly-linked lists, doubly-linked lists, trees), the user has the option to define custom ones. Further options include the specification of initial heaps or properties for state space generation. The \textsc{Attestor} back-end constitutes the program analysis which is divided into six phases. The first three phases comprise preprocessing of the verification task which are followed by the state space generation and the model checking phase.\\
 	
 	\begin{figure}
 		\begin{center}
@@ -363,10 +367,8 @@
 		\end{center}
 	\end{figure}
 	
-	The \textsc{Attestor} back-end constitutes the core process of the tool which is divided into six phases. The first three phases comprise preprocessing of the verification task which are followed by the state space generation and the model checking phase.\\
-	
 	\textbf{Phase 1: Parsing Inputs$\quad$}
-	In the first phase, the supplied input options passed to \textsc{Attestor}, including the input program and optional parameters, are parsed.\\
+	In the first phase, supplied input options passed to \textsc{Attestor}, including the input program and optional parameters, are parsed.\\
 	
 	\textbf{Phase 2: Marking Generation$\quad$} 
 	After parsing the input, markings are added to the initial heap if required by the specified LTL properties \cite{heinen2015verifyingPhd}. The markings track object identities during program execution along sequences of states so that properties such as neighborhood preservation can be checked.\\
@@ -444,63 +446,56 @@
 	
 	Our focus in model checking lies on pointer-manipulating programs. Therefore, we consider the heap of the program under consideration at every state. These are generated during \textsc{Attestor}'s state space generation phase (see Figure~\ref{fig:attestor}). The heap encompasses a set of locations with variables and pointers, i.e., references to locations. It is represented by a graph where vertices represent heap objects, directed edges depict selectors, and labeled edges depict the mapping of program variables to heap objects. Selectors are pointer variables that are connected to two vertices, i.e., a selector points from its source to its target node.\\
 	
-	Consider the class definition of a singly-linked list in \textsc{Java} code in Listing~\ref{lst:sll} in Chapter~\ref{chp:intro}. It defines a singly-linked list with a selector \texttt{next} that points to an element's successor node. Figure~\ref{fig:sll} illustrates a heap for a singly-linked list. The list consists of four elements represented by circles. The grayed circle at the end of the list represents the \texttt{null}-value. The \texttt{next}-selectors are represented by directed edges. Furthermore, the program variable \texttt{head} is attached to the first vertex of the list via an edge labeled with its rank. It indicates the number of vertices an edge connects, i.e., the rank of variable edges is one. Pointer-manipulating operations are represented by graph transformations. For instance, executing the statement \texttt{head := head.next} on the heap given in Figure~\ref{fig:sll} moves the variable \texttt{head} to the second vertex of the list. The resulting heap is shown in Figure~\ref{fig:sll_op}.\\ 		
+	Consider the class definition of a singly-linked list in \textsc{Java} code in Listing~\ref{lst:sll} in Chapter~\ref{chp:intro}. It defines a singly-linked list with a selector \texttt{next} that points to an element's successor node. Figure~\ref{fig:sll} illustrates a heap for a singly-linked list. The list consists of four elements represented by circles. The grayed circle at the end of the list represents the \texttt{null}-value. The \texttt{next}-selectors are represented by directed edges. Furthermore, the program variable \texttt{head} is attached to the first vertex of the list via an edge labeled with its rank. It indicates the number of vertices an edge connects, i.e., the rank of variable edges is one. Pointer-manipulating operations are represented by graph transformations. For instance, executing the statement \texttt{head := head.next} on the heap given in Figure~\ref{fig:sll} moves the variable \texttt{head} to the second vertex of the list.\\ 			
 
+	Take into account a program that contains a loop in which a new element is added to a list with every iteration. Thus, the  heap size increases with every iteration. If the loop is visited infinitely often, the number of objects in a heap can become unboundedly large. In order to obtain a finite representation, parts of the graph are abstracted, i.e., a subgraph is replaced by a placeholder. An example for an abstracted graph is depicted in Figure~\ref{fig:sll_hyper}. The graph shows a singly-linked list with a placeholder labeled \textit{SL} which represents a singly-linked list of arbitrary length. The example illustrates the concept of \textit{hypergraphs}. Hypergraphs are graphs in which an edge is connected to an arbitrary number of nodes. These edges are called \textit{hyperedges}. The number of vertices a hyperedge connects is captured in its \textit{rank}. Hypergraphs represent heaps that are partially concrete and partially abstract. In our example from Figure~\ref{fig:sll_hyper}, the hyperedge labeled \textit{SL} is an abstracted part of the hypergraph in the otherwise concrete graph. In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe concrete heaps that do not contain abstract parts such as the heap shown in Figure~\ref{fig:sll}.	
+	
 	\begin{figure}
 		\begin{center}
 			%\resizebox{0.5\textwidth}{!}{
-				\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm, font=\sffamily\Large\bfseries},
-				rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
-				
-				\node (a1) at (0,0) [normal] {};
-				\node (a2) at (1.5,0) [normal] {};
-				\node (a3) at (3,0) [normal] {};
-				\node (a4) at (4.5,0) [normal] {};
-				\node (a5) at (6,0) [normal,fill=gray] {};
-				\node (r1) at (0, 2) [rectstyle] {\texttt{head}};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
-				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, right] {1} (a1);
-				
-				\end{tikzpicture}%}
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm, font=\sffamily\Large\bfseries},
+			rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
+			
+			\node (a1) at (0,0) [normal] {};
+			\node (a2) at (1.5,0) [normal] {};
+			\node (a3) at (3,0) [normal] {};
+			\node (a4) at (4.5,0) [normal] {};
+			\node (a5) at (6,0) [normal,fill=gray] {};
+			\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
+			
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+			
+			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+			
+			\end{tikzpicture}%}
 			\caption{Heap for a singly-linked list.}\label{fig:sll}
 		\end{center}
 	\end{figure}	
 	
+	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]{def:hypergraph}
+		Given a finite ranked alphabet $\Sigma = \Sigma_N \uplus \Sigma_T$ with associated ranking function $\mathsf{rk} : \Sigma \rightarrow \mathds{N}$. A (labeled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, \mathsf{att}, \mathsf{lab}, \mathsf{ext})\]
+		where 
+		\begin{itemize}
+			\item $V$ is a finite set of vertices,
+			\item $E$ is a finite set of hyperedges,
+			\item $\mathsf{att} : E \rightarrow V^*$ is the attachment function that maps each hyperedge to a sequence of incident vertices, 
+			\item $\mathsf{lab} : E \rightarrow \Sigma$ is the hyperedge-labeling function that maps a label to an edge, and 
+			\item $\mathsf{ext} \in V^*$ is the (possibly empty) sequence of pairwise distinct external vertices. 
+		\end{itemize}
+		For every $e \in E$, we let $\mathsf{rk}(e) = |\mathsf{att}(e)|$ and we require $\mathsf{rk}(e) = \mathsf{rk}(\mathsf{lab}(e))$. The set of all hypergraphs over $\Sigma$ is denoted by $HG_{\Sigma}$.
+	\end{definition}
 	
-	\begin{figure}
-		\begin{center}
-			%\resizebox{0.5\textwidth}{!}{
-				\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm, font=\sffamily\Large\bfseries},
-				rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
-				
-				\node (a1) at (0,0) [normal] {};
-				\node (a2) at (1.5,0) [normal] {};
-				\node (a3) at (3,0) [normal] {};
-				\node (a4) at (4.5,0) [normal] {};
-				\node (a5) at (6,0) [normal,fill=gray] {};
-				\node (r1) at (1.5, 2) [rectstyle] {\texttt{head}};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
-				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, right] {1} (a2);
-				
-				\end{tikzpicture}%}
-			\caption{Modified heap of a singly-linked list after pointer-operation \texttt{head := head.next}.}\label{fig:sll_op}
-		\end{center}
-	\end{figure}		
+	In order to obtain all possible heaps represented by an abstract subgraph, we require the concept of \textit{graph grammars}. Graph grammars define a set of production rules that define how nonterminals can be replaced by hypergraphs. Nonterminals represent abstract parts of the graph such as $SL$ in Figure~\ref{fig:sll_hyper}. Exhaustively applying production rules to a graph gradually replaces nonterminals by graphs so that concrete graphs without nonterminals can be reached eventually. Graph grammars are therefore comparable to string grammars that define rules to manipulate strings. As we consider hypergraphs in our analysis, we focus on hyperedge replacement grammars that are graph grammars working on hypergraphs, where nonterminals represent hyperedges.  
 	
+	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]{def:hrg}
+		A \textit{hyperedge replacement grammar} $G$ over a ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal and $R \in HG_{\Sigma}$ is a rule graph, i.e., a hypergraph with $|ext_R|=\mathsf{rk}(X)$.
+	\end{definition}
+
 	\begin{figure}
 		\begin{center}
 			%\resizebox{0.75\textwidth}{!}{
@@ -529,55 +524,36 @@
 			\caption{A singly-linked list with an abstracted subgraph represented as a hypergraph.}\label{fig:sll_hyper}
 		\end{center}
 	\end{figure}
-
-	Consider a program that contains a loop in which a new element is added to a list with every iteration. Thus, the  heap size increases with every iteration. If the loop is visited infinitely often, the number of objects in a heap can become unboundedly large. In order to obtain a finite representation, parts of the graph are abstracted, i.e., a subgraph is replaced by a placeholder. An example for an abstracted graph is depicted in Figure~\ref{fig:sll_hyper}. The graph shows a singly-linked list with a placeholder labeled \textit{SL} which represents a singly-linked list of arbitrary length. The example illustrates the concept of \textit{hypergraphs}. Hypergraphs are graphs in which an edge is connected to an arbitrary number of nodes. These edges are called \textit{hyperedges}. The number of vertices a hyperedge connects is captured in its \textit{rank}. Hypergraphs represent heaps that are partially concrete and partially abstract. In our example from Figure~\ref{fig:sll_hyper}, the hyperedge labeled \textit{SL} is an abstracted part of the hypergraph in the otherwise concrete graph. In order to express the abstracted parts of the heap, we require a \textit{ranked alphabet} $\Sigma = \Sigma_N \uplus \Sigma_T$, where $\Sigma_N$ denotes a finite set of \textit{nonterminal symbols} and $\Sigma_T=Var \uplus Sel$ denotes the terminal symbols including the set $Var$ of variables and the set $Sel$ of selectors. Program variables are of rank one, while selectors are of rank two. Hypergraphs over the alphabet $\Sigma_T$ describe concrete heaps that do not contain an abstract part such as the heaps depicted in Figures~\ref{fig:sll} and~\ref{fig:sll_op}.
 	
-	\begin{definition}[Hypergraph \cite{heinen2015verifyingPhd}]{def:hypergraph}
-		Given a finite ranked alphabet $\Sigma = \Sigma_N \uplus \Sigma_T$ with associated ranking function $\mathsf{rk} : \Sigma \rightarrow \mathds{N}$. A (labeled) hypergraph over $\Sigma$ is a tuple \[H = (V ,E, \mathsf{att}, \mathsf{lab}, \mathsf{ext})\]
-		where 
-		\begin{itemize}
-			\item $V$ is a finite set of vertices,
-			\item $E$ is a finite set of hyperedges,
-			\item $\mathsf{att} : E \rightarrow V^*$ is the attachment function that maps each hyperedge to a sequence of incident vertices, 
-			\item $\mathsf{lab} : E \rightarrow \Sigma$ is the hyperedge-labeling function that maps a label to an edge, and 
-			\item $\mathsf{ext} \in V^*$ is the (possibly empty) sequence of pairwise distinct external vertices. 
-		\end{itemize}
-		For every $e \in E$, we let $\mathsf{rk}(e) = |\mathsf{att}(e)|$ and we require $\mathsf{rk}(e) = \mathsf{rk}(\mathsf{lab}(e))$. The set of all hypergraphs over $\Sigma$ is denoted by $HG_{\Sigma}$.
-	\end{definition}
+	The language of a hyperedge replacement grammar contains all concrete hypergraphs that are obtained by repeatedly applying production rules to a given hypergraph. In this context, a nonterminal in a hypergraph is replaced by the rule graph of a production rule. Therefore, the external nodes of the replacing hypergraph are mapped to the hyperedges of the nonterminal to be replaced. To illustrate an hyperedge replacement, consider the hyperedge replacement grammar given in Figure~\ref{fig:sll_grammar}. The grammar describes the language of all singly-linked lists. The first production rule recursively adds an element to an existing list introducing a new nonterminal $SL$ in order to allow for insertion of elements by further hyperedge replacements. The second rule terminates the production by replacing the nonterminal $SL$ with a concrete graph. Let us consider the hypergraph from Figure~\ref{fig:sll}. We have two options to apply the hyperedge replacement grammar for singly-linked lists to the hypergraph under consideration. Applying the first rule yields the (abstract) hypergraph depicted in Figure~\ref{fig:sll_hyper_r1}, while applying the second rule yields a concrete hypergraph as shown in Figure~\ref{fig:sll_hyper_r2}.\\	
 	
-	In order to obtain all possible heaps represented by an abstract subgraph, we require the concept of \textit{graph grammars}. Graph grammars define a set of production rules that define how nonterminals can be replaced by hypergraphs. Nonterminals represent abstract parts of the graph such as $SL$ in Figure~\ref{fig:sll_hyper}. Exhaustively applying production rules to a graph gradually replaces nonterminals by graphs so that concrete graphs without nonterminals can be reached eventually. Graph grammars are therefore comparable to string grammars that define rules to manipulate strings. As we consider hypergraphs in our analysis, we focus on hyperedge replacement grammars that are graph grammars working on hypergraphs, where nonterminals represent hyperedges.  
-	
-	\begin{definition}[Hyperedge Replacement Grammar \cite{heinen2015verifyingPhd}]{def:hrg}
-		A \textit{hyperedge replacement grammar} $G$ over a ranked alphabet $\Sigma$ is a set of production rules of the form $X \rightarrow R$, where $X \in \Sigma_N$ is a nonterminal and $R \in HG_{\Sigma}$ is a rule graph, i.e., a hypergraph with $|ext_R|=\mathsf{rk}(X)$.
-	\end{definition}
-	
-	The language of a hyperedge replacement grammar contains all concrete hypergraphs that are obtained by repeatedly applying production rules to a given hypergraph. In this context, a nonterminal in a hypergraph is replaced by the rule graph of a production rule. Therefore, the external nodes of the replacing hypergraph are mapped to the hyperedges of the nonterminal to be replaced. To illustrate an hyperedge replacement, consider the hyperedge replacement grammar given in Figure~\ref{fig:sll_grammar}. The grammar describes the language of all singly-linked lists. The first production rule recursively adds an element to an existing list introducing a new nonterminal $SL$ in order to allow for insertion of elements by further hyperedge replacements. The second rule terminates the production by replacing the nonterminal $SL$ with a concrete graph. Let us consider the hypergraph from Figure~\ref{fig:sll}. We have two options to apply the hyperedge replacement grammar for singly-linked lists to the hypergraph under consideration. Applying the first rule yields the (abstract) hypergraph depicted in Figure~\ref{fig:sll_hyper_r1}, while applying the second rule yields a concrete hypergraph as shown in Figure~\ref{fig:sll_hyper_r2}.\\
+	Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} display the forward application of production rules on a hypergraph, also called \textit{concretisation}, as an abstract fragment is replaced by a (more) concrete subgraph. A concretisation step can yield more than one concrete hypergraph if several production rules are applicable. Therefore, concretisation needs to consider all possible hypergraphs. In fact, the application of the production rules of the hyperedge replacement grammar for singly-linked lists in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} is an example for a case where more than one rule is applicable.\\	
 	
 	\begin{figure}
 		\begin{center}
 			%\resizebox{0.9\textwidth}{!}{
-				\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
-				rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
-				
-				\node (L) at (-1,0) [] {$SL$};
-				\node (arrow) at (0.5,0) [] {$\longrightarrow$};
-				
-				\node (a1) at (8.5,0) [normal] {1};
-				\node (a2) at (10,0) [normal] {2};
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				
-				\draw[] (7.5,0.75) -- (7.5,-0.75);
-				
-				\node (b1) at (2,0) [normal] {1};
-				\node (b2) at (3.5,0) [normal] {};
-				\node (SLL) at (5, 0) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
-				\node (b3) at (6.5,0) [normal] {2};
-				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
-				\draw[] (b2) -- node[below] {1} (SLL);
-				\draw[] (SLL) -- node[below] {2} (b3);				
-				\end{tikzpicture}%}
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
+			rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
+			
+			\node (L) at (-1,0) [] {$SL$};
+			\node (arrow) at (0.5,0) [] {$\longrightarrow$};
+			
+			\node (a1) at (8.5,0) [normal] {1};
+			\node (a2) at (10,0) [normal] {2};
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			
+			\draw[] (7.5,0.75) -- (7.5,-0.75);
+			
+			\node (b1) at (2,0) [normal] {1};
+			\node (b2) at (3.5,0) [normal] {};
+			\node (SLL) at (5, 0) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
+			\node (b3) at (6.5,0) [normal] {2};
+			\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+			\draw[] (b2) -- node[below] {1} (SLL);
+			\draw[] (SLL) -- node[below] {2} (b3);				
+			\end{tikzpicture}%}
 			\caption{A hyperedge replacement grammar for singly-linked lists.}\label{fig:sll_grammar}
 		\end{center}
 	\end{figure}	
@@ -585,63 +561,63 @@
 	\begin{figure}
 		\begin{center}
 			%\resizebox{0.9\textwidth}{!}{
-				\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
-				rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
-				
-				%start
-				\node (a1) at (1,3) [normal] {};
-				\node (a2) at (2.5,3) [normal] {};
-				\node (a3) at (4,3) [normal] {};
-				\node (a4) at (7,3) [normal] {};
-				\node (a5) at (8.5,3) [normal,fill=gray] {};
-				\node (r1) at (-1, 3) [rectstyle] {\texttt{head}};
-				\node (r) at (5.5, 3) [draw, fill=gray!10, minimum height=0.75cm, minimum width=0.75cm] {$SL$};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-				\path[] (r) edge[] node[fill=white, below] {1} (a3);
-				\path[] (r) edge[] node[fill=white, below] {2} (a4);
-				
-				% rule
-				\node (background) at (5.25,6) [fill=gray!15, minimum height=2cm, minimum width=6cm] {};
-				\node (b1) at (3,6) [normal] {1};
-				\node (b2) at (4.5,6) [normal] {};
-				\node (SLL) at (6,6) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
-				\node (b3) at (7.5,6) [normal] {2};
-				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
-				\draw[] (b2) -- node[below] {1} (SLL);
-				\draw[] (SLL) -- node[below] {2} (b3);
-				
-				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
-				\draw[->, dashed, shorten >=0.5pt, out=-75, in=90] (b3) to (a4);
-				
-				\node (arrow) at (3.5,1.5) [rotate=-90] {\Large $\Longrightarrow$};
-				
-				% result
-				\node (a1) at (0,0) [normal] {};
-				\node (a2) at (1.5,0) [normal] {};
-				\node (a3) at (3,0) [normal] {};
-				\node (a4) at (4.5,0) [normal] {};
-				\node (a5) at (7.5,0) [normal] {};
-				\node (a6) at (9,0) [normal,fill=gray] {};
-				\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
-				\node (r) at (6, 0) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
-				\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[above] {\texttt{next}} (a6);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-				\path[] (r) edge[] node[fill=white, below] {1} (a4);
-				\path[] (r) edge[] node[fill=white, below] {2} (a5);
-				
-				\end{tikzpicture}%}
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
+			rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
+			
+			%start
+			\node (a1) at (1,3) [normal] {};
+			\node (a2) at (2.5,3) [normal] {};
+			\node (a3) at (4,3) [normal] {};
+			\node (a4) at (7,3) [normal] {};
+			\node (a5) at (8.5,3) [normal,fill=gray] {};
+			\node (r1) at (-1, 3) [rectstyle] {\texttt{head}};
+			\node (r) at (5.5, 3) [draw, fill=gray!10, minimum height=0.75cm, minimum width=0.75cm] {$SL$};
+			
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+			
+			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+			\path[] (r) edge[] node[fill=white, below] {1} (a3);
+			\path[] (r) edge[] node[fill=white, below] {2} (a4);
+			
+			% rule
+			\node (background) at (5.25,6) [fill=gray!15, minimum height=2cm, minimum width=6cm] {};
+			\node (b1) at (3,6) [normal] {1};
+			\node (b2) at (4.5,6) [normal] {};
+			\node (SLL) at (6,6) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
+			\node (b3) at (7.5,6) [normal] {2};
+			\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+			\draw[] (b2) -- node[below] {1} (SLL);
+			\draw[] (SLL) -- node[below] {2} (b3);
+			
+			\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
+			\draw[->, dashed, shorten >=0.5pt, out=-75, in=90] (b3) to (a4);
+			
+			\node (arrow) at (3.5,1.5) [rotate=-90] {\Large $\Longrightarrow$};
+			
+			% result
+			\node (a1) at (0,0) [normal] {};
+			\node (a2) at (1.5,0) [normal] {};
+			\node (a3) at (3,0) [normal] {};
+			\node (a4) at (4.5,0) [normal] {};
+			\node (a5) at (7.5,0) [normal] {};
+			\node (a6) at (9,0) [normal,fill=gray] {};
+			\node (r1) at (-2, 0) [rectstyle] {\texttt{head}};
+			\node (r) at (6, 0) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
+			
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+			\draw[->,shorten >=0.5pt] (a5) edge[bend left] node[above] {\texttt{next}} (a6);
+			
+			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+			\path[] (r) edge[] node[fill=white, below] {1} (a4);
+			\path[] (r) edge[] node[fill=white, below] {2} (a5);
+			
+			\end{tikzpicture}%}
 			\caption{Applying the first production rule from Figure~\ref{fig:sll_grammar} adds an element to the list. An abstract hypergraph is obtained.}\label{fig:sll_hyper_r1}
 		\end{center}
 	\end{figure}
@@ -649,62 +625,60 @@
 	\begin{figure}
 		\begin{center}
 			%\resizebox{0.75\textwidth}{!}{
-				\begin{tikzpicture}
-				[node distance=2cm,thick,
-				normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
-				rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
-				
-				%start
-				\node (a1) at (0,3) [normal] {};
-				\node (a2) at (1.5,3) [normal] {};
-				\node (a3) at (3,3) [normal] {};
-				\node (a4) at (6,3) [normal] {};
-				\node (a5) at (7.5,3) [normal,fill=gray] {};
-				\node (r1) at (-2, 3) [rectstyle] {\texttt{head}};
-				\node (r) at (4.5, 3) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-				\path[] (r) edge[] node[fill=white, below] {1} (a3);
-				\path[] (r) edge[] node[fill=white, below] {2} (a4);
-				
-				% rule
-				\node (background) at (4.25,6) [fill=gray!15, minimum height=2cm, minimum width=3cm] {};
-				\node (b1) at (3.5,6) [normal] {1};
-				\node (b2) at (5,6) [normal] {2};
-				\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
-				
-				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
-				\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b2) to (a4);
-				
-				\node (arrow) at (2.75,1.5) [rotate=-90] {\Large $\Longrightarrow$};
-				
-				%result
-				\node (a1) at (1,0) [normal] {};
-				\node (a2) at (2.5,0) [normal] {};
-				\node (a3) at (4,0) [normal] {};
-				\node (a4) at (5.5,0) [normal] {};
-				\node (a5) at (7,0) [normal,fill=gray] {};
-				\node (r1) at (-1, 0) [rectstyle] {\texttt{head}};
-				
-				\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
-				\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
-				\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
-				\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
-				
-				\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
-				
-				\end{tikzpicture}%}
+			\begin{tikzpicture}
+			[node distance=2cm,thick,
+			normal/.style={circle, draw, fill=white, thick, minimum width=0.75cm},
+			rectstyle/.style={draw, minimum width=1.5cm, minimum height=0.75cm, rounded corners=1.5pt, fill=gray!10}]
+			
+			%start
+			\node (a1) at (0,3) [normal] {};
+			\node (a2) at (1.5,3) [normal] {};
+			\node (a3) at (3,3) [normal] {};
+			\node (a4) at (6,3) [normal] {};
+			\node (a5) at (7.5,3) [normal,fill=gray] {};
+			\node (r1) at (-2, 3) [rectstyle] {\texttt{head}};
+			\node (r) at (4.5, 3) [draw, fill=gray!10, minimum height=0.75cm] {$SL$};
+			
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+			
+			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+			\path[] (r) edge[] node[fill=white, below] {1} (a3);
+			\path[] (r) edge[] node[fill=white, below] {2} (a4);
+			
+			% rule
+			\node (background) at (4.25,6) [fill=gray!15, minimum height=2cm, minimum width=3cm] {};
+			\node (b1) at (3.5,6) [normal] {1};
+			\node (b2) at (5,6) [normal] {2};
+			\draw[->,shorten >=0.5pt] (b1) edge[bend left] node[above] {\texttt{next}} (b2);
+			
+			\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b1) to (a3);
+			\draw[->, dashed, shorten >=0.5pt, out=-90, in=90] (b2) to (a4);
+			
+			\node (arrow) at (2.75,1.5) [rotate=-90] {\Large $\Longrightarrow$};
+			
+			%result
+			\node (a1) at (1,0) [normal] {};
+			\node (a2) at (2.5,0) [normal] {};
+			\node (a3) at (4,0) [normal] {};
+			\node (a4) at (5.5,0) [normal] {};
+			\node (a5) at (7,0) [normal,fill=gray] {};
+			\node (r1) at (-1, 0) [rectstyle] {\texttt{head}};
+			
+			\draw[->,shorten >=0.5pt] (a1) edge[bend left] node[above] {\texttt{next}} (a2);
+			\draw[->,shorten >=0.5pt] (a2) edge[bend left] node[above] {\texttt{next}} (a3);
+			\draw[->,shorten >=0.5pt] (a4) edge[bend left] node[above] {\texttt{next}} (a5);
+			\draw[->,shorten >=0.5pt] (a3) edge[bend left] node[above] {\texttt{next}} (a4);
+			
+			\path[] (r1) edge[line width=0.75mm] node[fill=white, below] {1} (a1);
+			
+			\end{tikzpicture}%}
 			\caption{Applying the second production rule from Figure~\ref{fig:sll_grammar} yields a concrete hypergraph.}\label{fig:sll_hyper_r2}
 		\end{center}
 	\end{figure}	
 	
-	Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} display the forward application of production rules on a hypergraph, also called \textit{concretisation}, as an abstract fragment is replaced by a (more) concrete subgraph. A concretisation step can yield more than one concrete hypergraph if several production rules are applicable. Therefore, concretisation needs to consider all possible hypergraphs. In fact, the application of the production rules of the hyperedge replacement grammar for singly-linked lists in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} is an example for a case where more than one rule is applicable.\\
-	
-	In contrast to concretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction of subgraphs yield an over-approximation of the current set of concrete hypergraphs, since information on what exactly has been abstracted is lost during abstraction. Abstraction allows us to represent possibly unboundedly large graphs in a finite manner. Examples for abstraction are given in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} if we consider a reversed application of the production rules. Thus, starting in the resulting hypergraphs in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} and following the reversed direction of the arrow, we obtain abstracted hypergraphs by applying the first and second rule in a backward fashion, respectively.\\
+	In contrast to concretisation, \textit{abstraction} describes the backward application of production rules such that a subgraph is replaced by a nonterminal. Abstraction of subgraphs yield an over-approximation of the current set of concrete hypergraphs, since information on what exactly has been abstracted is lost during abstraction. Abstraction allows us to represent possibly unboundedly large graphs in a finite manner. Examples for abstraction are given in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} if we consider a reversed application of the production rules. Thus, starting in the resulting hypergraphs in Figures~\ref{fig:sll_hyper_r1} and~\ref{fig:sll_hyper_r2} and following the reversed direction of the arrow, we obtain abstracted hypergraphs by applying the first and second rule in a backward fashion, respectively.
 	
 	\section{Transition Systems}\label{sec:transition_system}
 	
@@ -729,6 +703,8 @@
 		\[\nexists s'\in S. (s, s') \in \delta.\]
 	\end{definition}
 
+	Figures~\ref{fig:example_statespace} and~\ref{fig:example_statespace_noop} depict transition systems for the methods \texttt{traverse} and \texttt{noop} given in Listing~\ref{lst:modify}, respectively. Let us exemplify the transition system $T=(S, I, \delta, AP, L)$ for the method \texttt{traverse}. Every state encompasses a hypergraph that represents the heap at the current position in the analyzed program. The initial state $s_0 \in I$ is marked with a short incoming arrow. It consists of a singly-linked list with two elements. The variable \texttt{head} is attached to the first node of the list. $s_0$ is succeeded by state $s_1$ which contains a further variable \texttt{current} that points to the same node as the variable \texttt{head}. The succeeding state $s_2$ of $s_1$ contains a self-loop, i.e., $s_2$ is its own successor. It also marks the final state of the transition system. The transition relation $\delta$ is represented by arrows connecting two states. For example, $(s_0, s_1) \in\; \delta$ and $(s_1, s_2) \in\; \delta$. The self-loop at state $s_2$ depicts the transition $(s_2,s_2) \in\; \delta$. The transition system does not have any terminal states as  all states have outgoing transitions. The states in $T$ are labeled with atomic propositions that they satisfy, i.e., all states satisfy the proposition \texttt{identicNeighbours}, abbreviated as \texttt{idN}, that indicates that the order of the elements in the list is not modified. Therefore, $L(s_0)=L(s_1)=L(s_2)=\{\texttt{identicNeighbours}\}$. From the stated propositions, the set $AP$ of atomic propositions is implicitly given as $AP=\{\texttt{identicNeighbours}\}$.\\
+	
 	\begin{figure}
 		\begin{center}
 			\resizebox{0.65\textwidth}{!}{
@@ -789,7 +765,7 @@
 			\caption{State space for method \texttt{SLList.traverse}.}\label{fig:example_statespace}
 		\end{center}
 	\end{figure}
-
+	
 	\begin{figure}
 		\begin{center}
 			\resizebox{0.65\textwidth}{!}{
@@ -868,9 +844,9 @@
 		\end{center}
 	\end{figure}
 
-	Figures~\ref{fig:example_statespace} and~\ref{fig:example_statespace_noop} depict transition systems for the methods \texttt{traverse} and \texttt{noop} given in Listing~\ref{lst:modify}, respectively. Let us exemplify the transition system $T=(S, I, \delta, AP, L)$ for the method \texttt{traverse}. Every state encompasses a hypergraph that represents the heap at the current position in the analyzed program. The initial state $s_0 \in I$ is marked with a short incoming arrow. It consists of a singly-linked list with two elements. The variable \texttt{head} is attached to the first node of the list. $s_0$ is succeeded by state $s_1$ which contains a further variable \texttt{current} that points to the same node as the variable \texttt{head}. The succeeding state $s_2$ of $s_1$ contains a self-loop, i.e., $s_2$ is its own successor. It also marks the final state of the transition system. The transition relation $\delta$ is represented by arrows connecting two states. For example, $(s_0, s_1) \in\; \delta$ and $(s_1, s_2) \in\; \delta$. The self-loop at state $s_2$ depicts the transition $(s_2,s_2) \in\; \delta$. The transition system does not have any terminal states as  all states have outgoing transitions. The states in $T$ are labeled with atomic propositions that they satisfy, i.e., all states satisfy the proposition \texttt{identicNeighbours}, abbreviated as \texttt{idN}, that indicates that the order of the elements in the list is not modified. Therefore, $L(s_0)=L(s_1)=L(s_2)=\{\texttt{identicNeighbours}\}$. From the stated propositions, the set $AP$ of atomic propositions is implicitly given as $AP=\{\texttt{identicNeighbours}\}$.\\
-	
 	A sequence of states starting in an initial state $s_0 \in I$ and either ending in a terminal state $s \in S$ or infinitely prolonging, is called a \textit{path} of transition system $T$.
+	
+	\newpage
 	 
 	\begin{definition}[Paths \cite{baier2008principles}]{def:paths}
 		A \textit{finite path} $\pi$ of a transition system $T=(S, I, \delta, AP, L)$ is a finite sequence $s_0 s_1 \dots s_n$ such that 
@@ -879,7 +855,7 @@
 			\item $s_i \in \{s\in S\;|\; (s_{i-1}, s) \in \delta\}$ for all $0 < i\leq n$, where $n \geq 0$, and 
 			\item $s_n$ is a terminal state.
 		\end{itemize} 
-		An \textit{infinite path} $\pi$ is an infinite sequence $s_0 s_1 s_2 \dots$ such that 
+		An \textit{infinite path} $\pi'$ is an infinite sequence $s_0 s_1 s_2 \dots$ such that 
 		\begin{itemize}
 			\item $s_0 \in I$ is an initial state,
 			\item $s_i \in \{s\in S\;|\; (s_{i-1}, s) \in \delta\}$ for all $i > 0$, and
@@ -888,34 +864,34 @@
 		$\mathsf{Paths}(T)$ denotes the set of all paths in $T$.
 	\end{definition}
 
-	For a path $\pi$, $\pi[i]$ denotes the $i$th state of $\pi$, while  $\pi[i..]$ denotes the $i$th suffix of $\pi$. Paths display the order of states that are traversed throughout a sequence of transitions. However, the related sets of atomic propositions of the traversed states, which are relevant for model checking, are not observable in the path itself. Therefore, we consider the notion of \textit{traces} which are sequences of sets of atomic propositions that are satisfied along a path $\pi$. We regard transition systems without terminal states. This condition is not a restriction, since for every transition system an equivalent one without terminal states can be constructed. This is achieved by adding a state $s_{stop}$ with a self-loop to the transition system to which all terminal states have an outgoing edge.
+	For a path $\pi$, $\pi[i]$ denotes the $i$th state of $\pi$, while  $\pi[i..]$ denotes the $i$th suffix of $\pi$. Paths display the order of states that are traversed throughout a sequence of transitions. However, the related sets of atomic propositions of the traversed states, which are relevant for model checking, are not observable in the path itself. Therefore, we consider the notion of \textit{traces} which are sequences of sets of atomic propositions that are satisfied along a path $\pi$. We regard transition systems without terminal states. This condition is not a restriction, since for every transition system an equivalent one without terminal states can be constructed by adding a state $s_{stop}$ with a self-loop to the transition system to which all terminal states have an outgoing edge.
 	
 	\begin{definition}[Trace \cite{baier2008principles}]{def:trace}
-		Let $T=(S, I, \delta, AP, L)$ be a transition system without terminal states. The \textit{trace} of a finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[\mathsf{trace}(\pi)=L(s_0)L(s_1)\dots L(s_n).\] The trace of an infinite path $\pi=s_0 s_1 \dots$ is defined as \[\mathsf{trace}(\pi)=L(s_0)L(s_1)\dots.\]
-		$\mathsf{Traces}(s)$ denotes the set of traces of paths starting in state $s$ and $\mathsf{Traces}(T)$ denotes the set of traces of the initial states of a transition system $T$.
+		Let $T=(S, I, \delta, AP, L)$ be a transition system without terminal states. The \textit{trace} of a finite path $\pi=s_0 s_1 \dots s_n$ is defined as \[\mathsf{trace}(\pi)=L(s_0)L(s_1)\dots L(s_n).\] Similarly, the trace of an infinite path $\pi'=s_0 s_1 \dots$ is defined as \[\mathsf{trace}(\pi')=L(s_0)L(s_1)\dots.\]
+		$\mathsf{Traces}(s)$ denotes the set of traces of paths starting in state $s$ and $\mathsf{Traces}(T)$ denotes the set of traces of the initial states of $T$.
 	\end{definition}
 	
-	Consider the sample transition system $T$ in Figure~\ref{fig:example_statespace}. A path $\pi$ in $T$ is the finite sequence $s_0s_1s_2$. The corresponding trace of $\pi$ is given by \[L(s_0)L(s_1)L(s_2) = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}.\] 
+	Consider the sample transition system $T$ in Figure~\ref{fig:example_statespace}. A path $\pi$ in $T$ is the finite sequence $s_0s_1s_2$. The corresponding trace of $\pi$ is given by \[\mathsf{trace}(\pi)=L(s_0)L(s_1)L(s_2) = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}.\] 
 	An infinite path $\pi'$ in $T$ is the sequence $s_0s_1s_2s_2\dots$ that infinitely loops around the state $s_2$. $\pi'$ implies the trace  
-	\[L(s_0)L(s_1)L(s_2)L(s_2)\dots = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\dots.\]
+	\[\mathsf{trace}(\pi')=L(s_0)L(s_1)L(s_2)L(s_2)\dots = \{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\{\texttt{idN}\}\dots.\]
 
 	\section{Recursive State Machines}\label{sec:rsm}
 	
-	Often computer programs do not only consist of a sequence of commands, but also contain (recursive) calls to methods. Execution of procedural programs contains call- and return-statements to different sections of the input program. In order to capture the hierarchical (or recursive) structure, we introduce the notion of \textit{recursive state machines}, as defined in \cite{alur2001analysis}, that encapsulate each method in its own \textit{component}. Each component consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component in the recursive state machine. A box can be understood as an interface with entry and exit nodes that models the transition into another method environment, e.g., entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. Thus, a component state machine is a transition system for a single procedure while a recursive state machine composes a transition system in which states can invoke procedures and hence enter different transition systems. We assume that the set $AP$ of atomic propositions is implicitly defined by the context of the program under consideration.
+	Often software programs contain method calls that induce call- and return-statements to different sections of the program. In order to capture the hierarchical structure of method invocation, we introduce \textit{recursive state machines} defined by Alur et al. in \cite{alur2001analysis}. Each method is encapsulated in its own \textit{component} which consists of a set of \textit{nodes} that are the states of the model and \textit{boxes} that are each mapped to a component. A box represents an interface with entry and exit nodes that models the transition into another method environment, i.e., entering a box resembles a method invocation while exiting a box represents the return from a method execution. Edges between states and boxes identify transitions. Thus, a component state machine is a transition system for a single procedure while a recursive state machine composes a global transition system in which states can invoke procedures and hence enter different transition systems. We assume that the set $AP$ of atomic propositions is implicitly defined by the context of the program under consideration.
 	
 	\begin{definition}[Recursive State Machine \cite{alur2001analysis}]{def:rsm}
-		A \textit{recursive state machine} (RSM) $\mathcal{A}$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} \[A_i = (S_i, En_i, Ex_i, \delta_i, L_i),\] $1 \leq i \leq k$, consists of
+		A \textit{recursive state machine} (RSM) $\mathcal{A}$ over a finite alphabet $\Sigma$ is given by a tuple $(A_1, ..., A_k)$, where each \textit{component state machine} is a tuple \[A_i = (S_i, En_i, Ex_i, \delta_i, L_i),\] $1 \leq i \leq k$, where
 		\begin{itemize}
-			\item a set $S_i=N_i \cup B_i$ of states composing of a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
-			\item a set of \textit{entry nodes} $En_i \subseteq N_i$,
-			\item a set of \textit{exit nodes} $Ex_i \subseteq N_i$, 
-			\item a \textit{transition relation} $\delta_i$, where transitions are of the form $(u, \sigma, v)$, where 
+			\item $S_i=N_i \cup B_i$ is a set of states composing of a set $N_i$ of \textit{nodes} and a (disjoint) set $B_i$ of \textit{boxes},
+			\item $En_i \subseteq N_i$ is a set of \textit{entry nodes},
+			\item $Ex_i \subseteq N_i$ is a set of \textit{exit nodes}, 
+			\item $\delta_i$ is a \textit{transition relation} with transitions of the form $(u, \sigma, v)$, where 
 			\begin{itemize}
 				\item the source $u$ is either a node of $N_i$ or a pair $(b, x)$, where $b$ is a box in $B_i$ and $x$ is an exit node in $Ex_j$ for $j = L_i(b)$,
 				\item the label $\sigma$ is in $\Sigma$, and 
 				\item the destination $v$ is either a node in $N_i$ or a pair $(b, e)$, where $b$ is a box in $B_i$ and $e$ is an entry node in $En_j$ for $j = L_i(b)$, and
 			\end{itemize}
-			\item a \textit{labeling} $L_i: B_i \mapsto \{1, ..., k\}$ that assigns to every box an index $j \in \{1, ..., k\}$ referring to one of the component state machines $A_1, ..., A_k$.
+			\item $L_i: B_i \mapsto \{1, ..., k\}$ is a \textit{labeling} that assigns to every box an index $j \in \{1, ..., k\}$ referring to one of the component state machines $A_1, ..., A_k$.
 		\end{itemize}
 	\end{definition}
 	
@@ -1236,9 +1212,7 @@
 		$T$ satisfies $\varphi$, denoted $T \models \varphi$, if $\mathsf{Traces}(T) \subseteq \mathsf{Words}(\varphi).$
 	\end{definition}
 
-	From Definition~\ref{def:ltl_paths_semantics}, it follows that \[T \models \varphi \quad\text{iff}\quad \forall s_0 \in I. s_0 \models \varphi.\]
-	
-	Based on the satisfaction relation of LTL formulae over paths and states, we specify the semantics of LTL for a transition system $T$.
+	From Definition~\ref{def:ltl_paths_semantics}, it follows that \[T \models \varphi \quad\text{iff}\quad \forall s_0 \in I. s_0 \models \varphi.\] Based on the satisfaction relation of LTL formulae over paths and states, we specify the semantics of LTL for a transition system $T$.
 
 	\begin{definition}[Semantics of LTL \cite{baier2008principles}]{def:ltl_semantics}
 		Given an LTL formula $\varphi$, a concrete transition system $T$, and a path $\pi \in \mathsf{Paths}(T)$, the model relation $\models$ for LTL formulae is defined by
@@ -1255,7 +1229,6 @@
 	\end{definition}
 
 	For the operators \textit{eventually}  ($\lozenge$), \textit{globally} ($\square$), and \textit{release} ($\textbf{\textup{R}}$), the semantics are defined similarly:
-	
 	\begin{align*}
 		\pi &\models \lozenge \varphi &&\Leftrightarrow \exists i \geq 1.\pi[i...] \models \varphi\\
 		\pi &\models \square \varphi &&\Leftrightarrow \forall i \geq 1. \pi[i...] \models \varphi\\
@@ -1276,10 +1249,15 @@
 		\begin{equation*}		
 		\varphi := \texttt{\textup{true}} \mid \texttt{\textup{false}} \mid a \mid \neg a \mid \varphi_1 \wedge \varphi_2 \mid \varphi_1 \vee \varphi_2 \mid \bigcirc \varphi \mid \varphi_1 \textbf{\textup{U}} \varphi_2 \mid \varphi_1 \textbf{\textup{R}} \varphi_2.
 		\end{equation*}
-	\end{definition}
+	\end{definition}	
+	
+	The following theorem states the existence of an equivalent formula in PNF for every LTL formula. 
+	
+	\begin{theorem}[Existence of Equivalent PNF Formulae \cite{baier2008principles}]{thm:pnf}
+		For each LTL formula there exists an equivalent LTL formula in PNF.
+	\end{theorem}
 	
 	The existence of an equivalent PNF formula for every LTL formula is due to the following equivalences that allow to push negations inside \cite{heinen2015verifyingPhd}:
-	
 	\begin{align*}
 		\neg \neg \varphi &= \varphi\\
 		\neg \texttt{false} &= \texttt{true}\\
@@ -1289,6 +1267,7 @@
 	\end{align*}
 	
 	As an example, consider the LTL formula \[\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\}\] where \texttt{terminated} and \texttt{SLList} are atomic propositions as described above. An equivalent formula in PNF is achieved by the following equivalences:
+	
 	\begin{align*}
 		&\square \lozenge \{\texttt{terminated}\} \rightarrow \square \lozenge \{\texttt{SLList}\} \\
 		\equiv \quad &\neg(\square \lozenge \{\texttt{terminated}\}) \vee (\square \lozenge \{\texttt{SLList}\}) \qquad &(\text{definition of } \rightarrow) \\
@@ -1297,69 +1276,54 @@
 		\equiv \quad &\neg(\neg(\text{\texttt{true}}  \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\})))\\ &\vee (\neg(\text{\texttt{true}} \text{\textbf{ U }} \neg (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\}))) \qquad &(\text{definition of } \lozenge) \\
 		\equiv \quad &\neg(\neg\text{\texttt{true}}  \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{terminated}\}))\\ &\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})) \qquad &(\text{duality of } \text{\textbf{U}} \text{ and } \text{\textbf{R}}) \\
 		\equiv \quad &\text{\texttt{true}}  \text{\textbf{ U }} (\neg\text{\texttt{true}} \text{\textbf{ R }} \neg\{\texttt{terminated}\}) \\&\vee (\neg\text{\texttt{true}} \text{\textbf{ R }} (\text{\texttt{true}} \text{\textbf{ U }} \{\texttt{SLList}\})). \qquad &(\text{duality of } \text{\textbf{U}} \text{  and } \text{\textbf{R}}) \\
-	\end{align*}
-	
-	The following theorem states the existence of an equivalent formula in PNF for every LTL formula.
-	
-	\begin{theorem}[Existence of Equivalent PNF Formulae \cite{baier2008principles}]{thm:pnf}
-		For each LTL formula there exists an equivalent LTL formula in PNF.
-	\end{theorem}	
+	\end{align*}	
 	
 	\chapter{Hierarchical Model Checking}\label{chp:tableaux}
 	
-	One of the main challenges in model checking programs with method calls is that we do not only need to consider the state space of the main method, but also the state spaces induced by method executions, denoted as \textit{procedure state spaces}. Here, we face three main difficulties:
-	\begin{itemize}
-		\item How can we finitely represent the state space of a program with recursive method calls avoiding repetitions in the state space?
-		\item How can we efficiently model check procedure state spaces, at best avoiding checking a procedure state space multiple times? 
-		\item How do we deal with unbounded recursion depth?
-	\end{itemize}
-	
-	The underlying state space of procedural programs is a hierarchical one where each procedure contributes an own state space that is connected to nodes of other state spaces reflecting method invocation. In a flat setting, where hierarchy is not actively considered, this corresponds to an edge connecting the calling state with the "entry" state of the procedure state space. For the flat setting, we introduce the tableaux construction to model checking LTL properties for pointer-manipulating programs with method calls by Grumberg et al. \cite{bhat1995efficient}. Based on this algorithm, we introduce our modified approaches to hierarchical model checking in Chapters~\ref{chp:otf} and~\ref{chp:hmc}.
+	A challenge in model checking programs with method calls is that the underlying state space of procedural programs is a hierarchical one, where each procedure contributes an own state space, denoted as a \textit{procedure state space}. In contrast to top level model checking, several state spaces need to be generated and model checked. Therefore, it is desirable to verify procedure state spaces in a hierarchical setting as efficient as possible such that repetitive computations are avoided. One solution to hierarchical model checking is to flatten the hierarchical state space by removing the hierarchy. This corresponds to an edge connecting the calling state of a procedure with the "entry" state of the procedure state space. For the flat setting, we introduce the tableaux construction for model checking LTL properties by Grumberg et al. \cite{bhat1995efficient}. Since flattening a hierarchical state space is not very efficient and might result in unboundedly large state spaces, we introduce modified approaches of the tableaux construction to hierarchical model checking in Chapters~\ref{chp:otf} and~\ref{chp:hmc}. Both algorithms avoid checking a procedure state space multiple times for the same set of LTL formulae by implementing \textit{model checking contracts} that store previously computed results. We present this concept in the second part of this chapter.
 	
 	\section{Tableaux Construction}\label{sec:tableaux}
 	
-	This section presents the on-the-fly approach by Grumberg et al. \cite{bhat1995efficient} that constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to show whether an LTL formula $\varphi$ in PNF is satisfied by a transition system $T$. We assume all LTL formulae to be in PNF which is not a restriction due to Theorem~\ref{thm:pnf}. \\
-	
-	A proof structure is a directed graph $(V,E)$, where the set of vertices $V$ are composed of \textit{assertions} and the set $E$ of edges contains the edge $(\lambda_1, \lambda_2)$ between two assertions $\lambda_1$ and $\lambda_2$ if the underlying tableaux contains the inference rule $\frac{\lambda_1}{\lambda_2}$.
-	
+	The on-the-fly model checking approach by Grumberg et al. \cite{bhat1995efficient} constructs a \textit{proof structure} based on a set of \textit{tableaux rules} in order to verify whether a transition system $T$ satisfies an LTL formula $\varphi$ in PNF. The condition that LTL formulae are in PNF is not a restriction due to Theorem~\ref{thm:pnf}. A proof structure is a directed graph $(V,E)$, where the set of vertices $V$ are composed of \textit{assertions} and the set $E$ of edges contains the edge $(\lambda_1, \lambda_2)$ between two assertions $\lambda_1$ and $\lambda_2$ if the underlying tableaux contains the inference rule $\frac{\lambda_1}{\lambda_2}$.
+	\newpage
 	\begin{definition}[Proof Structure \cite{bhat1995efficient}]{def:ps}
 		A \textit{proof structure} for $\lambda \in \Lambda$ is a tuple $(V,E)$ with $V \subseteq (\Lambda \; \cup \ \texttt{true})$ and $E \subseteq V \times V$, such that for any $\lambda'$ it holds that $\lambda'$ is reachable from $\lambda$ and that the successors of $\lambda'$ are the ones that result from applying some of the rules, i.e. \[(\lambda_1, \lambda_2) \in E \quad \text{iff} \quad \frac{\lambda_1}{\lambda_2 \quad s \dots}.\]
 	\end{definition}
-	
-	\begin{figure}
-		\begin{align*}
-			&(R^{\models}) \quad \frac{s \vdash \Phi \cup \{a\}}{\texttt{true}} \; \text{ if } s \models a \\[1.5ex]
-			&(R^{\nvDash}) \quad \frac{s \vdash \Phi \cup \{a\}}{s \vdash \Phi} \; \text{ if } s \nvDash a \\[1.5ex]
-			&(R^{\vee}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \vee \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \cup \{\varphi_2\}}\\[1ex]
-			&(R^{\wedge}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \wedge \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2\}}\\[1.5ex]
-			&(R^{\text{\textbf{U}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{U}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2, \varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2, \bigcirc(\varphi_1 \text{\textbf{U}} \varphi_2)\}}\\[1.5ex]
-			&(R^{\text{\textbf{R}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{R}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2\} \qquad s \vdash \Phi\cup \{\varphi_1, \bigcirc(\varphi_1 \text{\textbf{R}} \varphi_2)\}}\\[1.5ex]
-			&(R^{\bigcirc}) \quad \frac{s \vdash \{\bigcirc \varphi_1, \dots, \bigcirc \varphi_n\}}{s_1 \vdash \{\varphi_1, \dots, \varphi_n\} \qquad \dots \qquad s_m \vdash \{\varphi_1, \dots, \varphi_n\}}\\
-			\end{align*}
-		\caption{Tableaux rules for LTL model checking.}\label{fig:tableaux_rules}
-	\end{figure}
 
-	The underlying tableaux rules for the proof structure are specified in Figure~\ref{fig:tableaux_rules}. They model the semantics of LTL. The rules for the operators \textbf{U} and \textbf{R} follow from the expansion law for LTL formulae \cite{baier2008principles}. Accordingly,
+	The underlying tableaux rules for checking LTL formulae are specified in Figure~\ref{fig:tableaux_rules}. They model the semantics of LTL. The rules for the operators \textbf{U} and \textbf{R} follow from the expansion law for LTL formulae \cite{baier2008principles}. Accordingly,
 	\[\varphi_1 \text{\textbf{U}} \varphi_2 \equiv \varphi_2 \vee (\varphi_1 \wedge \bigcirc (\varphi_1 \text{\textbf{U}} \varphi_2))\] and
 	\[\varphi_1 \text{\textbf{R}} \varphi_2 \equiv \varphi_2 \wedge (\varphi_1 \vee \bigcirc (\varphi_1 \text{\textbf{R}} \varphi_2)).\]	
 	
-	A vertex in the set $V$ of a proof structure $(V,E)$ is an assertion of the form $s \vdash \Phi$, where $s$ is a state in $T$ and $\Phi$ is a set of LTL formulae. An assertion $s \vdash \Phi$ holds if at least one formula $\varphi \in \Phi$ is satisfied by the state $s$. Thus, an assertion can be interpreted as a verification goal that aims at proving that $s\models \bigvee_{\varphi \in \Phi}\varphi$. In order to do so, the assertion is broken down into subgoals according to the tableaux rules. By proving a sequence of subgoals the validity of the assertion $\lambda$ can be concluded from the validity of the subgoals. Hence, the proof structure of an assertion $\lambda$ contains all subgoals of $\lambda$. \\
+	A vertex in the set $V$ of a proof structure $(V,E)$ is an assertion of the form $s \vdash \Phi$, where $s$ is a state in $T$ and $\Phi$ is a set of LTL formulae. An assertion $s \vdash \Phi$ holds if at least one formula $\varphi \in \Phi$ is satisfied by the state $s$. Thus, an assertion is a verification goal that aims at proving that $s\models \bigvee_{\varphi \in \Phi}\varphi$. Therefore, an assertion is split into subgoals according to the tableaux rules. By proving a sequence of subgoals the validity of the initial assertion $\lambda$ can be concluded from the validity of the subgoals. Hence, the proof structure of an assertion $\lambda$ contains all subgoals of $\lambda$. \\
 	
-	The rules $(R^{\text{\textbf{U}}})$ and $(R^{\text{\textbf{R}}})$ can introduce cycles into a proof structure if $\varphi_1$ is fulfilled for every state in the underlying transition system for formulae of the form $\varphi_1 \text{\textbf{U}} \varphi_2$ or $\varphi_1 \text{\textbf{R}} \varphi_2$, while no state fulfills $\varphi_2$. Therefore, a cycle in a proof structure represents an \textit{infinite path} in the underlying state space. In an infinite path, $\varphi_1 \text{\textbf{U}} \varphi_2$ can never be fulfilled whereas $\varphi_1 \text{\textbf{R}} \varphi_2$ is fulfilled according to the definition of \textbf{R}. Consequently, a cycle in the proof structure originating from successively applying rule $(R^{\text{\textbf{U}}})$ evaluates to a violated assertion, while a cycle arising from applying rule $(R^{\text{\textbf{R}}})$ fulfills the subgoal. The other rules specified in the tableaux cannot introduce infinite paths as their application reduces the size of the formulae. \\
+	The rules $(R^{\text{\textbf{U}}})$ and $(R^{\text{\textbf{R}}})$ can introduce cycles into a proof structure if $\varphi_1$ is fulfilled for every state in the underlying transition system for formulae of the form $\varphi_1 \text{\textbf{U}} \varphi_2$ or $\varphi_1 \text{\textbf{R}} \varphi_2$, while no state fulfills $\varphi_2$. Therefore, a cycle in a proof structure represents an \textit{infinite path} in the underlying state space. In an infinite path, $\varphi_1 \text{\textbf{U}} \varphi_2$ can never be fulfilled, whereas $\varphi_1 \text{\textbf{R}} \varphi_2$ is fulfilled according to the definition of \textbf{R}. Consequently, a cycle in the proof structure originating from successively applying rule $(R^{\text{\textbf{U}}})$ evaluates to a violated assertion, while a cycle arising from applying rule $(R^{\text{\textbf{R}}})$ fulfills the subgoal. The other tableaux rules cannot introduce infinite paths as their application reduces the size of the formulae. \\
 	
-	In the following, we describe when a proof structure $(V,E)$ for an assertion $\lambda$ can be concluded to be \textit{successful} \cite{bhat1995efficient}:
+	For a proof structure $(V,E)$ for an assertion $\lambda$, we define the following relations according to \cite{bhat1995efficient}:
 	
 	\begin{itemize}
-		\item If $s \vdash \emptyset \in V$, then $(V,E)$ is unsuccessful as an empty assertion can never be fulfilled.
+		\item If $s \vdash \emptyset \in V$, then $(V,E)$ is \textit{unsuccessful} as an empty assertion can never be fulfilled.
 		\item $\lambda \in V$ is a leaf of the proof structure if there is no $\lambda' \in V$ with $(\lambda, \lambda') \in E$. A leaf $\lambda$ is called successful if $\lambda = \texttt{true}$.
 		\item An infinite path $\lambda_1 \lambda_2 \dots$ in $(V,E)$ is called successful if and only if there exists a position $i\in \mathds{N}$ with $\varphi_1 \text{\textbf{R}} \varphi_2 \in \lambda_i$ and for all $j \geq i$ it holds that $\varphi \notin \lambda_j$.
 		\item The proof structure $(V,E)$ is called successful if every leaf as well as every of its infinite paths is successful.
 	\end{itemize} 
+
+	\begin{figure}
+		\begin{align*}
+		&(R^{\models}) \quad \frac{s \vdash \Phi \cup \{a\}}{\texttt{true}} \; \text{ if } s \models a \\[1.5ex]
+		&(R^{\nvDash}) \quad \frac{s \vdash \Phi \cup \{a\}}{s \vdash \Phi} \; \text{ if } s \nvDash a \\[1.5ex]
+		&(R^{\vee}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \vee \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \cup \{\varphi_2\}}\\[1ex]
+		&(R^{\wedge}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \wedge \varphi_2\}}{s \vdash \Phi \cup \{\varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2\}}\\[1.5ex]
+		&(R^{\text{\textbf{U}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{U}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2, \varphi_1\} \qquad s \vdash \Phi\cup \{\varphi_2, \bigcirc(\varphi_1 \text{\textbf{U}} \varphi_2)\}}\\[1.5ex]
+		&(R^{\text{\textbf{R}}}) \quad \frac{s \vdash \Phi \cup \{\varphi_1 \text{\textbf{R}} \varphi_2\}}{s \vdash \Phi \cup \{\varphi_2\} \qquad s \vdash \Phi\cup \{\varphi_1, \bigcirc(\varphi_1 \text{\textbf{R}} \varphi_2)\}}\\[1.5ex]
+		&(R^{\bigcirc}) \quad \frac{s \vdash \{\bigcirc \varphi_1, \dots, \bigcirc \varphi_n\}}{s_1 \vdash \{\varphi_1, \dots, \varphi_n\} \qquad \dots \qquad s_m \vdash \{\varphi_1, \dots, \varphi_n\}}\\
+		\end{align*}
+		\caption{Tableaux rules for LTL model checking.}\label{fig:tableaux_rules}
+	\end{figure}
 	
 	Theorem \ref{thm:tableaux_correct} states that the tableaux construction is indeed a suitable procedure to model check a transition system $T$ for an LTL formula $\varphi$ as the success of the proof structure $s \vdash \{\varphi\}$ for a state $s$ in $T$ coincides with the validity of $T \models \varphi$.
 	
 	\begin{theorem}[Correctness of the Tableaux Construction \cite{bhat1995efficient}]{thm:tableaux_correct}
-		Given a concrete transition system $T=(S, I, \delta, AP, L)$ with $s\in S$ and an LTL formula $\varphi$. Let $(V,E)$ be the proof structure for $s \vdash \{\varphi\}$. Then it holds that $s \models \varphi$ if and only if $(V,E)$ is successful.
+		For a concrete transition system $T=(S, I, \delta, AP, L)$ with $s\in S$ and an LTL formula $\varphi$, let $(V,E)$ be the proof structure for $s \vdash \{\varphi\}$. Then it holds that $s \models \varphi$ if and only if $(V,E)$ is successful.
 	\end{theorem}
 	
 	In order to illustrate the tableaux construction algorithm, consider the method \texttt{reverse} for reversing a singly-linked list given in Listing~\ref{lst:sll_reverse}.\\
@@ -1381,7 +1345,7 @@
 	}
 	\end{lstlisting}
 	
-	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we employ tableaux construction to check whether the formula $\varphi=\square \lozenge \{\texttt{SLList}\}$ is satisfied. $\varphi$ states that the heap will always be a singly-linked list. An equivalent formula to $\varphi$ in PNF is \[(\neg \texttt{true}\;\textbf{R}\;(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})).\] The proof structure is depicted in Figure~\ref{fig:tableaux_ps}. It starts with the initial formula $\varphi$ in PNF and the initial state $s_0$ of the state space, i.e., $\lambda_0 = (s_0 \vdash \{\varphi\})$ is the first assertion of the proof structure. Applying the rule $(R^{\textbf{R}})$ to $\lambda_0$, we split $\lambda_0$ into two assertions that are connected to the root assertion via directed edges. Thereupon, the rules $(R^{\textbf{U}})$ and $(R^{\nvDash})$ are applied to the resulting assertions $s_0 \vdash \{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\}$ and  $s_0 \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$, respectively. While the first branch terminates in a leaf with the Boolean value \texttt{true}, the second branch expands the proof structure for successor states of $s_0$, i.e., $s_1$, by applying the rule $(R^{\bigcirc})$. Thus, $\varphi$ is validated for state $s_1$. For the sake of readability, the rule applications for states $s_2, \dots, s_9$ are omitted as they are analogous to the rule application for state $s_0$. All paths ending in the leaf \texttt{true} are successful. For state $s_{10}$, the proof structure induces two infinite paths: the infinite path $\pi_0$ looping around the sets of LTL formulae $\{\varphi\}, \{\neg\texttt{true},\bigcirc\varphi\}$, and $\{\bigcirc\varphi\}$, and the infinite path $\pi_2$ looping around the sets $\{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\},\{\texttt{SLList}, \bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$, and $\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})$. The loop in $\pi_2$ is marked red. As the sets of formulae in the loop on path $\pi_1$ contain an \textbf{R}-operator, $\pi_1$ is considered as successful. Opposed to this, the sets of formulae in the loop on path $\pi_2$ do not contain an \textbf{R}-operator, but originate from applying the rule $(R^{\textbf{U}})$. Thus, $\pi_2$ is not successful. Therefore, the proof structure for $\lambda_0$ is unsuccessful concluding that the state space, i.e., the method \texttt{reverse}, does not satisfy the LTL formula $\neg\texttt{true}\;\textbf{R}\;(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})$.\\
+	Figure~\ref{fig:reverseSLL_tableaux} shows the state space of reversing a singly-linked list with two elements according to the method \texttt{reverse}. For this state space, we employ tableaux construction to check whether the formula $\varphi=\square \lozenge \{\texttt{SLList}\}$ is satisfied. $\varphi$ states that the heap will always be a singly-linked list. An equivalent formula to $\varphi$ in PNF is \[(\neg \texttt{true}\;\textbf{R}\;(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})).\] The proof structure is depicted in Figure~\ref{fig:tableaux_ps}. It starts with the initial formula $\varphi$ in PNF and the initial state $s_0$ of the state space, i.e., $\lambda_0 = (s_0 \vdash \{\varphi\})$ is the first assertion of the proof structure. Applying the rule $(R^{\textbf{R}})$ to $\lambda_0$, we split $\lambda_0$ into two assertions that are connected to the root assertion via directed edges. Thereupon, the rules $(R^{\textbf{U}})$ and $(R^{\nvDash})$ are applied to the resulting assertions $s_0 \vdash \{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\}$ and  $s_0 \vdash \{\neg\texttt{true}, \bigcirc\varphi\}$, respectively. While the first branch terminates in a leaf with the Boolean value \texttt{true}, the second branch expands the proof structure for successor states of $s_0$, i.e., $s_1$, by applying the rule $(R^{\bigcirc})$. Thus, $\varphi$ is validated for state $s_1$. For the sake of readability, the rule applications for states $s_2, \dots, s_9$ are omitted as they are analogous to the rule application for state $s_0$. All paths ending in the leaf \texttt{true} are successful. For state $s_{10}$, the proof structure induces two infinite paths: the infinite path $\pi_1$ looping around the sets of LTL formulae $\{\varphi\}, \{\neg\texttt{true},\bigcirc\varphi\}$, and $\{\bigcirc\varphi\}$, and the infinite path $\pi_2$ looping around the sets $\{\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\}\},\{\texttt{SLList}, \bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})\}$, and $\bigcirc(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})$. The loop in $\pi_2$ is marked red. As the sets of formulae in the loop on path $\pi_1$ contain an \textbf{R}-operator, $\pi_1$ is considered as successful. Opposed to this, the sets of formulae in the loop on path $\pi_2$ do not contain an \textbf{R}-operator, but originate from applying the rule $(R^{\textbf{U}})$. Thus, $\pi_2$ is not successful. Therefore, the proof structure for $\lambda_0$ is unsuccessful concluding that the state space, i.e., the method \texttt{reverse}, does not satisfy the LTL formula $\neg\texttt{true}\;\textbf{R}\;(\texttt{true}\;\textbf{U}\;\{\texttt{SLList}\})$.\\
 	
 	\begin{figure}
 		\begin{center}
@@ -1674,7 +1638,7 @@
 	
 	The tableaux construction can be combined with an on-the-fly state space generation such that not all states need to be computed if not required during the run of the tableaux construction. Consider the LTL formula $\bigcirc\{\texttt{SLList}\}$ which describes that the heap of the next states of the system under consideration is a singly-linked list. In order to check this formula only the successors of the current state are required. For the state space given in Figure~\ref{fig:reverseSLL_tableaux}, starting in state $s_0$, the only successor state is $s_1$. Thus, checking the heap of $s_1$ is sufficient to decide whether $\bigcirc\{\texttt{SLList}\}$ is satisfied. An on-the-fly approach thus circumvents the generation of the complete state space.\\	
 	
-	Considering our example introduced in Chapter~\ref{chp:intro} in Listing~\ref{lst:modify}, we construct the proof structure for the method \texttt{traverse} based on the state space given in Figure~\ref{fig:example_statespace} for the property $\square \{\texttt{identicNeighbours}\}$ according to \textsc{Attestor}'s top level model checking algorithm. Figure~\ref{fig:tableaux_traverse} shows the resulting proof structure, which is indeed successful as no violating path has been encountered. However, including the state space of the method \texttt{noop} from Figure~\ref{fig:example_statespace_noop} into the proof structure construction a violating point is identified. Figure~\ref{fig:tableaux_noop} shows the according proof structure. The violated assertion is marked as red. Therefore, top level model checking is not sufficient in order to detect property violations within procedure state spaces. We introduce two algorithms that aim at model checking procedure state spaces efficiently.\\
+	Considering our example introduced in Chapter~\ref{chp:intro} in Listing~\ref{lst:modify}, we construct the proof structure for the method \texttt{traverse} based on the state space given in Figure~\ref{fig:example_statespace} for the property $\square \{\texttt{identicNeighbours}\}$ according to \textsc{Attestor}'s top level model checking algorithm. Figure~\ref{fig:tableaux_traverse} shows the resulting proof structure, which is indeed successful as no violating path has been encountered. However, including the state space of the method \texttt{noop} from Figure~\ref{fig:example_statespace_noop} into the proof structure construction identifies a violating point. Figure~\ref{fig:tableaux_noop} shows the according proof structure, where the violated assertion is marked as red. Therefore, top level model checking is not sufficient in order to detect property violations within procedure state spaces. We introduce two algorithms that aim at model checking procedure state spaces efficiently.\\
 	
 	\begin{figure}
 		\begin{center}
@@ -1852,11 +1816,9 @@
 
 	\section{Model Checking Contracts}
 	
-	The tableaux construction by Grumberg et al. \cite{bhat1995efficient} is an efficient approach at verifying LTL formulae for software programs. A solution to model checking hierarchical systems is to flatten the underlying state space such that the hierarchy is removed from the model. Then, the state space can be verified by performing tableaux construction on the flattened system. However, this solution yields a number of problems. These include repetitive verification of states in case procedures are called multiple times. Also the size of the state space resulting from flattening a hierarchical model can become unboundedly large due to possibly unbounded recursion depth. Therefore, we propose the concept of \textit{model checking contracts}  that allow for model checking hierarchical systems without flattening the underlying state space. Model checking contracts can be included in hierarchical model checking algorithms in order to avoid re-computation of previously encountered verification tasks for a state space.\\
+	The tableaux construction by Grumberg et al. \cite{bhat1995efficient} is an efficient approach at verifying LTL formulae for software programs. A solution to model checking hierarchical systems is to flatten the underlying state space such that the hierarchy is removed from the model. Then, the state space can be verified by performing tableaux construction on the flattened system. However, this solution yields a number of problems. These include repetitive verification of states in case procedures are called multiple times. Also the size of the state space resulting from flattening a hierarchical model can become unboundedly large due to possibly unbounded recursion depth. Therefore, we propose the concept of \textit{model checking contracts}  that allow for model checking hierarchical systems without flattening the underlying state space. Model checking contracts avoid re-computation of previously encountered verification tasks for a state space.\\
 		
-	As the hierarchical structure of the system under consideration is kept, it follows that a hierarchy of model checking procedures is constructed where each level represents the verification of a procedure state space. Once state space generation and model checking is completed for a method execution, the successor states and model checking results are returned to the above lying level. Figure~\ref{fig:otf_hierarchy} visualizes the flow of model checking information throughout a hierarchy of method calls $m_i(), 1 \leq i \leq 3$. Every executed method $i$ contributes a state space that is checked during generation. The state labels $\Phi^{(k)}$ denote the set of LTL formulae to be validated.\\	
-
-	Important for model checking procedure state spaces is the labeling of the contained states with atomic propositions. An atomic proposition $a \in AP$ is added to a state $s$ if $s \models a$. In \textsc{Attestor}, only the states of the top-level state space are labeled, as procedure state spaces were not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap of $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap. Therefore, the property, that the heap is a singly-linked list, is violated. Thus, the state will not be labeled with the corresponding atomic proposition, resulting in a negative outcome of the model checking procedure despite the fact that the heap is still a singly-linked list outside of the current scope. In order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in a scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied to the state in reversed order, such that the original heap is restored. Based on the resulting state, the corresponding atomic propositions are determined.\\
+	As the hierarchical structure of the system under consideration is kept, it follows that a hierarchy of model checking procedures is constructed where each level represents the verification of a procedure state space. Once model checking is completed for a method execution, model checking results are returned to the above lying level. Figure~\ref{fig:otf_hierarchy} visualizes the flow of model checking information throughout a hierarchy of method calls $m_i(), 1 \leq i \leq 3$. Every executed method $i$ contributes a state space that is checked. The labels $\Phi^{(k)}, k \in \mathds{N}$, denote a set of checked LTL formulae for the respective state.\\	
 	
 	\begin{figure}
 		\begin{center}
@@ -1927,15 +1889,17 @@
 				\draw [->,shorten >=0.5pt] (g11) -- (g2);
 				
 				\end{tikzpicture}}
-			\caption{Conceptual flow of model checking information in a state space with method invocations.}\label{fig:otf_hierarchy}
+			\caption{Conceptual flow of model checking information in a state space with hierarchical method invocations.}\label{fig:otf_hierarchy}
 		\end{center}
 	\end{figure}	
 
-	In order to avoid repetitive verification of procedure state spaces for a same set of LTL formulae, model checking contracts store verification results for procedure state spaces with respect to a verified set of LTL formulae. Hence, model checking results that have been computed beforehand can be reused if the same verification task is encountered at a later stage. Model checking results include information on whether a formula is satisfied as well as the updated set of formulae for which the successor states need to be checked for. The model checking results are stored in contracts of the form
+	In order to avoid repetitive verification of procedure state spaces for a same set of LTL formulae, model checking contracts store verification results for procedure state spaces with respect to a verified set of LTL formulae. Hence, results that have been computed beforehand are reused if the same verification task is encountered at a later stage. Model checking results contain information on whether a formula is satisfied as well as the updated set of formulae for which successor states are checked. They are stored in contracts of the form
 	
 	\[(HC_{in}, \Phi) \mapsto (\Phi', \delta_{0/1}, \pi),\]
 	
-	where $HC_{in}$ denotes the input heap for which the set $\Phi$ of formulae is to be validated. The tuple $(HC_{in}, \Phi)$ is mapped to a tuple of model checking results containing the resulting set $\Phi'$ of formulae to be checked for possible successor states, a Boolean value $\delta_{0/1}$ that indicates whether model checking was successful, and a failure trace $\pi$ in case any formulae is found to be violated. Model checking contracts are stored in the context of \textit{procedure contracts} which unambiguously define the executed method. Procedure contracts capture the overall effect of a procedure by defining pairs of pre- and post-conditions. Pre- and post-conditions specify the heap prior to and after execution of a procedure, respectively. Details on procedure contracts are described in \cite{jansen2014generating}. Thus, model checking contracts can be used to avoid repetitive model checking of a procedure state space for a set of input formulae.
+	where $HC_{in}$ denotes the input heap for which the set $\Phi$ of formulae is validated. The tuple $(HC_{in}, \Phi)$ is mapped to a tuple $(\Phi', \delta_{0/1}, \pi)$ of model checking results containing the resulting set $\Phi'$ of formulae checked for possible successor states, a Boolean value $\delta_{0/1}$ that indicates whether model checking was successful, and a failure trace $\pi$ in case a formula is violated. Model checking contracts are stored within \textit{procedure contracts} which unambiguously define the executed procedure. Procedure contracts capture the overall effect of a procedure by defining pairs of pre- and post-conditions that specify the heap prior to and after execution of a procedure, respectively. Details on procedure contracts are described in \cite{jansen2014generating}. Thus, model checking contracts avoid repetitive model checking of a procedure state space.\\
+	
+	Another important point in model checking procedure state spaces is the labeling of the contained states with atomic propositions. An atomic proposition $a \in AP$ is added to a state $s$ if $s \models a$. In \textsc{Attestor}, only the states of the top-level state space are labeled, as procedure state spaces are not considered in the tableaux construction. However, in order to model check procedure state spaces, the corresponding states need to be labeled as well. When a method is invoked at a state $s$, the heap of $s$ is adapted to the scope of the invoked method such that local variables are excluded. Thus, we obtain a \textit{scoped heap}. This might produce faulty results when labeling states within procedure state spaces, as parts of the heap are disguised. For example, consider the property of the heap being a singly-linked list. Assume a heap, where this is in fact true. Now, if we enter a method \texttt{foo()} that does nothing, the heap will be scoped to an empty heap. Therefore, the property, that the heap is a singly-linked list, is violated and the state will not be labeled with the corresponding atomic proposition. Consequently, model checking returns that the property is violated despite the fact that the heap is still a singly-linked list outside of the current scope. In order to account for procedure state labeling, we introduce the notion of a \textit{scope hierarchy} which tracks which parts of the heap have been excluded for state space generation. As there might be a hierarchy of method calls, the heap under consideration might have been scoped multiple times. Thus, the collection of scopes is summarized in a scope hierarchy. Now, before computing the labels for a state under consideration, the scope hierarchy is applied to the state in reversed order, such that the original heap is restored. Based on the resulting state, the corresponding atomic propositions are determined.
 	
 	\chapter{On-The-Fly Hierarchical Model Checking}\label{chp:otf}
 	
