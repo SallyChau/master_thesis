@@ -1,9 +1,0 @@
-# Benchmark: M
---description "Memory safety"
---classpath "examples/adummy/configuration/code"
---class "DLList"
---method "buildList"
---predefined-grammar "DLList"
---rename DLListNode=DLList next=nextAlt prev=prevAlt
---admissible-abstraction
---model-checking "GF { L(RefDLList) }"
