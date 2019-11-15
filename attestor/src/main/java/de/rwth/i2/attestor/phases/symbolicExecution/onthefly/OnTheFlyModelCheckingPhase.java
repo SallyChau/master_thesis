@@ -28,10 +28,12 @@ import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalContra
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.InternalPreconditionMatchingStrategy;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.OnTheFlyStateSpaceGeneratorFactory;
 import de.rwth.i2.attestor.phases.symbolicExecution.procedureImpl.scopes.DefaultScopeExtractor;
+import de.rwth.i2.attestor.phases.symbolicExecution.recursive.interproceduralAnalysis.ProcedureCall;
 import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
 import de.rwth.i2.attestor.phases.transformers.InputTransformer;
 import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
-import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
+import de.rwth.i2.attestor.phases.transformers.OnTheFlyModelCheckingResultsTransformer;
+import de.rwth.i2.attestor.phases.transformers.OnTheFlyStateSpaceTransformer;
 import de.rwth.i2.attestor.procedures.ContractCollection;
 import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.procedures.MethodExecutor;
@@ -41,7 +43,7 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpaceGenerationAbortedException;
 
-public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCheckingResultsTransformer {
+public class OnTheFlyModelCheckingPhase extends AbstractPhase implements OnTheFlyStateSpaceTransformer, OnTheFlyModelCheckingResultsTransformer {
 	
 	private final OnTheFlyStateSpaceGeneratorFactory stateSpaceGeneratorFactory;	
 
@@ -289,7 +291,8 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
 	@Override
 	public boolean isVerificationPhase() {
 
-		return true;
+		// do not count phase into verification phase
+		return false;
 	}
 	
 	@Override
@@ -317,4 +320,36 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements ModelCh
     public int getNumberSatFormulae() {
         return numberSatFormulae;
     }
+
+
+
+	@Override
+	public StateSpace getStateSpace() {
+		
+		return mainStateSpace;
+	}
+
+
+
+	@Override
+	public Map<StateSpace, ProcedureCall> getProcedureStateSpaces() {
+
+		return null;
+	}
+
+
+
+	@Override
+	public List<ProcedureCall> getMainProcedureCalls() {
+		
+		return null;
+	}
+
+
+
+	@Override
+	public Map<ProgramState, ProcedureCall> getCallingStatesToCall() {
+
+		return null;
+	}
 }

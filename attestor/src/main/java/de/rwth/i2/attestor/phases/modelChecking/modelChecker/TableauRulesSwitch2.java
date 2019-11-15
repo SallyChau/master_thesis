@@ -48,7 +48,9 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
  *	    			| "{" "terminated" "}"
  *	    			| "{" <variable> " == " <variable> "}"
  *	    			| "{" <variable> " != " <variable> "}"
- * @author chau
+ * The implementation is similar to {@link TableauRulesSwitch} but employs {@link Assertion2} for modeling assertions.
+ * 
+ * @author sally
  *
  */
 public class TableauRulesSwitch2 extends AnalysisAdapter {

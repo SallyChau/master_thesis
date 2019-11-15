@@ -8,6 +8,17 @@ import de.rwth.i2.attestor.graph.heap.HeapConfiguration;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalProofStructure;
 
+/**
+ * Model checking contracts store verification results for procedure
+ * state spaces with respect to a set of LTL formulae. Hence, results that have
+ * been computed beforehand are reused if the same verification task is encountered.
+ * Model checking results contain information on whether a formula is satisfied as well
+ * as the updated set of formulae for which successor states are checked. They map
+ * sets of checked formulae to input heaps.
+ * 
+ * @author sally
+ *
+ */
 public class ModelCheckingContract {
 	
 	// Input parameter

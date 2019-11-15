@@ -15,7 +15,7 @@ import de.rwth.i2.attestor.refinement.AutomatonStateLabelingStrategy;
 
 /**
  * 
- * @author chau
+ * @author sally
  *
  */
 public class OnTheFlyStateSpaceGeneratorBuilder {

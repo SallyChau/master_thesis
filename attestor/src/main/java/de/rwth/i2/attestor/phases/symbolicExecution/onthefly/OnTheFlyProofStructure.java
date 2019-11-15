@@ -42,6 +42,7 @@ public class OnTheFlyProofStructure extends AbstractProofStructure {
 			if (!currentAssertion.getFormulae().isEmpty()) {
 				
 				Node currentFormula = currentAssertion.getFirstFormula();
+				logger.debug("Checking formula " + currentFormula);
 				
 				HashSet<Assertion2> successorAssertions = expand(currentAssertion, currentFormula);
 				

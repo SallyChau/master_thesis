@@ -11,7 +11,7 @@ import de.rwth.i2.attestor.procedures.ScopedHeap;
  * Wraps scopedHeaps and according externalReorderings for AP computation of states for
  * procedure state spaces.
  * 
- * @author chau
+ * @author sally
  *
  */
 public class ScopedHeapHierarchy {

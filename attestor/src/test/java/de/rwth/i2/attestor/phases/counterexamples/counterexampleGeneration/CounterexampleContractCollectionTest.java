@@ -55,13 +55,11 @@ public class CounterexampleContractCollectionTest {
 
 					@Override
 					public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
-						// TODO Auto-generated method stub
 						return null;
 					}
 
 					@Override
 					public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
-						// TODO Auto-generated method stub
 						return false;
 					}
                 };
@@ -93,13 +91,11 @@ public class CounterexampleContractCollectionTest {
 
 			@Override
 			public List<ModelCheckingContract> getModelCheckingContracts() {
-				// TODO Auto-generated method stub
 				return null;
 			}
 
 			@Override
 			public void addModelCheckingContracts(Collection<ModelCheckingContract> contract) {
-				// TODO Auto-generated method stub
 				
 			}
         });

@@ -26,11 +26,6 @@ import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.SemanticsCommand;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
-/**
- * 
- * @author chau
- *
- */
 public class ComponentStateMachine {
 	
 	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");

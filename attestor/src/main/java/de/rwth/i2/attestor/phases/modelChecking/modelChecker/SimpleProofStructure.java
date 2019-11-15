@@ -22,6 +22,13 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 
+/**
+ * Implements the proof structure for the tableaux construction similar to {@link ProofStructure} 
+ * but employs {@link Assertion2} for modeling assertions.
+ * 
+ * @author sally
+ *
+ */
 public class SimpleProofStructure extends AbstractProofStructure {
 	
 	private static final Logger logger = LogManager.getLogger("proofStructure.java");

@@ -15,7 +15,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * An OnTheFlyStateSpaceGenerator takes an analysis and generates a
- * state space from it (analogously to a StateSpaceGenerator.
+ * state space from it (analogously to a StateSpaceGenerator).
  * During state space generation model checking of an LTL formula
  * is performed on-the-fly. <br>
  * Initialization of an OnTheStateSpaceGenerator has to be performed
@@ -26,7 +26,7 @@ import gnu.trove.set.hash.TIntHashSet;
  * The generation of a StateSpace and model checking are
  * started by invoking generateAndCheck().
  * 
- * @author chau
+ * @author sally
  *
  */
 public class OnTheFlyStateSpaceGenerator extends StateSpaceGenerator {

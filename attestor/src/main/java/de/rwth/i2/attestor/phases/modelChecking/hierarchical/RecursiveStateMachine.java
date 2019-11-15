@@ -20,6 +20,13 @@ import de.rwth.i2.attestor.procedures.Method;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateSpace;
 
+/**
+ * Implementation of an RSM according to Alur et. al. Each Method is represented by an own {@link ComponentStateMachine}
+ * that stores procedure state spaces and model checking results. * 
+ * 
+ * @author sally
+ *
+ */
 public class RecursiveStateMachine {
 	
 	private static final Logger logger = LogManager.getLogger("componentStateMachine.java");
@@ -146,7 +153,7 @@ public class RecursiveStateMachine {
 		
 		for (ModelCheckingContract contract : contracts) {
 			
-			if (contract.getInputFormulae().equals(formulae)) return contract;
+			if (contract.getInputFormulae().toString().equals(formulae.toString())) return contract;
 		}
 		
 		return null;

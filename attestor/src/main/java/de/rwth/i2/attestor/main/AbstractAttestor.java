@@ -1,20 +1,25 @@
 package de.rwth.i2.attestor.main;
 
-import de.rwth.i2.attestor.LTLFormula;
-import de.rwth.i2.attestor.main.scene.DefaultScene;
-import de.rwth.i2.attestor.phases.transformers.CounterexampleTransformer;
-import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
-import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
-import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
-import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import de.rwth.i2.attestor.LTLFormula;
+import de.rwth.i2.attestor.main.scene.DefaultScene;
+import de.rwth.i2.attestor.phases.transformers.CounterexampleTransformer;
+import de.rwth.i2.attestor.phases.transformers.InputSettingsTransformer;
+import de.rwth.i2.attestor.phases.transformers.MCSettingsTransformer;
+import de.rwth.i2.attestor.phases.transformers.ModelCheckingResultsTransformer;
+import de.rwth.i2.attestor.phases.transformers.OnTheFlyModelCheckingResultsTransformer;
+import de.rwth.i2.attestor.phases.transformers.OnTheFlyStateSpaceTransformer;
+import de.rwth.i2.attestor.phases.transformers.StateSpaceTransformer;
+import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 public abstract class AbstractAttestor {
 
@@ -58,10 +63,23 @@ public abstract class AbstractAttestor {
 
         return scene.getNumberOfGeneratedStates();
     }
+    
+    public long getTotalNumberOfOnTheFlyStates() {
+
+        return scene.getNumberOfOnTheFlyGeneratedStates();
+    }
 
     public int getNumberOfStatesWithoutProcedureCalls() {
 
         return registry.getMostRecentPhase(StateSpaceTransformer.class)
+                .getStateSpace()
+                .getStates()
+                .size();
+    }
+    
+    public int getNumberOfOnTheFlyStatesWithoutProcedureCalls() {
+
+        return registry.getMostRecentPhase(OnTheFlyStateSpaceTransformer.class)
                 .getStateSpace()
                 .getStates()
                 .size();
@@ -72,11 +90,40 @@ public abstract class AbstractAttestor {
         return registry.getMostRecentPhase(InputSettingsTransformer.class)
                 .getInputSettings()
                 .getDescription();
+    } 
+    
+    public Set<LTLFormula> getLTLFormulae() {
+
+        return registry.getMostRecentPhase(MCSettingsTransformer.class)
+                .getMcSettings()
+                .getFormulae();
+    }
+    
+    public String getMethodName() {
+
+        return registry.getMostRecentPhase(InputSettingsTransformer.class)
+                .getInputSettings()
+                .getMethodName();
+    }
+    
+    public String getClassName() {
+
+        return registry.getMostRecentPhase(InputSettingsTransformer.class)
+                .getInputSettings()
+                .getClassName();
     }
 
     public int getNumberOfFinalStates() {
 
         return registry.getMostRecentPhase(StateSpaceTransformer.class)
+                .getStateSpace()
+                .getFinalStates()
+                .size();
+    }
+    
+    public int getNumberOfOnTheFlyFinalStates() {
+
+        return registry.getMostRecentPhase(OnTheFlyStateSpaceTransformer.class)
                 .getStateSpace()
                 .getFinalStates()
                 .size();
@@ -93,6 +140,10 @@ public abstract class AbstractAttestor {
 
     public boolean hasAllLTLSatisfied() {
         return registry.getMostRecentPhase(ModelCheckingResultsTransformer.class).hasAllLTLSatisfied();
+    }
+    
+    public boolean hasAllLTLSatisfiedOnTheFly() {
+        return registry.getMostRecentPhase(OnTheFlyModelCheckingResultsTransformer.class).hasAllLTLSatisfied();
     }
 
     public Map<String, Double> getExecutionTimes() {

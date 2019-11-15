@@ -8,7 +8,9 @@ import de.rwth.i2.attestor.generated.node.Node;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 
 /**
- * Represents node in tableau graph
+ * This class implements the states of the tableau method proof structure. Each state consists
+ * of a program state and a list of (sub)formulae, which together form an assertion, that has
+ * to be discharged. In contrast to {@link Assertion} next-formulae are managed in an own list.
  * 
  * @author sally 
  *

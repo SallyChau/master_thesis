@@ -35,13 +35,11 @@ public final class NoContractMatch implements ContractMatch {
 
 	@Override
 	public ModelCheckingContract getModelCheckingContract(Set<Node> inputFormulae) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean hasModelCheckingContractMatch(Set<Node> inputFormulae) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }
