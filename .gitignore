@@ -172,3 +172,11 @@ notes/thesis.aux
 *.gz
 *.out
 *.aux
+*.blg
+*.bbl
+notes/Master thesis notes/~$nchmarks.docx
+/notes/Master thesis notes/Literature
+/benchmark-helper-ws
+/attestor-examples-ws
+/notes/Attestor Test Notes
+Attestor Test Notes
