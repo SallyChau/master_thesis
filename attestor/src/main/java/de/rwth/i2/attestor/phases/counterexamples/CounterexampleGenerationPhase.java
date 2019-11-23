@@ -1,5 +1,10 @@
 package de.rwth.i2.attestor.phases.counterexamples;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.grammar.Grammar;
 import de.rwth.i2.attestor.grammar.canonicalization.CanonicalizationStrategy;
@@ -24,11 +29,6 @@ import de.rwth.i2.attestor.stateSpaceGeneration.Program;
 import de.rwth.i2.attestor.stateSpaceGeneration.ProgramState;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateRectificationStrategy;
 import de.rwth.i2.attestor.stateSpaceGeneration.StateRefinementStrategy;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class CounterexampleGenerationPhase extends AbstractPhase implements CounterexampleTransformer {
 
@@ -130,12 +130,14 @@ public class CounterexampleGenerationPhase extends AbstractPhase implements Coun
             return;
         }
 
+        logHighlight("Counterexample generation for results from " + modelCheckingResults.getClass().getSimpleName() + ":");
+        
         if(!scene().options().isCanonicalEnabled()) {
-            logHighlight("Detected counterexamples are not verified.");
+        	logSum("Detected counterexamples are not verified.");
         } else if (allCounterexamplesDetected) {
-            logHighlight("Detected a non-spurious counterexample for all violated LTL formulae.");
+        	logSum("Detected a non-spurious counterexample for all violated LTL formulae.");
         } else {
-            logHighlight("Some counterexampleGeneration might be spurious.");
+        	logSum("Some counterexample might be spurious.");
         }
         for (Map.Entry<LTLFormula, ProgramState> result : counterexamples.entrySet()) {
             logSum(result.getKey().getFormulaString());

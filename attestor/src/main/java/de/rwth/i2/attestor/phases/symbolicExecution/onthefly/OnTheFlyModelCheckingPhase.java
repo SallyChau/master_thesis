@@ -246,7 +246,7 @@ public class OnTheFlyModelCheckingPhase extends AbstractPhase implements OnTheFl
             		interproceduralAnalysis.addFailureTrace(mainStateSpaceFailureTrace);
             		failureTrace = interproceduralAnalysis.getHierarchicalFailureTrace();
             	}            	
-            	traces.put(formula, failureTrace); 
+            	traces.put(formula, failureTrace.getTopLevelFailureTrace()); 
             	
             	logger.info("Hierarchical FailureTrace: " + interproceduralAnalysis.getHierarchicalFailureTrace().getStateTrace());
             }

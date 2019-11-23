@@ -56,6 +56,7 @@ public class Attestor extends AbstractAttestor {
                 .addPhase(new GrammarRefinementPhase(scene))
                 .addPhase(new AbstractionPreprocessingPhase(scene))                
                 .addPhase(new OnTheFlyModelCheckingPhase(scene)) 
+                .addPhase(new CounterexampleGenerationPhase(scene))
                 .addPhase(new RecursiveStateSpaceGenerationPhase(scene))
                 .addPhase(new ModelCheckingPhase(scene))
                 .addPhase(new CounterexampleGenerationPhase(scene))

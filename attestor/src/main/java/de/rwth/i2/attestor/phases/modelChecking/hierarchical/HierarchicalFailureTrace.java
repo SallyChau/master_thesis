@@ -3,6 +3,7 @@ package de.rwth.i2.attestor.phases.modelChecking.hierarchical;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingTrace;
@@ -42,7 +43,7 @@ public class HierarchicalFailureTrace implements ModelCheckingTrace {
 	@Override
 	public ProgramState getFinalState() {
 
-		return globalStateTrace.getFirst().getFinalState();
+		return getTopLevelFailureTrace().getFinalState();
 	}
 
 	@Override
@@ -81,6 +82,22 @@ public class HierarchicalFailureTrace implements ModelCheckingTrace {
 	public List<FailureTrace> getStateTrace() {
 		
 		return new LinkedList<>(globalStateTrace);
+	}
+	
+	public FailureTrace getTopLevelFailureTrace() {
+		
+		// find final state of trace that is a state in top-level state space
+		// therefore, iterate list in reverse
+		
+		ListIterator<FailureTrace> traceIterator = globalStateTrace.listIterator(globalStateTrace.size());
+
+		// Iterate in reverse.
+		while(traceIterator.hasPrevious()) {
+			FailureTrace current = traceIterator.previous();
+			if (current.getFinalState().isFromTopLevelStateSpace()) return current;
+		}
+		
+		return null;
 	}
 	
 	private int size() {

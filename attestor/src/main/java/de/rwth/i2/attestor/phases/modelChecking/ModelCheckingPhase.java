@@ -11,7 +11,6 @@ import de.rwth.i2.attestor.LTLFormula;
 import de.rwth.i2.attestor.main.AbstractPhase;
 import de.rwth.i2.attestor.main.scene.Scene;
 import de.rwth.i2.attestor.phases.communication.ModelCheckingSettings;
-import de.rwth.i2.attestor.phases.modelChecking.hierarchical.HierarchicalFailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.hierarchical.RecursiveStateMachine;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.FailureTrace;
 import de.rwth.i2.attestor.phases.modelChecking.modelChecker.ModelCheckingResult;
@@ -99,7 +98,7 @@ public class ModelCheckingPhase extends AbstractPhase implements ModelCheckingRe
                 if (scene().options().isIndexedMode()) {
                     logger.warn("Counterexample generation for indexed grammars is not supported yet.");
                 } else {
-                    HierarchicalFailureTrace failureTrace = rsm.getHierarchicalFailureTrace(call, formula);
+                    FailureTrace failureTrace = rsm.getHierarchicalFailureTrace(call, formula).getTopLevelFailureTrace();
                     traces.put(formula, failureTrace);
                 }
             }
