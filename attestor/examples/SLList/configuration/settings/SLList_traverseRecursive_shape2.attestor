@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "SLList.traverseRecurisve: Verify that the heap is always a SLList."
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "traverseRecursive"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long.json"
+
+# Model Checking
+--model-checking "G { L(RefSLList) }"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug

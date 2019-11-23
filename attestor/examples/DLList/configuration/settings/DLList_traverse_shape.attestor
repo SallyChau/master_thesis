@@ -1,0 +1,25 @@
+# Master thesis - Benchmark
+# Specification:
+--description "DLList.traverse: Verify that the heap is a DLList."
+
+# Analyzed Method
+--classpath "examples/DLList/configuration/code"
+--class "DLList"
+--method "traverse"
+
+# Grammar
+--predefined-grammar "DLList"
+--rename DLListNode=DLList next=next prev=prev
+
+# Initial states
+--initial "examples/DLList/configuration/initial/dll.json"
+
+# Model Checking
+--model-checking "(GF {terminated} -> GF { L(RefDLList) })"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--no-garbage-collector
+--debug

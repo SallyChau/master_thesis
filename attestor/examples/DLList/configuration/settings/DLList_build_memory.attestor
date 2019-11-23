@@ -1,0 +1,23 @@
+# Master thesis - Benchmark
+# Specification:
+--description "DLList.build: Verify memory safety."
+
+# Analyzed Method
+--classpath "examples/DLList/configuration/code"
+--class "DLList"
+--method "build"
+
+# Grammar
+--predefined-grammar "DLList"
+--rename DLListNode=DLList next=next prev=prev
+
+# Initial states
+
+# Model Checking
+--model-checking "G true"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--canonical

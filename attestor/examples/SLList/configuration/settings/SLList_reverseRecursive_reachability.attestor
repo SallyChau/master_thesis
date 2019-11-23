@@ -1,0 +1,24 @@
+# Master thesis - Benchmark
+# Specification:
+--description "SLList.reverseRecursive: Verify that the variable 'head' is reachable from the variable 'tail' upon termination."
+
+# Analyzed Method
+--classpath "examples/SLList/configuration/code"
+--class "SLList"
+--method "reverseRecursive"
+
+# Grammar
+--predefined-grammar "SLList"
+--rename ListNode=SLList next=next
+
+# Initial states
+--initial "examples/SLList/configuration/initial/sll_long_tail.json"
+
+# Model Checking
+--model-checking "(X {isReachable(head,tail,[next])} & F (X {terminated} -> {isReachable(tail,head,[next])}))"
+#--hierarchical-model-checking
+#--mc-skip "<init>"
+
+# Options
+--admissible-abstraction
+--debug

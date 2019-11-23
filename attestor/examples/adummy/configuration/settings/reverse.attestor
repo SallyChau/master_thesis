@@ -1,0 +1,9 @@
+# Benchmark: M
+--description "memory safety: build and reverse list"
+--classpath "examples/adummy/configuration/code"
+--class "ListNodeAlt"
+--method "buildList"
+--predefined-grammar "SLList"
+--rename ListNode=ListNodeAlt next=nextAlt
+--admissible-abstraction
+--model-checking "GF { L(RefSLList) }"
